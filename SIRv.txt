@@ -1,0 +1,34 @@
+model {
+  # Observation equation
+  for (i in 1:n) {
+    for (j in 1:3) {
+      y[i,j]  ~ dbin(p[j],dx[i,j])
+      dx[i,j] ~ dpois(edx[i,j])
+    }
+  } 
+
+  # Evolution equation
+  for (i in 2:n) {
+    edx[i,1] <- gamma[1]*x[i-1,1]*x[i-1,2]/N      # S -> I
+    edx[i,2] <- gamma[2]*x[i-1,2]                 # I -> R
+    edx[i,3] <- gamma[3]*x[i-1,1]                 # S -> R, vaccination
+
+    # Update states
+    x[i,1] <- x[i-1,1]-dx[i,1]        -dx[i,3]    # S -> I
+    x[i,2] <- x[i-1,2]+dx[i,1]-dx[i,2]            # I -> R
+    x[i,3] <- x[i-1,1]                +dx[i,3]    # S -> R, vaccination
+  }
+  x[1,1] <- X0[1]-dx[1,1]        -dx[1,3]         # S -> I
+  x[1,2] <- X0[2]+dx[1,1]-dx[1,2]                 # I -> R
+  x[1,3] <- X0[3]                +dx[1,3]         # S -> R, vaccination
+
+  edx[1,1] <- gamma[1]*X0[1]*X0[2]/N              # S -> I 
+  edx[1,2] <- gamma[2]*X0[2]                      # I -> R
+  edx[1,3] <- gamma[3]*X0[1]                      # S -> R, vaccination
+  
+  # Prior
+  for (j in 1:3) {
+    gamma[j] ~ dgamma(1,1)
+  }
+}
+
