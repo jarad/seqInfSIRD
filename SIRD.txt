@@ -1,14 +1,16 @@
 model {
   # Observation equation
   for (i in 1:n) {
-    y[i] <- dbin(dx[i],p)
-    dx[i] <- dpois(edx[i])
+    y[i]  ~ dbin(p,dx[i])
+    dx[i] ~ dpois(edx[i])
   } 
 
   # Evolution equation
   for (i in 2:n) {
     edx[i] <- x[i-1]*gamma
+    x[i]   <- x[i-1]-dx[i]
   }
+  x[1]   <- S0-dx[1]
   edx[1] <- S0*gamma
 
   # Prior
