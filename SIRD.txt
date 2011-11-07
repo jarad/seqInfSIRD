@@ -1,0 +1,9 @@
+model {
+  for (i in 2:n) {
+    y[i] <- dbin(dx[i],p)
+    dx[i] <- dpois(edx[i])
+    edxx[i] <- x[i-1]*gamma
+  }
+  gamma ~ dgamma(1,1)
+}
+
