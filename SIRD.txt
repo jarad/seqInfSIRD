@@ -1,9 +1,17 @@
 model {
-  for (i in 2:n) {
+  # Observation equation
+  for (i in 1:n) {
     y[i] <- dbin(dx[i],p)
     dx[i] <- dpois(edx[i])
-    edxx[i] <- x[i-1]*gamma
+  } 
+
+  # Evolution equation
+  for (i in 2:n) {
+    edx[i] <- x[i-1]*gamma
   }
+  edx[1] <- S0*gamma
+
+  # Prior
   gamma ~ dgamma(1,1)
 }
 
