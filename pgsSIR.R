@@ -27,8 +27,10 @@ oneStep <- function(X,g) {
   newI <- rpois(1, g[1]*X[1]*X[2]/N*dt)
   newR <- rpois(1, g[2]*X[2])
 
+  newI <- min(X[1],      newI)
   newR <- min(X[2]+newI, newR)
-  
+ 
+ 
   X[1] <- X[1]-newI
   X[2] <- X[2]+newI-newR
   X[3] <- X[3]     +newR
@@ -102,13 +104,18 @@ draw.X <- function(y,X,g,J=nrow(y)*5) {
 
 
 # Actual MCMC
-n.reps <- 100
+n.reps <- 1e3
 g.reps <- matrix(NA,n.reps,length(g))
 X.reps <- array(NA, dim=c(n.reps, nrow(X), ncol(X)))
 g.reps[1,]  <- g
 X.reps[1,,] <- X
 
+
+cat("  |",rep(" ",20),"|100%\n  |",sep="")
 for (i in 2:n.reps) {
+  if (i%%(n.reps/20)==0) cat("*")
   g.reps[i,] <- draw.g(y,X.reps[i-1,,])
   X.reps[i,,] <- draw.X(y,X.reps[i-1,,],g.reps[i,])
 }
+cat("|\n")
+
