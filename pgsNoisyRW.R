@@ -60,7 +60,7 @@ s.reps <- rep(NA,n.reps);      s.reps[1] <- 1
 
 cat("  |",rep(" ",20),"|100%\n  |",sep="")
 for (i in 2:n.reps) {
-  f (i%%(n.reps/20)==0) cat("*")
+  if (i%%(n.reps/20)==0) cat("*")
   s.reps[i] <- draw.sigma(x.reps[i-1,])
   x.reps[i,] <- draw.x(y,  x.reps[i-1,], s.reps[i])
 }
