@@ -1,0 +1,15 @@
+For mcmc inference in SIRD models. 
+
+BUGS models:
+
+  SIR.txt:  S->I, I->R
+  SIRv.txt: S->I, I->R, S->R
+  SIRD.txt: S->I, I->R, S->R, I->D
+
+Particle Gibbs sampling:
+
+  pgsNormalNormal.R: X_i ~ N(\mu,1), Y_i ~ N(X_i,1), estimate \mu
+  pgsNoisyRW.R: X_i ~ N(X_{i-1},\sigma^2)m Y_i~N(X_i,1), estimate \sigma
+  pgsSIR.R: S->I,I->R discrete time model, estimate transition rates
+
+

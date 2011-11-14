@@ -1,6 +1,0 @@
-For sequential inference in SIRD models.
-
-  SIR.txt:  S->I, I->R
-  SIRv.txt: S->I, I->R, S->R
-  SIRD.txt: S->I, I->R, S->R, I->D
-
