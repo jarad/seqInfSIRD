@@ -1,0 +1,11 @@
+A repository for working on (sequential) inference in SIRD models.
+
+The organization struction is 
+
+code/        where all functions should go
+  working/   a place to put random R code
+  
+data/        where all data should be put and script files
+  20011115/  subfolders to organize by date
+
+
