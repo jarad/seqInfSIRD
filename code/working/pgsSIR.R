@@ -105,9 +105,9 @@ draw.X <- function(y,X,g,J=nrow(y)*5) {
 
 # Actual MCMC
 n.reps <- 1e3
-g.reps <- matrix(NA,n.reps,length(g))
+g.reps <- matrix(NA,n.reps,length(g.true))
 X.reps <- array(NA, dim=c(n.reps, nrow(X), ncol(X)))
-g.reps[1,]  <- g
+g.reps[1,]  <- g.true
 X.reps[1,,] <- X
 
 
