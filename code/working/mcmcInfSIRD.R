@@ -61,3 +61,10 @@ readline("Hit enter:")
 dat <- list(X0=X0, y=y, p=p, n=nrow(y), N=sum(X0), a=rep(1,4), b=rep(1,4))
 mod <- jags.model("SIRD.txt", dat, list(dx=dx),n.adapt=1e3) 
 res <- coda.samples(mod, c("gamma","x"), 1e3, thin=10) 
+
+rownames(res$mcmc)
+par(mfrow=c(2,2))
+for (i in 1:4) {
+  plot(res[,i],trace=F,auto.layout=F)
+  abline(v=gamma[i],col="red",lwd=2)
+}
