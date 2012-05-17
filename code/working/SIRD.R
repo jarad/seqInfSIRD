@@ -5,7 +5,7 @@ require(rjags)
 # SIRDsim  : simulates SIRD data
 # SIRDmcmc : uses JAGS to run mcmc <not implemented yet>
 
-hazard = function(X,gamma,N=sum(X)) {
+hazard = function(X,gamma,N) {
   return(c(gamma[1]*X[1]*X[2]/N, # Hazard for S -> I
            gamma[2]*X[2],        # Hazard for I -> R
            gamma[3]*X[1],        # Hazard for S -> R
@@ -30,27 +30,24 @@ update <- function(x,dx) {
 
 SIRDsim = function(X0,gamma,p,n) {
   x = y = dx = matrix(NA,n,4)
+  N = sum(X0)
   
   # First step
-  dx[1,] = rpois(4,hazard(X0,gamma))
-  dx[1,] = fix.updates(dx[1,],X0)
-  
-  x[1,] = update(X0,dx[1,])
-
-  y[1,] = rbinom(4,dx[1,],p)
+  dx[1,] = rpois(4,hazard(X0,gamma,N))
+  dx[1,] = fix.updates(dx[1,],X0,gamma)
+   x[1,] = update(X0,dx[1,])
+   y[1,] = rbinom(4,dx[1,],p)
   
   # Remaining steps
   for (i in 2:n) {
   	stopifnot(all(!is.na(x[i-1,])))
-  	dx[i,] = rpois(2,hazard(x[i-1,],gamma))
-  	dx[i,] = fix.updates(dx[i,],x[i-1,])
-  	
-  	x[i,] = update(x[i-1,],dx[i,])
-  	
-  	y[i,] = rbinom(2,dx[i,],p)
+  	dx[i,] = rpois(2,hazard(x[i-1,],gamma,N))
+  	dx[i,] = fix.updates(dx[i,],x[i-1,],gamma)
+  	 x[i,] = update(x[i-1,],dx[i,])
+  	 y[i,] = rbinom(2,dx[i,],p)
   }
 
-  return(list( x = data.frame(S    =  x[,1], I    =  x[,2], R = x[,3], D = x[,4]),
+  return(list( x = data.frame(S    =  x[,1], I    =  x[,2], R    =  x[,3],    D =  x[,4]),
               dx = data.frame(StoI = dx[,1], ItoR = dx[,2], StoR = dx[,3], ItoD = dx[,4]),
                y = data.frame(StoI =  y[,1], ItoR =  y[,2], StoR =  y[,3], ItoD =  y[,4])))
 }
