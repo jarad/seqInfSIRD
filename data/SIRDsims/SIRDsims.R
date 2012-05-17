@@ -2,16 +2,16 @@ source("../../code/working/SIRD.R")
 
 #### Simulation parameter settings
 # Poisson transition parameters (gamma)
-prior.g = rbind(c(1,1) # S -> I
-                c(1,1) # I -> R
-                c(1,1) # S -> R
-                c(1,1) # I -> D)
+prior.g = rbind(c(1,1), # S -> I
+                c(1,1), # I -> R
+                c(1,1), # S -> R
+                c(1,1)) # I -> D
                 
 # Binomial observation parameters (beta)           
-prior.p = rbind(c(1,1) # S -> I
-                c(1,1) # I -> R
-                c(1,1) # S -> R
-                c(1,1) # I -> D)
+prior.p = rbind(c(1,1), # S -> I
+                c(1,1), # I -> R
+                c(1,1), # S -> R
+                c(1,1)) # I -> D
       
 # Number of steps              
 n = 52 # weekly for a year
@@ -20,11 +20,33 @@ n = 52 # weekly for a year
 X0 = c(16000,2,0,0)
 
 # Number of simulations
+n.sims = 2^4 
 
-n.sims = 2^4
+# Whether the draws should be random from the prior or gridded
+random = TRUE 
 
-
+#### Random draws
+if (random) {
+  gammas = probs = matrix(NA,n.sims,4)
+  for (i in 1:4) {
+    gammas[,i] = rgamma(n.sims, prior.g[i,1], prior.g[i,2])	
+     probs[,i] =  rbeta(n.sims, prior.p[i,1], prior.p[i,2])	
+  }
+}
 
 #### Gridded draws
-n.sims
+if (!random) {
+  n.each.dim = floor(n.sims^.25)
+  qts = (1:n.each.dim)/(n.each.dim+1)	
+  gammas = probs = matrix(NA,n.sims,4)
+  for (i in 1:4) {
+    gammas[,i] = qgamma(qts, prior.g[i,1], prior.g[i,2])	
+     probs[,i] =  qbeta(qts, prior.p[i,1], prior.p[i,2])	
+  }
+}
+
+# Need to expand.grid for the gridded draws
+
+
+
 
