@@ -1,94 +1,116 @@
+dyn.load(paste("gillespieExactStep-",.Platform$r_arch,.Platform$dynlib.ext,sep=''))
+dyn.load(paste("inference-",.Platform$r_arch,.Platform$dynlib.ext,sep=''))
+
+
+##########################################################################
 #Use particles to filter for SIR model with discrete-time sampled 
 #transitions 
-particleSampledSIR <- function(dt, N, T, LOOPN=1,aLW=0.99,verbose="NONE",col="blue",trueX=NULL,Y=NULL)
+#
+#  model.params are the initialization parameters -- see the default case base.params above
+#  N is the number of particles
+#  T is the horizon in periods of length dt (eg T=50,dt=1)
+#  LOOPN is the number of repetitions to do
+#  aLW is the Liu-West weight alpha; if aLW > 1 then Storvik algorithm is done instead
+#  verbose=CI/HIST will output some summary plots using the given color
+#  if trueX/Y is provided, that would be used as the true scenario
+#  model.propagate.func is the method to use for particle mutation/true system evolution: tauLeap/gillespie
+#  resample.func is the resampling method: multinomial.resample/branchMinVar
+#
+particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW=0.99,
+                verbose="CI",col="blue",trueX=NULL,Y=NULL,
+                model.propagate.func=tauLeap,resample.func=multinomial.resample)
 {
-    initP <- c(0.25, 0.25, 0.5, 0.5)
-    initX <- c(19980,20, 0,0)
-    hyperPrior <- c(22.5,30,15,30,0,1000,20,1000)
-    trueTheta <- array(c(0.75, 0.5, 0, 0.02),dim=c(4,1))
-    saved.stats <- array(0, dim=c(LOOPN,ceil(T/dt)+1,24))
+    initP <- model.params$initP
+    initX <- model.params$initX
+    hyperPrior <- model.params$hyperPrior
+    trueTheta <- model.params$trueTheta
 
-    if (is.null(trueX)) # generate a scenario
+
+    saved.stats <- array(0, dim=c(LOOPN,ceil(T/dt)+1,24))  # all the saved summary statistics
+
+    if (is.null(Y)) # generate a scenario on the fly
     {
-       trueX <- array(0, dim=c(ceil(T/dt)+1,4))
-       Y <- array(0,dim=c(ceil(T/dt)+1,4))
-       
-       trueX[1,] <- initX
-
-       # Fix the true state trajectory for replicability
-       #set.seed(21)
-       # Construct the true process and the observations
-       for (i in 1:(T/dt)) {
-           out <- tauLeap(t(t(trueX[i,])),t(t(trueTheta)),NULL,t(initP))
-           Y[i+1,] <- out$Y
-           trueX[i+1,] <- out$X
-       }
-       #browser()
+       scen <- generate.scenario(model.params,model.propagate.func,T)
+       trueX <- scen$X
+       Y <-scen$Y
     }
-
     
-    for (loop in 1:LOOPN) {
+    for (loop in 1:LOOPN) {    # run the filter LOOPN times to understand MC variance if needed
     
        # Initialize particles
-       X <- t(array(rep(initX, N),dim=c(N.RXNS,N)))
+       X <- t(array(rep(initX,N),dim=c(N.RXNS,N)))
+       X[,2] <- rpois(N, initX[2])  # initial infecteds
+       X[,1] <- sum(initX) - X[,2]           # S_0 = N - I_0, R_0 =0, D_0 = 0
        lambda <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
+       lambda[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
        Suff <- t(array(rep(hyperPrior,N), dim=c(2*N.RXNS,N))) # sufficient conjugate statistics
        fixTheta <- array(0,dim=c(N,N.RXNS))
 
+       # fixed theta particles if implementing Liu-West
        for (jj in 1:N.RXNS)
           fixTheta[,jj] <- rgamma(N, hyperPrior[2*jj-1],hyperPrior[2*jj])
        
        theta <- fixTheta
        p.weights <- array(1, N)/N
 
+       # start at t=0
        curt <- 0 
        i <- 1
        totalWeight <- 1
        saved.stats[loop,i,] <- saveStats(X, fixTheta)
 
-       while (curt < T-dt & trueX[i,2] >0) {
-         if (aLW > 1)  # Storvik filter: sample from the posterior Gamma mixture
+       ######### MAIN LOOP OVER OBSERVATIONS ##############
+       while (curt < T-dt) {
+         if (aLW > 1 & is.null(Suff) == 0 && i %% 3 == 1)  # Storvik filter: sample from the posterior Gamma mixture
            for (jj in 1:N.RXNS)
                theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
            
-         else # use the Liu-West thetas
+         else if (aLW < 1) # use the Liu-West thetas
             theta <- fixTheta
         
-        out <- tauLeap(t(X), t(theta),Suff,lambda,Y[i+1,])
+        # propagate particles 
+        out <- model.propagate.func(t(X), t(theta),lambda,curY=Y[i+1,],hyper=Suff)
         X <- t(out$X); dX <- t(out$dX); Suff <- out$hyper
         
-        p.weights <- mutate(dX,Y[i+1,],lambda,p.weights)
+        # update weights
+        p.weights <- updateWeights(dX,Y[i+1,],lambda,p.weights)
         curt <- (i-1)*dt
 
-         if ( i %%10  == 0 & verbose =="HIST") # plot posterior of infectiousness parameter
+         if ( i %%15  == 6 & verbose =="HIST") # plot posterior of infectiousness parameter every 15 steps
          {
             
-            gridx <- seq(0.5,1,by=0.005)
-            gridy <- array(0, length(gridx))
-            for (jj in 1:length(gridx))
-               gridy[jj] <- sum(dgamma(gridx[jj],Suff[,1],Suff[,2]))
-         
-            if (aLW < 1)
-              hist(theta[,1],25,freq=F,main=sprintf("t=%d",curt),xlab='S->I Rate') 
-            else
-               plot(gridx,gridy/N,type="l",col=col,main=sprintf("t=%d",curt),xlab='S->I Rate')
-         
+            if (aLW < 1)  # for Liu and West just histogram the particles
+              hist(theta[,1],35,freq=F,main=sprintf("t=%d",curt),xlab='S->I Rate') 
+            else { 
+               # for Storvik construct exact Gamma pdf on a grid using S-particles
+               gridx <- seq(0.4,1.1,by=0.0025)
+               gridy <- array(0, length(gridx))
+               for (jj in 1:length(gridx))
+                  gridy[jj] <- sum(dgamma(gridx[jj],Suff[,1],Suff[,2]))
+               gridy <- gridy/sum(gridy)
+               print(c("i=",i-1,gridx[min(which(cumsum(gridy)>0.025))], gridx[max(which(cumsum(gridy)<0.975))]))
+
+               plot(gridx,gridy,type="l",col=col,main=sprintf("t=%d",curt),xlab='S->I Rate')
+            }
+             
             abline(v=trueTheta[1], col="red")
+            #browser()
          }
          totalWeight <- totalWeight*sum(p.weights)
 
-         # resample
+         ##### resample and update all the particles
          ESS <- 1/sum(N^2*p.weights^2) 
-         CoV <- sqrt(sum( (N*p.weights-1)^2) ) 
-         Ent <- sum( p.weights*log(N*p.weights))
-         newIndex <- multinomial.resample(p.weights) # branchMinVar
-         #browser()
+       #if (i %% 3 == 0 | ESS < essThreshold) {
+         newIndex <- resample.func(p.weights) 
+         
          X <- X[newIndex,] 
-         Suff <- Suff[newIndex,]
+         if (is.null(Suff) == 0)
+             Suff <- Suff[newIndex,]
          lambda <- lambda[newIndex,]
          fixTheta <- fixTheta[newIndex,]
+         theta <- theta[newIndex,]
          
-         # Liu and West move
+         #### Liu and West move
          meanLam <- varLam <- array(0,N.RXNS)
          if (aLW < 1) # & curt > 1
          {
@@ -100,7 +122,7 @@ particleSampledSIR <- function(dt, N, T, LOOPN=1,aLW=0.99,verbose="NONE",col="bl
             }
           }
           p.weights <- rep(1/N, N)
-        
+       #} 
 
         i <- i+1
         saved.stats[loop,i,] <- saveStats(X,theta)
@@ -108,15 +130,159 @@ particleSampledSIR <- function(dt, N, T, LOOPN=1,aLW=0.99,verbose="NONE",col="bl
       }
    }
    
-   if (verbose=='CI')
+   if (verbose=='CI')  # plot some CI over time 
       plot.ci(saved.stats[1,1:i,],trueX[1:i,],trueTheta,1,col)
  
    return( list(stat=saved.stats,trueX=trueX,Y=Y))
 }
 
-################### branching function
-#resample using Crisan min-variance method
+
+#####################################################
+# move one step of the SIR as a continuous-time Markov chain
+#
+# In this case there are no sufficient hyper-parameters, so last parameter is never used
+# X is a matrix: each column has 4 rows for SIRD states 
+# theta is a matrix, each column has 4 rows for SIRD rates 
+# 
+gillespieStep <- function(X, theta, prop,curY = NULL,hyper=NULL)
+{
+    hyper <- array(1, dim=c(4,dim(X)[2]))
+        
+    out <- gillespieExactStep.C(sir0=matrix(X[1:3,],nrow=3),prior=hyper,th=theta[1:3,])
+    dX <- array(0, dim=c(4,dim(X)[2]))
+    dX[1,] <- X[1,]-out$newSim[1,]
+    dX[2,] <- dX[1,]
+    dX[3:4,] <- 0
+       
+    if (is.null(curY) | is.nan(curY)) 
+        Y <- c(rbinom(2, dX[1:2,], prop[,1:2]),0,0)
+    else
+        Y <- curY
+
+    return(list(X=out$newSim,dX=dX,Y=Y, hyper=NULL))
+}
+
+
+
+#######################################################
+# move one step of the SIR as a tau-leaping Poisson approx
+#
+# X is a matrix: each column has 4 rows for SIRD states 
+# theta is a matrix, each column has 4 rows for SIRD rates 
+tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL)
+{
+    h <- t(X)
+    dX <- X
+    hyper2 <- array(1, dim=c(N.RXNS,2,dim(X)[2]))
+    
+    out <- one.step.C(X, hyper2, theta, t(prop), sample=T)
+    
+    for (j in 1:dim(X)[2])
+    {    
+       #out <- simulate.one.step.C(X[,j],theta[,j],sum(X[,j]) )
+       #dX[,j] <- out$dX
+       #X[,j] <- out$X
+       h[j,]  <- hazard.R(X[,j], sum(X[,j]))   
+    }
+    newX <- out$newX[,1]
+    newX[is.nan(newX)] <- 0  # to take care of the case when some proportions are zero
+       
+    if (is.null(curY))
+        Y <- rbinom(N.RXNS, newX, prop)
+    else
+        Y <- curY
+    #Y[is.nan(Y)] <- 0
+
+    # update the hyperparameters
+    if (!is.null(hyper) & !is.nan(Y[1])) 
+      for (i in 1:N.RXNS) {
+        hyper[,2*i-1] <- hyper[,2*i-1] + Y[i]
+        hyper[,2*i] <- hyper[,2*i] + prop[,i]* h[,i]
+      }
+    
+    return(list(X=out$X,dX=out$newX,hyper=hyper,Y=Y))
+}
+
+###############################################
+# Generate a scenario of the SIRD model
+# output is a path (X,Y)
+generate.scenario <- function(model.params,model.propagate.func,T,seed=NULL)    
+{
+
+        X <- array(0, dim=c(T+1,N.RXNS))
+        Y <- array(0,dim=c(T+1,N.RXNS))
+       
+         X[1,] <- model.params$initX
+         theta <- model.params$trueTheta
+         theta[1] <- theta[1]+0.1*rnorm(1);
+
+       # Fix the true state trajectory for replicability
+       if (!is.null(seed))
+         set.seed(seed)
+       # Construct the true process and the observations
+       for (i in 1:T) 
+       {
+           out <- model.propagate.func(t(t(X[i,])),t(t(theta)),t(model.params$initP))
+           
+           Y[i+1,] <- out$Y
+           X[i+1,1:dim(out$X)[1]] <- out$X
+       }
+       return(list(X=X,Y=Y,theta=theta))
+}
+
+
+#######################################################
+# Update the weights of the particles using the binomial sampling
+updateWeights <- function(dX, curY, prop, weights)
+{
+    new.weights <- weights
+   
+    for (jj in 1:N.RXNS)
+      new.weights <- new.weights*dbinom(curY[jj], dX[,jj], prop[,jj])
+      
+    return(new.weights)
+
+}
+
+#######################################################
+# Predictive likelihood of the next observation using Poisson approximations
+predictiveLikelihood <- function(X, nextY, theta, prop, weights)
+{
+    h <- X  # just to set the size of h correctly
+    
+    new.weights <- weights
+    for (j in 1:dim(X)[1])
+       h[j,]  <- hazard.R(X[j,], sum(X[j,]))   
+       
+    for (jj in 1:N.RXNS) {
+        new.weights <- new.weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])      
+    }
+    #browser()
+    return(new.weights)
+
+}
+
+#######################################################
+# Summary statistics: for each X-coordinate and theta parameter
+# save the 95% CI and the mean generated by the particle cloud
+saveStats <- function(X, theta)
+{
+    summ.stat <- array(0,dim=c(24,1))
+    for (jj in 1:dim(X)[2])
+    {
+      summ.stat[(jj-1)*6+1] <- mean(X[,jj])
+      summ.stat[((jj-1)*6+2):((jj-1)*6+3)] <- quantile(X[,jj],c(0.025,0.975))
+
+      summ.stat[(jj-1)*6+4] <- mean(theta[,jj])
+      summ.stat[((jj-1)*6+5):((jj-1)*6+6)] <- quantile(theta[,jj],c(0.025,0.975))
+    }
+    return(summ.stat)
+}
+
+################################################# 
+# Resample using Crisan min-variance method
 # branching from Crisan (2006) p .10
+# similar to residual sampling but even less variance
 branchMinVar <- function(p.weights)
 {
         N <- length(p.weights)
@@ -148,87 +314,105 @@ branchMinVar <- function(p.weights)
         return (newNdx)
 }
 
-#####################################################
-# move one step of the SIR
-# X is a matrix: each column has 4 rows for SIRD states 
-# theta is a matrix, each column has 4 rows for SIRD rates 
-tauLeap<- function(X, theta, hyper=NULL, prop,curY=NULL)
+
+##########################################################################
+#Use particles to filter for SIR model with discrete-time sampled 
+#transitions 
+#
+#  model.params are the initialization parameters -- see the default case base.params above
+#  LOOPN is the number of repetitions to do
+#  aLW is the Liu-West weight alpha; if aLW > 1 then particle learning is done
+#  verbose=CI/HIST will output some summary plots using the given color
+#  if trueX/Y is provided, that would be used as the true scenario
+#  model.propagate.func is the method to use for particle mutation/true system evolution: tauLeap/gillespie
+#  resample.func is the resampling method: multinomial.resample/branchMinVar
+#
+plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
+                col="blue",trueX=NULL,Y=NULL,
+                model.propagate.func=tauLeap,resample.func=multinomial.resample)
 {
-    h <- t(X)
-    dX <- X
-    hyper2 <- array(1, dim=c(N.RXNS,2,dim(X)[2]))
-    
-    out <- one.step.C(X, hyper2, theta, t(prop), sample=T)
-    
-    for (j in 1:dim(X)[2])
-    {    
-       #out <- simulate.one.step.C(X[,j],theta[,j],sum(X[,j]) )
-       #dX[,j] <- out$dX
-       #X[,j] <- out$X
-       h[j,]  <- hazard.R(X[,j], sum(X[,j]))   
-    }
-       
-    if (is.null(curY))
-        Y <- rbinom(N.RXNS, out$newX[,1], prop)
-    else
-        Y <- curY
+    initP <- model.params$initP
+    initX <- model.params$initX
+    hyperPrior <- model.params$hyperPrior
+    trueTheta <- model.params$trueTheta
 
-    if (!is.null(hyper)) 
-      for (i in 1:N.RXNS) {
-        hyper[,2*i-1] <- hyper[,2*i-1] + Y[i]
-        hyper[,2*i] <- hyper[,2*i] + prop[,i]* h[,i]
-      }
-    
+    saved.stats <- array(0, dim=c(LOOPN,ceil(T/dt)+1,24))
 
-    return(list(X=out$X,dX=out$newX,hyper=hyper,Y=Y))
-}
-
-mutate <- function(dX, curY, prop, weights)
-{
-    newWeights <- weights
-   
-    for (jj in 1:N.RXNS)
-      newWeights <- newWeights*dbinom(curY[jj], dX[,jj], prop[,jj])
-      
-    return(newWeights)
-
-}
-
-saveStats <- function(X, theta)
-{
-    summ.stat <- array(0,dim=c(24,1))
-    for (jj in 1:4)
+    if (is.null(Y)) # generate a scenario
     {
-      summ.stat[(jj-1)*6+1] <- mean(X[,jj])
-      summ.stat[((jj-1)*6+2):((jj-1)*6+3)] <- quantile(X[,jj],c(0.025,0.975))
+        scen <- generate.scenario(model.params,model.propagate.func,T)
+        Y <- scen$Y
+        trueX <- scen$X 
+        trueTheta <- scen$theta
+    }     
+    
+    for (loop in 1:LOOPN) {
+    
+       # Initialize particles
+       X <- t(array(rep(initX, N),dim=c(N.RXNS,N)))
+       X[,2] <- rpois(N, initX[2])  # initial infecteds
+       X[,1] <- sum(initX) - X[,2]           # S_0 = N - I_0, R_0 =0, D_0 = 0
+       lambda <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
+       lambda[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
+       Suff <- t(array(rep(hyperPrior,N), dim=c(2*N.RXNS,N))) # sufficient conjugate statistics
+       theta <- array(0,dim=c(N,N.RXNS))
+       for (jj in 1:N.RXNS)
+               theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
+       
+       p.weights <- array(1, N)/N
 
-      summ.stat[(jj-1)*6+4] <- mean(theta[,jj])
-      summ.stat[((jj-1)*6+5):((jj-1)*6+6)] <- quantile(theta[,jj],c(0.025,0.975))
-    }
-    return(summ.stat)
-}
+       curt <- 0 
+       i <- 1
+       totalWeight <- 1
+       saved.stats[loop,i,] <- saveStats(X, theta)
 
-plot.ci <- function(saved.stats,trueX,trueTheta,sir.plotCI=0,col="blue")
-{
-   par(mfcol=c(2,3),mar=c(4,4,2,1), oma=c(0,0,0,1))
-   XLab <- c("S", "I", "R", "D")
-   TLab <- c("S->I", "I->R", "S->R","I->D")
-   for (jj in c(1,2,4))
-   {
-       len <- dim(saved.stats)[1]
-       plot(1:len,saved.stats[,(6*jj-5)],col=col,lwd=2,type="l",ylab=XLab[jj],
-        xlab='',ylim=c(min(saved.stats[,(6*jj-4)]),max(saved.stats[,(6*jj-3)])))
-       lines(1:len,saved.stats[,(6*jj-4)],col=col,lty=3)
-       lines(1:len,saved.stats[,(6*jj-3)],col=col,lty=3)
-
-       lines(1:len,trueX[,jj],col ='red',xlim=c(0,len),lwd=1.5)
-       plot(1:len,saved.stats[,(6*jj-2)],col=col,xlab='time',ylab=TLab[jj],type="l",
-       ylim=c(trueTheta[jj]*0.8,trueTheta[jj]*1.2), lwd=2 )
-       abline(h=trueTheta[jj],col='red',lwd=1.5)
-       if (sir.plotCI == 1) {
-         lines(1:len,saved.stats[,(6*jj-1)],col=col,lty=3)
-         lines(1:len,saved.stats[,6*jj],col=col,lty=3)
+       ####### MAIN LOOP OVER OBSERVATIONS
+       while (curt < T-dt) {
+           # Sample from the posterior Gamma mixtures
+           for (jj in 1:N.RXNS)
+               theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
+               
+           # resample 
+           if (!is.nan(Y[i+1,1])) # else missing observation for that date
+           {  
+             p.weights <- predictiveLikelihood(X, Y[i+1,], theta, lambda, p.weights)
+             newIndex <- resample.func(p.weights) 
          
-       }
+             X <- X[newIndex,] 
+             Suff <- Suff[newIndex,]
+             lambda <- lambda[newIndex,]
+             theta <- theta[newIndex,]
+             p.weights <- rep(1/N, N)
+           }
+          
+           out <- model.propagate.func(t(X), t(theta),lambda,curY=Y[i+1,],hyper=Suff)
+           X <- t(out$X); dX <- t(out$dX); Suff <- out$hyper
+
+           curt <- (i-1)*dt
+
+           if ( i %%15  == 6 & verbose =="HIST") # plot posterior of infectiousness parameter
+           {
+               # construct exact Gamma pdf on a grid
+               gridx <- seq(trueTheta[1]-0.25,trueTheta[1]+0.25,by=0.005)
+               gridy <- array(0, length(gridx))
+               for (jj in 1:length(gridx))
+                  gridy[jj] <- sum(dgamma(gridx[jj],Suff[,1],Suff[,2]))
+
+               plot(gridx,gridy/N,type="l",col=col,main=sprintf("t=%d",curt),xlab='S->I Rate')
+             
+               abline(v=trueTheta[1], col="red")
+           }
+           totalWeight <- totalWeight*sum(p.weights)
+
+        i <- i+1
+        saved.stats[loop,i,] <- saveStats(X,theta)
+        # end of main loop
+      }
    }
+   
+   if (verbose=='CI')
+      plot.ci(saved.stats[1,1:i,],trueX[1:i,],trueTheta,1,col)
+ 
+   return( list(stat=saved.stats,trueX=trueX,Y=Y,theta=trueTheta))
 }
+
