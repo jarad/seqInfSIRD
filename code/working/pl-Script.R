@@ -16,7 +16,7 @@ N.RXNS <- 4
 # initX is the initial state of S/I/R/D
 # hyperPrior is the Gamma prior on the 4 thetas: (alpha_i,beta_i)_{i=1}^4
 # trueTheta are the actual thetas for S->I, I->R, S->R, I->D
-base.params <- list(    initP=c(0.1, 0, 0, 0),
+base.params <- list(    initP=c(0.05, 0, 0, 0),
     initX=c(15980,20, 0,0),    hyperPrior = c(22.5,30,15,30,0,1000,0.6,80),
     trueTheta = array(c(0.8, 0.5, 0, 0.002),dim=c(4,1)) )
 
@@ -42,5 +42,18 @@ plot.ci.mcError(lw$stat,1,col1="#ddffee99", col2="green")
 temp <- plSIR(5000, 70, LOOPN=10,verbose="HIST")
 plot.ci(temp$stat[1,,],temp$trueX,temp$theta,1)
 plot.ci.mcError(temp$stat,1)
+
+
+### Try to handle the actual weekly data set: 60 weeks total
+harare <- read.csv("data/harare/harareClean.csv")
+harY <- array(0,dim=c(60,4))
+harY[,1] <- diff(harare$total)
+hararePL <- plSIR(5000,60,LOOPN=1,Y=harY,verbose="HIST")
+plot.ci(hararePL$stat[1,,],NULL,hararePL$theta,1)
+hararePL <- plSIR(5000,60,LOOPN=5,Y=harY,verbose="CI")
+
+
+
+
 
 
