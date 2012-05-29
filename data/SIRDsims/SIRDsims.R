@@ -47,6 +47,10 @@ if (!random) {
 
 # Need to expand.grid for the gridded draws
 
+##################### Generate simulations ########################
+set.seed(1)
+sims = list()
+for (i in 1:n.sims) sims[[i]] = SIRDsim(X0,gammas[i,],probs[i,],n)
 
 
 
