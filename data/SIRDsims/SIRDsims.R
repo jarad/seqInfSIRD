@@ -2,10 +2,10 @@ source("../../code/working/SIRD.R")
 
 #### Simulation parameter settings
 # Poisson transition parameters (gamma)
-prior.g = rbind(c(1,1), # S -> I
-                c(1,1), # I -> R
-                c(1,1), # S -> R
-                c(1,1)) # I -> D
+prior.g = rbind(c(1.5*10,10), # S -> I
+                c( .5*10,10), # I -> R
+                c(.01*10,10), # S -> R
+                c(.05*10,10)) # I -> D
                 
 # Binomial observation parameters (beta)           
 prior.p = rbind(c(1,1), # S -> I
@@ -33,6 +33,7 @@ if (random) {
      probs[,i] =  rbeta(n.sims, prior.p[i,1], prior.p[i,2])	
   }
 }
+gammas[,3] = 0
 
 #### Gridded draws
 if (!random) {
@@ -52,5 +53,5 @@ set.seed(1)
 sims = list()
 for (i in 1:n.sims) sims[[i]] = SIRDsim(X0,gammas[i,],probs[i,],n)
 
-
+save(sims,gammas,probs, file="SIRDsims.RData")
 
