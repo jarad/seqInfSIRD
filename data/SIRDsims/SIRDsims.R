@@ -55,3 +55,4 @@ for (i in 1:n.sims) sims[[i]] = SIRDsim(X0,gammas[i,],probs[i,],n)
 
 save(sims,gammas,probs, file="SIRDsims.RData")
 
+q("no")
