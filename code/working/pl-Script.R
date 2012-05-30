@@ -88,13 +88,13 @@ Ylow[,1] <-rbinom(N.week+1,sampScen$Y[,1],0.05)
 scen.params$initP <- c(0.05,0,0,0)
 scenLow <- plSIR(8000,N.week,LOOPN=1,Y=Ylow,trueX=sampScen$X,verbose="CI",model.params=scen.params)
 
-
+# 20%-observations of infecteds transitioning to recovereds as well
 Ygam <- Ymed
 Ygam[,2] <- rbinom(N.week+1,sampScen$Y[,2],0.2)
 scen.params$initP <- c(0.2,0.2,0,0)
 scenGamma <- plSIR(8000,N.week,LOOPN=1,Y=Ygam,trueX=sampScen$X,verbose="CI",model.params=scen.params)
 
-
+# observe 20% of infecteds as well as ALL deaths (very implicit info about current infecteds)
 Ydeaths <- Ymed
 Ydeaths[,4] <- sampScen$Y[,4]
 scen.params$initP <- c(0.2,0,0,1)
