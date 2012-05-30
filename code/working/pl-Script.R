@@ -64,6 +64,8 @@ plot.ci.mcError(hararePL$stat,1,col1="#ddddddaa", col2="blue") # close to 0.5
 base.params$hyperPrior <- c(2.25,3,1,2,0,1000,0,1000)  # close to 1 due to the wide prior of Gamma
 hararePL <- plSIR(5000,Nweek-1,LOOPN=10,Y=harY,verbose="CI")
 
+################################################################
+# Generate a scenario
 N.week <- 60
 scen.params <- base.params
 scen.params$initP <- c(1,1,1,1) # use full observations first
@@ -100,7 +102,23 @@ Ydeaths[,4] <- sampScen$Y[,4]
 scen.params$initP <- c(0.2,0,0,1)
 scenDeaths <- plSIR(8000,N.week,LOOPN=1,Y=Ydeaths,trueX=sampScen$X,verbose="CI",model.params=scen.params)
 
+########################
+# To run SimsSIRD.RData examples
+sims.params <- list(    initP=c(0.05, 0, 0, 0),
+    initX=c(16000,2, 0,0),    hyperPrior = c(15,10,5,10,0.1,10,0.5,10),
+    trueTheta = array(c(0.8, 0.5, 0, 0.002),dim=c(4,1)) )
+N.week <- 52
 
+for (j in 16:16)
+{
+  sims.params$initP <- probs[j,]
+  sims.params$initP[3:4] <- 0
+  sims.params$trueTheta <- gammas[j,]
+  simY <- as.matrix(sims[[j]]$y)
+  simY[,3:4] <- 0
+  simX <- as.matrix(sims[[j]]$x)
+  simPL <- plSIR(8000,N.week-1,LOOPN=1,Y=simY,trueX=simX,verbose="CI",model.params=sims.params)
+}
 
 
 
