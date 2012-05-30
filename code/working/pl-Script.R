@@ -44,16 +44,81 @@ plot.ci(temp$stat[1,,],temp$trueX,temp$theta,1)
 plot.ci.mcError(temp$stat,1)
 
 
-### Try to handle the actual weekly data set: 60 weeks total
+### Try to handle the actual weekly data set: 59 weeks total
+Nweek <- 59
 harare <- read.csv("data/harare/harareClean.csv")
-harY <- array(0,dim=c(60,4))
+harY <- array(0,dim=c(Nweek,4))
 harY[,1] <- diff(harare$total)
-hararePL <- plSIR(5000,60,LOOPN=1,Y=harY,verbose="HIST")
+hararePL <- plSIR(5000,Nweek,LOOPN=1,Y=harY,verbose="HIST")
 plot.ci(hararePL$stat[1,,],NULL,hararePL$theta,1)
-hararePL <- plSIR(5000,60,LOOPN=5,Y=harY,verbose="CI")
+hararePL <- plSIR(5000,Nweek,LOOPN=5,Y=harY,verbose="CI")
+plot(c(0,60),c(0.6,0.6),type="l",col="red",ylab="Beta posterior",xlab="Periods")
+plot.ci.mcError(hararePL$stat,1,col1="#ddddddaa", col2="blue")
 
+# The prior on GAMMA has a strong impact on the POSTERIOR of BETA:
+base.params$hyperPrior <- c(1,1.2,20,40,0,1000,0,1000)
+hararePL3 <- plSIR(5000,Nweek-1,LOOPN=10,Y=harY,verbose="CI")
+plot(c(0,60),c(0.6,0.6),type="l",col="red",ylab="Beta posterior",xlab="Periods")
+plot.ci.mcError(hararePL$stat,1,col1="#ddddddaa", col2="blue") # close to 0.5
 
+base.params$hyperPrior <- c(2.25,3,1,2,0,1000,0,1000)  # close to 1 due to the wide prior of Gamma
+hararePL <- plSIR(5000,Nweek-1,LOOPN=10,Y=harY,verbose="CI")
 
+################################################################
+# Generate a scenario
+N.week <- 60
+scen.params <- base.params
+scen.params$initP <- c(1,1,1,1) # use full observations first
+set.seed(5)
+sampScen <- generate.scenario(scen.params,tauLeap,N.week) 
+sampScen$theta
+# [1] 0.7159145 0.5000000 0.0000000 0.0020000
+plot(sampScen$X[,2]/2,type="l")
+lines(sampScen$Y[,1],col="green") 
+scen.params$trueTheta <- sampScen$theta 
+
+# now generate various observations by sub-sampling
+# case 1: typical good observations
+Ymed <- array(0,dim=c(N.week+1,4))
+Ymed[,1] <-rbinom(N.week+1,sampScen$Y[,1],0.2)
+scen.params$initP <- c(0.2,0,0,0)
+scenMed <- plSIR(8000,N.week,LOOPN=1,Y=Ymed,trueX=sampScen$X,verbose="CI",model.params=scen.params)
+
+# typical low observations (like in Zimbabwe)
+Ylow <- array(0,dim=c(N.week+1,4))
+Ylow[,1] <-rbinom(N.week+1,sampScen$Y[,1],0.05)
+scen.params$initP <- c(0.05,0,0,0)
+scenLow <- plSIR(8000,N.week,LOOPN=1,Y=Ylow,trueX=sampScen$X,verbose="CI",model.params=scen.params)
+
+# 20%-observations of infecteds transitioning to recovereds as well
+Ygam <- Ymed
+Ygam[,2] <- rbinom(N.week+1,sampScen$Y[,2],0.2)
+scen.params$initP <- c(0.2,0.2,0,0)
+scenGamma <- plSIR(8000,N.week,LOOPN=1,Y=Ygam,trueX=sampScen$X,verbose="CI",model.params=scen.params)
+
+# observe 20% of infecteds as well as ALL deaths (very implicit info about current infecteds)
+Ydeaths <- Ymed
+Ydeaths[,4] <- sampScen$Y[,4]
+scen.params$initP <- c(0.2,0,0,1)
+scenDeaths <- plSIR(8000,N.week,LOOPN=1,Y=Ydeaths,trueX=sampScen$X,verbose="CI",model.params=scen.params)
+
+########################
+# To run SimsSIRD.RData examples
+sims.params <- list(    initP=c(0.05, 0, 0, 0),
+    initX=c(16000,2, 0,0),    hyperPrior = c(15,10,5,10,0.1,10,0.5,10),
+    trueTheta = array(c(0.8, 0.5, 0, 0.002),dim=c(4,1)) )
+N.week <- 52
+
+for (j in 16:16)
+{
+  sims.params$initP <- probs[j,]
+  sims.params$initP[3:4] <- 0
+  sims.params$trueTheta <- gammas[j,]
+  simY <- as.matrix(sims[[j]]$y)
+  simY[,3:4] <- 0
+  simX <- as.matrix(sims[[j]]$x)
+  simPL <- plSIR(8000,N.week-1,LOOPN=1,Y=simY,trueX=simX,verbose="CI",model.params=sims.params)
+}
 
 
 
