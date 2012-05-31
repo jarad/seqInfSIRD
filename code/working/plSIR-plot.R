@@ -48,8 +48,7 @@ plot.ci.mcError <- function(in.stats, which.var,col1="#ddddddaa", col2="blue")
     ndx1 <- which.var*6-3+2
     ndx2 <- which.var*6-3+3
 
-    plm2 <- rbind(apply(in.stats[,,ndx1],2, 
-    min),apply(in.stats[,,ndx2],2,max),apply(in.stats[,,ndx1],2,mean),apply(in.stats[,,ndx2],2,mean))
+    plm2 <- rbind(apply(in.stats[,,ndx1],2,min),apply(in.stats[,,ndx2],2,max),apply(in.stats[,,ndx1],2,mean),apply(in.stats[,,ndx2],2,mean))
 
     #polygon(c(1:len,len:1),c(plm2[1,1:len],plm2[2,len:1]),col=col1,border=NA)
     lines(1:len,plm2[1,],col=col2,lwd=0.5,lty=2)
