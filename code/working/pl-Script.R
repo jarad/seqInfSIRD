@@ -105,11 +105,11 @@ scenDeaths <- plSIR(8000,N.week,LOOPN=1,Y=Ydeaths,trueX=sampScen$X,verbose="CI",
 ########################
 # To run SimsSIRD.RData examples
 sims.params <- list(    initP=c(0.05, 0, 0, 0),
-    initX=c(16000,2, 0,0),    hyperPrior = c(15,10,5,10,0.1,10,0.5,10),
+    initX=c(16000,2, 0,0),    hyperPrior = c(100,100,50,100,0,10,0,10),
     trueTheta = array(c(0.8, 0.5, 0, 0.002),dim=c(4,1)) )
 N.week <- 52
 
-for (j in 16:16)
+for (j in 4:4)
 {
   sims.params$initP <- probs[j,]
   sims.params$initP[3:4] <- 0

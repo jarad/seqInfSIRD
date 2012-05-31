@@ -29,10 +29,7 @@ fix.updates <- function(dx,x,gamma) {
 }
 
 update <- function(x,dx) {
-	c(x[1]-dx[1]      -dx[3],
-	  x[2]+dx[1]-dx[2]      -dx[4],
-	  x[3]      +dx[2]+dx[3],
-	  x[4]                  +dx[4])
+	c(x[1]-dx[1]-dx[3],x[2]+dx[1]-dx[2],x[3]+dx[2]+dx[3],x[4]+dx[4])
 }
 
 SIRDsim = function(X0,gamma,p,n) {
@@ -46,14 +43,12 @@ SIRDsim = function(X0,gamma,p,n) {
    y[1,] = rbinom(n.states,dx[1,],p)
   
   # Remaining steps
-  if (n>1) {
   for (i in 2:n) {
   	stopifnot(all(!is.na(x[i-1,])))
   	dx[i,] = rpois(n.transitions,hazard(x[i-1,],gamma,N))
   	dx[i,] = fix.updates(dx[i,],x[i-1,],gamma)
   	 x[i,] = update(x[i-1,],dx[i,])
   	 y[i,] = rbinom(n.states,dx[i,],p)
-  }
   }
 
   return(list( x = data.frame(S    =  x[,1], I    =  x[,2], R    =  x[,3],    D =  x[,4]),
