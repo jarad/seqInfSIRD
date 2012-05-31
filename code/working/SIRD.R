@@ -1,5 +1,9 @@
 require(rjags)
 
+n.states      = 4
+n.transitions = 4 # S->I, I->R, S->R, I->D
+
+
 # Contains functions for SIRD model
 #
 # SIRDsim  : simulates SIRD data
@@ -36,19 +40,19 @@ SIRDsim = function(X0,gamma,p,n) {
   N = sum(X0)
   
   # First step
-  dx[1,] = rpois(4,hazard(X0,gamma,N))
+  dx[1,] = rpois(n.transitions,hazard(X0,gamma,N))
   dx[1,] = fix.updates(dx[1,],X0,gamma)
    x[1,] = update(X0,dx[1,])
-   y[1,] = rbinom(4,dx[1,],p)
+   y[1,] = rbinom(n.states,dx[1,],p)
   
   # Remaining steps
   if (n>1) {
   for (i in 2:n) {
   	stopifnot(all(!is.na(x[i-1,])))
-  	dx[i,] = rpois(4,hazard(x[i-1,],gamma,N))
+  	dx[i,] = rpois(n.transitions,hazard(x[i-1,],gamma,N))
   	dx[i,] = fix.updates(dx[i,],x[i-1,],gamma)
   	 x[i,] = update(x[i-1,],dx[i,])
-  	 y[i,] = rbinom(4,dx[i,],p)
+  	 y[i,] = rbinom(n.states,dx[i,],p)
   }
   }
 
