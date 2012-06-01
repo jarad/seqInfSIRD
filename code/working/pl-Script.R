@@ -105,11 +105,13 @@ scenDeaths <- plSIR(8000,N.week,LOOPN=1,Y=Ydeaths,trueX=sampScen$X,verbose="CI",
 ########################
 # To run SimsSIRD.RData examples
 sims.params <- list(    initP=c(0.05, 0, 0, 0),
-    initX=c(16000,2, 0,0),    hyperPrior = c(100,100,50,100,0,10,0,10),
+    initX=c(16000,2, 0,0),    hyperPrior = c(150,100,50,100,0,10,0.1,10),
     trueTheta = array(c(0.8, 0.5, 0, 0.002),dim=c(4,1)) )
 N.week <- 52
 
-for (j in 4:4)
+stt <- array(0, dim=c(3,N.week,24))
+  
+for (j in 1:1)
 {
   sims.params$initP <- probs[j,]
   sims.params$initP[3:4] <- 0
@@ -117,8 +119,16 @@ for (j in 4:4)
   simY <- as.matrix(sims[[j]]$y)
   simY[,3:4] <- 0
   simX <- as.matrix(sims[[j]]$x)
-  simPL <- plSIR(8000,N.week-1,LOOPN=1,Y=simY,trueX=simX,verbose="CI",model.params=sims.params)
+  simPL <- plSIR(8000,N.week-1,LOOPN=1,Y=simY,trueX=simX,verbose="CIR",model.params=sims.params)
+  simLW <- particleSampledSIR(8000,N.week-1,LOOPN=1,Y=simY,trueX=simX,verbose="CIR",model.params=sims.params)
+  simSV <- particleSampledSIR(aLW=2,8000,N.week-1,LOOPN=1,Y=simY,trueX=simX,verbose="CIR",model.params=sims.params)
+  stt[1,,] <- simPL$stat[1,,]
+  stt[2,,] <- simLW$stat[1,,]
+  stt[3,,] <- simSV$stat[1,,]
+  plot.ci(stt,simX,sims.params$trueTheta,plot.diff=1,col=3,legend=c("PL","LW","Storvik"))
+
 }
+
 
 
 
