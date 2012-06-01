@@ -1,34 +1,80 @@
 ####################################################
 # Plotting Commands related to the particle learning algorithms
-# Plot the 95% CI over time: right now hard-coded to show beta/gamma only
+# Plot the 95% CI over time: default is to show beta/gamma only
+# which.dim -- what to plot
 #
-plot.ci <- function(saved.stats,trueX,trueTheta,sir.plotCI=0,col="blue")
+plot.ci <- function(saved.stats,trueX,trueTheta,sir.plotCI=0,col="blue",plot.diff=0, which.dim=c(1,2),in.legend=NULL)
 {
-   par(mfcol=c(2,2),mar=c(4,4,2,1), oma=c(0,0,0,1))
+   par(mfcol=c(2,length(which.dim)),mar=c(4,4,2,1), oma=c(0,0,0,1))
    XLab <- c("S", "I", "R", "D")
    TLab <- c("S->I", "I->R", "S->R","I->D")
-   for (jj in c(1,2))
+   n.comps <- dim(saved.stats)[1]
+   
+   for (jj in which.dim)
    {
-       len <- dim(saved.stats)[1]
-       plot(1:len,saved.stats[,(6*jj-5)],col=col,lwd=2,type="l",ylab=XLab[jj],
-        xlab='',ylim=c(min(saved.stats[,(6*jj-4)]),max(max(saved.stats[,(6*jj-5)]),0.7*max(saved.stats[,(6*jj-3)]))))
-       lines(1:len,saved.stats[,(6*jj-4)],col=col,lty=3)
-       lines(1:len,saved.stats[,(6*jj-3)],col=col,lty=3)
-       if (!is.null(trueX))
-          lines(1:len,trueX[,jj],col ='red',xlim=c(0,len),lwd=1.5)
+      len <- dim(saved.stats)[2]
+      if (plot.diff==1) {  # absolute difference
+         for (k in 1:n.comps) {
+            if (k==1) 
+               plot(1:len,(saved.stats[k,,(6*jj-5)]-trueX[,jj]),col=col,lwd=2,type="l",
+                   ylab=XLab[jj], xlab='')
+            else
+               lines(1:len,(saved.stats[k,,(6*jj-5)]-trueX[,jj]),col=k,lwd=2)
+      
+            lines(1:len,(saved.stats[k,,(6*jj-4)]-trueX[,jj]),col=k,lty=3)
+            lines(1:len,(saved.stats[k,,(6*jj-3)]-trueX[,jj]),col=k,lty=3)
+          
+         }
+      }
+      else if (plot.diff==2) {  # percent-difference
+         for (k in 1:n.comps) {
+            if (k==1) 
+               plot(1:len,log(saved.stats[k,,(6*jj-5)]/trueX[,jj]),col=col,lwd=2,type="l",
+                   ylab=XLab[jj], xlab='')
+            else
+               lines(1:len,log(saved.stats[k,,(6*jj-5)]/trueX[,jj]),col=k,lwd=2)
+      
+            lines(1:len,log(saved.stats[k,,(6*jj-4)]/trueX[,jj]),col=k,lty=3)
+            lines(1:len,log(saved.stats[k,,(6*jj-3)]/trueX[,jj]),col=k,lty=3)
+          
+         }
+      }     
+      else { # plot absolute values
+         for (k in 1:n.comps) {
+            if (k==1)
+               plot(1:len,saved.stats[k,,(6*jj-5)],col=col,lwd=2,type="l",ylab=XLab[jj],
+                  xlab='',ylim=c(min(saved.stats[k,,(6*jj-4)]),max(max(saved.stats[k,,(6*jj-5)]),0.7*max(saved.stats[k,,(6*jj-3)]))))
+            else
+               lines(1:len,saved.stats[k,,(6*jj-5)],col=k,lwd=2)
+            
+            lines(1:len,saved.stats[k,,(6*jj-4)],col=k,lty=3)
+            lines(1:len,saved.stats[k,,(6*jj-3)],col=k,lty=3)
 
+            if (!is.null(trueX))
+               lines(1:len,trueX[,jj],col ='red',xlim=c(0,len),lwd=1.5)
+          }
+      }
+      if (n.comps > 1 & !is.null(in.legend) & jj == which.dim[1])
+         legend("topright", in.legend, lty=rep(1,n.comps), col=c(col,2:n.comps))
 
-       plot(1:len,saved.stats[,(6*jj-2)],col=col,xlab='time',ylab=TLab[jj],type="l",
-       ylim=c(trueTheta[jj]*0.75,trueTheta[jj]*1.25), lwd=2 )
-       abline(h=trueTheta[jj],col='red',lwd=1.5)
-       if (sir.plotCI == 1) {
-         lines(1:len,saved.stats[,(6*jj-1)],col=col,lty=3)
-         lines(1:len,saved.stats[,6*jj],col=col,lty=3)
+      for (k in 1:n.comps) {
+         if (k==1) {
+            plot(1:len,saved.stats[k,,(6*jj-2)],col=col,xlab='time',ylab=TLab[jj],type="l",
+               ylim=c(trueTheta[jj]*0.75,trueTheta[jj]*1.25), lwd=2 )
+      
+            abline(h=trueTheta[jj],col='red',lwd=1.5) 
+         }
+         else 
+            lines(1:len,saved.stats[k,,(6*jj-2)],col=k, lwd=2)  
+          
+         if (sir.plotCI == 1) {
+            lines(1:len,saved.stats[k,,(6*jj-1)],col=col,lty=3)
+            lines(1:len,saved.stats[k,,6*jj],col=col,lty=3)
+         }
+      }   
 
-       }
    }
 }
-
 
 plot.ci.mcError <- function(in.stats, which.var,col1="#ddddddaa", col2="blue")
 #  plots the Monte Carlo variability around the mean/95-quantiles of the posterior for the
