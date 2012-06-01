@@ -131,7 +131,7 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
    }
    
    if (verbose=='CI')  # plot some CI over time 
-      plot.ci(saved.stats[1,1:i,],trueX[1:i,],trueTheta,1,col)
+      plot.ci(saved.stats,trueX[1:i,],trueTheta,1,col)
  
    return( list(stat=saved.stats,trueX=trueX,Y=Y))
 }
@@ -184,11 +184,11 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL)
        #X[,j] <- out$X
        h[j,]  <- hazard.R(X[,j], sum(X[,j]))   
     }
-    newX <- out$newX[,1]
+    newX <- out$newX
     newX[is.nan(newX)] <- 0  # to take care of the case when some proportions are zero
        
     if (is.null(curY))
-        Y <- rbinom(N.RXNS, newX, prop)
+        Y <- rbinom(N.RXNS, newX[,1], prop)
     else
         Y <- curY
     #Y[is.nan(Y)] <- 0
@@ -200,7 +200,7 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL)
         hyper[,2*i] <- hyper[,2*i] + prop[,i]* h[,i]
       }
     
-    return(list(X=out$X,dX=out$newX,hyper=hyper,Y=Y))
+    return(list(X=out$X,dX=newX,hyper=hyper,Y=Y))
 }
 
 ###############################################
@@ -238,7 +238,7 @@ updateWeights <- function(dX, curY, prop, weights)
     new.weights <- weights
    
     for (jj in 1:N.RXNS)
-      new.weights <- new.weights*dbinom(curY[jj], dX[,jj], prop[,jj])
+      new.weights <- new.weights*dbinom(curY[jj], floor(dX[,jj]), prop[,jj])
       
     return(new.weights)
 
@@ -386,7 +386,7 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
            }
           
            out <- model.propagate.func(t(X), t(theta),lambda,curY=Y[i+1,],hyper=Suff)
-           X <- t(out$X); dX <- t(out$dX); Suff <- out$hyper
+           X <- t(out$X); Suff <- out$hyper
 
            curt <- (i-1)*dt
 
@@ -411,7 +411,7 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
    }
    
    if (verbose=='CI')
-      plot.ci(saved.stats[1,1:i,],trueX[1:i,],trueTheta,1,col)
+      plot.ci(saved.stats,trueX[1:i,],trueTheta,1,col)
  
    return( list(stat=saved.stats,trueX=trueX,Y=Y,theta=trueTheta))
 }
