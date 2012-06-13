@@ -26,6 +26,11 @@ probs  = cbind(parms$StoIprob, parms$ItoRprob, 0, 0)
 sims = list()
 for (i in 1:nrow(gammas)) sims[[i]] = SIRDsim(X0,gammas[i,],probs[i,],n)
 
-save(sims,gammas,probs, file="SIRDsims.RData")
+prior = list()
+prior$gamma = list()
+prior$gamma$a = rep(1,4)
+prior$gamma$b = rep(1,4)
 
-q("no")
+save(sims,gammas,probs,X0,prior, file="SIRDsims.RData")
+
+#q("no")
