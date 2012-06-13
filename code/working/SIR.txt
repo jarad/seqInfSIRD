@@ -32,7 +32,7 @@ model {
 
   ###################### Priors #########################
   for (j in 1:2) {
-    gamma[j] ~ dgamma(a[j],a[j])
+    gamma[j] ~ dgamma(a[j],b[j])
   }
 }
 
