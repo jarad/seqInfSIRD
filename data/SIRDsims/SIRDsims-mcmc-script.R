@@ -14,6 +14,6 @@ res   = coda.samples(mod, c("gamma","x"), 1e3, thin=10)
 
 
 
-mod   = jags.model("../../code/working/SIRD.txt", data=dat, 
-                  inits=inits, n.adapt=1e3)
-res   = coda.samples(mod, c("gamma","x"), 1e3, thin=10) 
+mod   = jags.model("../../code/working/SIRD.txt", data=dat, inits=inits, n.adapt=1e6)
+update(mod,1e5)
+res   = coda.samples(mod, c("gamma","x"), 1e5, thin=100) 
