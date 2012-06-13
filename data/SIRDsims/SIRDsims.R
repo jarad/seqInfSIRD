@@ -14,7 +14,7 @@ ItoRrate = rgamma(2, .5*100,100)
 R        = runif( 2,1,3)
 
 probs    = c(.1,.5)
-parms    = expand.grid(ItoRrate=ItoRrate,R=R,StoRprob=probs, ItoRprob=probs)
+parms    = expand.grid(ItoRrate=ItoRrate,R=R,StoIprob=probs, ItoRprob=probs)
 
 parms$StoIrate = apply(parms[,1:2],1,prod)
 
