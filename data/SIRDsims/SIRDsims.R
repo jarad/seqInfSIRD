@@ -10,7 +10,7 @@ X0 = c(16000,2,0,0)
 
 
 # Parameters
-ItoRrate = rgamma(2, .5*100,100)
+ItoRrate = rtheta(2, .5*100,100)
 R        = runif( 2,1,3)
 
 probs    = c(.1,.5)
@@ -18,19 +18,19 @@ parms    = expand.grid(ItoRrate=ItoRrate,R=R,StoIprob=probs, ItoRprob=probs)
 
 parms$StoIrate = apply(parms[,1:2],1,prod)
 
-gammas = cbind(parms$StoIrate, parms$ItoRrate, 0, 0)
+thetas = cbind(parms$StoIrate, parms$ItoRrate, 0, 0)
 probs  = cbind(parms$StoIprob, parms$ItoRprob, 0, 0)
 
 
 ##################### Generate simulations ########################
 sims = list()
-for (i in 1:nrow(gammas)) sims[[i]] = SIRDsim(X0,gammas[i,],probs[i,],n)
+for (i in 1:nrow(thetas)) sims[[i]] = SIRDsim(X0,gammas[i,],probs[i,],n)
 
 prior = list()
-prior$gamma = list()
-prior$gamma$a = c(100,50,0.1,0.1)
-prior$gamma$b = c(100,100,10,10)
+prior$theta = list()
+prior$theta$a = c(100,50,0.1,0.1)
+prior$theta$b = c(100,100,10,10)
 
-save(sims,gammas,probs,X0,prior, file="SIRDsims.RData")
+save(sims,thetas,probs,X0,prior, file="SIRDsims.RData")
 
 #q("no")
