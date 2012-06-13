@@ -10,8 +10,8 @@ model {
   ################ Evolution equation #####################
   for (i in 2:n) {
     # Expected transitions
-    edx[i,1] <- gamma[1]*x[i-1,1]*x[i-1,2]/N # S -> I
-    edx[i,2] <- gamma[2]*x[i-1,2]            # I -> R
+    edx[i,1] <- theta[1]*x[i-1,1]*x[i-1,2]/N # S -> I
+    edx[i,2] <- theta[2]*x[i-1,2]            # I -> R
 
     # Update state
     #                   S->I    I->R
@@ -21,8 +21,8 @@ model {
 
   ############### Evolution for t=1 ###################### 
   # Expected transitions
-  edx[1,1] <- gamma[1]*X0[1]*X0[2]/N         # S -> I
-  edx[1,2] <- gamma[2]*X0[2]                 # I -> R
+  edx[1,1] <- theta[1]*X0[1]*X0[2]/N         # S -> I
+  edx[1,2] <- theta[2]*X0[2]                 # I -> R
 
   # Update states
   #                S->I    I->R
@@ -32,7 +32,7 @@ model {
 
   ###################### Priors #########################
   for (j in 1:2) {
-    gamma[j] ~ dgamma(a[j],b[j])
+    theta[j] ~ dgamma(a[j],b[j])
   }
 }
 

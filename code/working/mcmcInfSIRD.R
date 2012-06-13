@@ -14,7 +14,7 @@ fix.updates <- function(x,dx,p) {
 }
 
 # Simulate data
-gamma <- rgamma(4,1); gamma <- c(2,1,0,0)
+theta <- rgamma(4,1); gamma <- c(2,1,0,0)
 p <- rep(0.5,4)
 N <- 100
 I0 <- 2
@@ -22,11 +22,11 @@ I0 <- 2
 n <- 20
 x <- y <- dx <- matrix(NA,n,4)
 X0 <- c(N-I0,I0,0,0)
-dx[1,1] <- rpois(1, gamma[1]*X0[1]*X0[2]/N)
-dx[1,2] <- rpois(1, gamma[2]*X0[2])
-dx[1,3] <- rpois(1, gamma[3]*X0[1])
-dx[1,4] <- rpois(1, gamma[4]*X0[2])
-dx[1, ] <- fix.updates(X0,dx[1,],gamma[2]/(gamma[2]+gamma[4]))
+dx[1,1] <- rpois(1, theta[1]*X0[1]*X0[2]/N)
+dx[1,2] <- rpois(1, theta[2]*X0[2])
+dx[1,3] <- rpois(1, theta[3]*X0[1])
+dx[1,4] <- rpois(1, theta[4]*X0[2])
+dx[1, ] <- fix.updates(X0,dx[1,],theta[2]/(gamma[2]+gamma[4]))
 
 x[1,1] <- X0[1]-dx[1,1]        -dx[1,3]
 x[1,2] <- X0[2]+dx[1,1]-dx[1,2]        -dx[1,4]
@@ -38,11 +38,11 @@ for (j in 1:4) {
 }
 
 for (i in 2:n) {
-  dx[i,1] <- rpois(1, gamma[1]*x[i-1,1]*x[i-1,2]/N)
-  dx[i,2] <- rpois(1, gamma[2]*x[i-1,2])
-  dx[i,3] <- rpois(1, gamma[3]*x[i-1,1])
-  dx[i,4] <- rpois(1, gamma[4]*x[i-1,2])
-  dx[i,]  <- fix.updates(x[i-1,], dx[i,], gamma[2]/(gamma[2]+gamma[4]))
+  dx[i,1] <- rpois(1, theta[1]*x[i-1,1]*x[i-1,2]/N)
+  dx[i,2] <- rpois(1, theta[2]*x[i-1,2])
+  dx[i,3] <- rpois(1, theta[3]*x[i-1,1])
+  dx[i,4] <- rpois(1, theta[4]*x[i-1,2])
+  dx[i,]  <- fix.updates(x[i-1,], dx[i,], theta[2]/(gamma[2]+gamma[4]))
 
   x[i,1] <- x[i-1,1]-dx[i,1]        -dx[i,3]
   x[i,2] <- x[i-1,2]+dx[i,1]-dx[i,2]        -dx[i,4]
@@ -60,11 +60,11 @@ readline("Hit enter:")
 # Inference
 dat <- list(X0=X0, y=y, p=p, n=nrow(y), N=sum(X0), a=rep(1,4), b=rep(1,4))
 mod <- jags.model("SIRD.txt", dat, list(dx=dx),n.adapt=1e3) 
-res <- coda.samples(mod, c("gamma","x"), 1e3, thin=10) 
+res <- coda.samples(mod, c("theta","x"), 1e3, thin=10) 
 
 rownames(res$mcmc)
 par(mfrow=c(2,2))
 for (i in 1:4) {
   plot(res[,i],trace=F,auto.layout=F)
-  abline(v=gamma[i],col="red",lwd=2)
+  abline(v=theta[i],col="red",lwd=2)
 }
