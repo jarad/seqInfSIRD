@@ -28,7 +28,7 @@ for (i in 1:nrow(gammas)) sims[[i]] = SIRDsim(X0,gammas[i,],probs[i,],n)
 
 prior = list()
 prior$gamma = list()
-prior$gamma$a = c(100,50,0,0.1)
+prior$gamma$a = c(100,50,0.1,0.1)
 prior$gamma$b = c(100,100,10,10)
 
 save(sims,gammas,probs,X0,prior, file="SIRDsims.RData")
