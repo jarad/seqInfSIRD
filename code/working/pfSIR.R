@@ -235,12 +235,10 @@ generate.scenario <- function(model.params,model.propagate.func,T,seed=NULL)
 # Update the weights of the particles using the binomial sampling
 updateWeights <- function(dX, curY, prop, weights)
 {
-    new.weights <- weights
-   
     for (jj in 1:N.RXNS)
-      new.weights <- new.weights*dbinom(curY[jj], floor(dX[,jj]), prop[,jj])
+      weights <- weights*dbinom(curY[jj], floor(dX[,jj]), prop[,jj])
       
-    return(new.weights)
+    return(weights)
 
 }
 
@@ -250,15 +248,14 @@ predictiveLikelihood <- function(X, nextY, theta, prop, weights)
 {
     h <- X  # just to set the size of h correctly
     
-    new.weights <- weights
     for (j in 1:dim(X)[1])
        h[j,]  <- hazard.R(X[j,], sum(X[j,]))   
        
     for (jj in 1:N.RXNS) {
-        new.weights <- new.weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])      
+        weights <- weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])      
     }
     #browser()
-    return(new.weights)
+    return(weights)
 
 }
 
