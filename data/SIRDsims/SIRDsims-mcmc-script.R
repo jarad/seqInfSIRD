@@ -1,4 +1,4 @@
-require(jags)
+require(rjags)
 load("SIRDsims.RData")
 
 i = 1
