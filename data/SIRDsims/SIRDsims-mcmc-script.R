@@ -9,16 +9,11 @@ dat   = list(X0=X0[cols], y=as.matrix(sims[[i]]$y[,cols]), p=probs[i,cols],
 inits = list(dx=as.matrix(sims[[i]]$dx[,cols]),
              theta=thetas[i,cols])
 
-mod   = jags.model("../../code/working/SIR.txt", data=dat, 
-                  inits=inits, n.adapt=1e3)
-res   = coda.samples(mod, c("theta","x"), 1e3, thin=10) 
-
-
 ptr = proc.time()
 
 mod   = jags.model("../../code/working/SIRD.txt", data=dat, 
-                  inits=inits, n.adapt=1e5)
-res   = coda.samples(mod, c("theta","x"), 1e5, thin=10) 
+                  inits=inits, n.adapt=1e2)
+res   = coda.samples(mod, c("theta","x"), 1e2, thin=10) 
 
 run.time = proc.time()-ptr
 
