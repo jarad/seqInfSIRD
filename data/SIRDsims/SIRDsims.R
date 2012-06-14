@@ -10,7 +10,7 @@ X0 = c(16000,2,0,0)
 
 
 # Parameters
-ItoRrate = rtheta(2, .5*100,100)
+ItoRrate = rgamma(2, .5*100,100)
 R        = runif( 2,1,3)
 
 probs    = c(.1,.5)
