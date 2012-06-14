@@ -12,8 +12,8 @@ inits = list(dx=as.matrix(sims[[i]]$dx[,cols]),
 ptr = proc.time()
 
 mod   = jags.model("../../code/working/SIRD.txt", data=dat, 
-                  inits=inits, n.adapt=1e2)
-res   = coda.samples(mod, c("theta","x"), 1e2, thin=10) 
+                  inits=inits, n.adapt=1e5)
+res   = coda.samples(mod, c("theta","x"), 1e5, thin=10) 
 
 run.time = proc.time()-ptr
 
