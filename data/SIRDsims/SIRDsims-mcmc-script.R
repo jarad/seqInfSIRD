@@ -1,3 +1,4 @@
+require(jags)
 load("SIRDsims.RData")
 
 i = 1
@@ -13,7 +14,15 @@ mod   = jags.model("../../code/working/SIR.txt", data=dat,
 res   = coda.samples(mod, c("gamma","x"), 1e3, thin=10) 
 
 
+ptr = proc.time()
 
 mod   = jags.model("../../code/working/SIRD.txt", data=dat, 
-                  inits=inits, n.adapt=1e3)
-res   = coda.samples(mod, c("gamma","x"), 1e3, thin=10) 
+                  inits=inits, n.adapt=1e5)
+res   = coda.samples(mod, c("gamma","x"), 1e5, thin=10) 
+
+run.time = proc.time()-ptr
+
+save.image("SIRDsims-mcmc-script.RData")
+
+q("no")
+
