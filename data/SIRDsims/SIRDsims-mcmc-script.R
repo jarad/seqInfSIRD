@@ -17,6 +17,10 @@ res   = coda.samples(mod, c("theta","x"), 1e6, thin=100)
 
 run.time = proc.time()-ptr
 
+res.quantiles = apply(as.matrix(res), 2, function(x) quantile(x,c(.025,.975)))
+
+write.csv(res.quantiles,"SIRDsims-mcmc-quantiles.csv")
+
 save.image("SIRDsims-mcmc-script.RData")
 
 q("no")
