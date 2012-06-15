@@ -39,6 +39,6 @@ for (i in 1:nrow(thetas)) {
   n[i] = zeros[match(3,diff3)]
 }
 
-save(sims,thetas,probs,n,X0,prior, file="SIRDsims.RData")
+save(sims,thetas,probs,n,prior, file="SIRDsims.RData")
 
 #q("no")
