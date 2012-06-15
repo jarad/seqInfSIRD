@@ -28,7 +28,7 @@ for (i in 1:nrow(thetas)) sims[[i]] = SIRDsim(X0,thetas[i,],probs[i,],n)
 
 prior = list()
 prior$theta = list()
-prior$theta$a = c(100,50,0.1,0.1)
+prior$theta$a = c(150, 50, 0, 0)
 prior$theta$b = c(100,100,10,10)
 
 save(sims,thetas,probs,X0,prior, file="SIRDsims.RData")
