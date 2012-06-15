@@ -51,6 +51,9 @@ SIRDsim = function(X0,theta,p,n) {
   	 y[i,] = rbinom(n.states,dx[i,],p)
   }
 
+  # Include initial X in x
+  x = rbind(X0,x)
+
   return(list( x = data.frame(S    =  x[,1], I    =  x[,2], R    =  x[,3],    D =  x[,4]),
               dx = data.frame(StoI = dx[,1], ItoR = dx[,2], StoR = dx[,3], ItoD = dx[,4]),
                y = data.frame(StoI =  y[,1], ItoR =  y[,2], StoR =  y[,3], ItoD =  y[,4])))
