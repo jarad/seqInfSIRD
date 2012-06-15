@@ -24,7 +24,7 @@ probs  = cbind(parms$StoIprob, parms$ItoRprob, 0, 0)
 
 ##################### Generate simulations ########################
 sims = list()
-for (i in 1:nrow(thetas)) sims[[i]] = SIRDsim(X0,gammas[i,],probs[i,],n)
+for (i in 1:nrow(thetas)) sims[[i]] = SIRDsim(X0,thetas[i,],probs[i,],n)
 
 prior = list()
 prior$theta = list()
