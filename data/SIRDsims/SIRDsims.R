@@ -31,6 +31,14 @@ prior$theta = list()
 prior$theta$a = c(150, 50, 0, 0)
 prior$theta$b = c(100,100,10,10)
 
-save(sims,thetas,probs,X0,prior, file="SIRDsims.RData")
+# Find the end of the outbreak
+# defined as 4 consecutive weeks of zero S->I observed
+for (i in 1:nrow(thetas)) {
+  zeros = which(sims[[i]]$y$StoI==0)
+  diff3 = diff(zeros,3)
+  n[i] = zeros[match(3,diff3)]
+}
+
+save(sims,thetas,probs,n,X0,prior, file="SIRDsims.RData")
 
 #q("no")
