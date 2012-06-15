@@ -19,7 +19,7 @@ run.time = proc.time()-ptr
 
 res.quantiles = apply(as.matrix(res), 2, function(x) quantile(x,c(.025,.975)))
 
-write.csv(res.quantiles,"SIRDsims-mcmc-quantiles.csv")
+write.csv(res.quantiles,"SIRDsims-mcmc-quantiles.csv",row.names=T)
 
 save.image("SIRDsims-mcmc-script.RData")
 
