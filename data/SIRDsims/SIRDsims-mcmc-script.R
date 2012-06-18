@@ -4,7 +4,9 @@ load("SIRDsims.RData")
 N.RXNS = 2
 N.STATES = 3
 
-i = 1
+res = list()
+run.time = rep(NA,length(sims))
+for (i in 1:length(sims)) {
   X0 = as.numeric(sims[[i]]$x[1,1:N.STATES])
   dat   = list(X0 = X0, 
                y  = as.matrix(sims[[i]]$y[1:n[i],1:N.RXNS]), 
@@ -14,17 +16,18 @@ i = 1
   inits = list(dx=as.matrix(sims[[i]]$dx[1:n[i],1:N.RXNS]),
                theta=thetas[i,1:N.RXNS])
 
-ptr = proc.time()
+  ptr = proc.time()
 
-mod   = jags.model("../../code/working/SIR.txt", data=dat, 
-                  inits=inits, n.adapt=1e6)
-res   = coda.samples(mod, c("theta","x"), 1e6, thin=10) 
+  mod   = jags.model("../../code/working/SIR.txt", data=dat, 
+                    inits=inits, n.adapt=1e6)
+  res[[i]]   = coda.samples(mod, c("theta","x"), 1e6, thin=10) 
 
-run.time = proc.time()-ptr
+  run.time[i] = proc.time()-ptr
+}
 
-res.quantiles = apply(as.matrix(res), 2, function(x) quantile(x,c(.025,.975)))
+#res.quantiles = apply(as.matrix(res), 2, function(x) quantile(x,c(.025,.975)))
 
-write.csv(res.quantiles,"SIRDsims-mcmc-quantiles.csv",row.names=T)
+#write.csv(res.quantiles,"SIRDsims-mcmc-quantiles.csv",row.names=T)
 
 save.image("SIRDsims-mcmc-script.RData")
 
