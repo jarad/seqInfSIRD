@@ -17,8 +17,8 @@ i = 1
 ptr = proc.time()
 
 mod   = jags.model("../../code/working/SIR.txt", data=dat, 
-                  inits=inits, n.adapt=1e2)
-res   = coda.samples(mod, c("theta","x"), 1e2, thin=10) 
+                  inits=inits, n.adapt=1e6)
+res   = coda.samples(mod, c("theta","x"), 1e6, thin=10) 
 
 run.time = proc.time()-ptr
 
