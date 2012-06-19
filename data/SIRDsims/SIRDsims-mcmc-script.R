@@ -7,6 +7,7 @@ N.STATES = 3
 res = list()
 run.time = rep(NA,length(sims))
 for (i in 1:length(sims)) {
+  cat("Simulation",i,"\n")
   X0 = as.numeric(sims[[i]]$x[1,1:N.STATES])
   dat   = list(X0 = X0, 
                y  = as.matrix(sims[[i]]$y[1:n[i],1:N.RXNS]), 
@@ -23,6 +24,8 @@ for (i in 1:length(sims)) {
   res[[i]]   = coda.samples(mod, c("theta","x"), 1e6, thin=10) 
 
   run.time[i] = proc.time()-ptr
+
+  save.image("SIRDsims-mcmc-script.RData")
 }
 
 #res.quantiles = apply(as.matrix(res), 2, function(x) quantile(x,c(.025,.975)))
