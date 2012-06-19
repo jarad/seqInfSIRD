@@ -1,5 +1,5 @@
-dyn.load(paste("gillespieExactStep-",.Platform$r_arch,.Platform$dynlib.ext,sep=''))
-dyn.load(paste("inference-",.Platform$r_arch,.Platform$dynlib.ext,sep=''))
+#dyn.load(paste("gillespieExactStep-",.Platform$r_arch,.Platform$dynlib.ext,sep=''))
+#dyn.load(paste("inference-",.Platform$r_arch,.Platform$dynlib.ext,sep=''))
 
 
 ##########################################################################
@@ -39,10 +39,10 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
     
        # Initialize particles
        X <- t(array(rep(initX,N),dim=c(N.RXNS,N)))
-       X[,2] <- rpois(N, initX[2])  # initial infecteds
-       X[,1] <- sum(initX) - X[,2]           # S_0 = N - I_0, R_0 =0, D_0 = 0
+       #X[,2] <- rpois(N, initX[2])  # initial infecteds
+       #X[,1] <- sum(initX) - X[,2]           # S_0 = N - I_0, R_0 =0, D_0 = 0
        lambda <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
-       lambda[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
+       #lambda[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
        Suff <- t(array(rep(hyperPrior,N), dim=c(2*N.RXNS,N))) # sufficient conjugate statistics
        fixTheta <- array(0,dim=c(N,N.RXNS))
 
@@ -69,11 +69,11 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
             theta <- fixTheta
         
         # propagate particles 
-        out <- model.propagate.func(t(X), t(theta),lambda,curY=Y[i+1,],hyper=Suff)
+        out <- model.propagate.func(t(X), t(theta),lambda,curY=Y[i,],hyper=Suff)
         X <- t(out$X); dX <- t(out$dX); Suff <- out$hyper
         
         # update weights
-        p.weights <- updateWeights(dX,Y[i+1,],lambda,p.weights)
+        p.weights <- updateWeights(dX,Y[i,],lambda,p.weights)
         curt <- (i-1)*dt
 
          if ( i %%15  == 6 & verbose =="HIST") # plot posterior of infectiousness parameter every 15 steps
@@ -94,7 +94,7 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
             }
              
             abline(v=trueTheta[1], col="red")
-            #browser()
+            #browser()  
          }
          totalWeight <- totalWeight*sum(p.weights)
 
@@ -184,6 +184,7 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL)
        #X[,j] <- out$X
        h[j,]  <- hazard.R(X[,j], sum(X[,j]))   
     }
+    #browser()
     newX <- out$newX
     newX[is.nan(newX)] <- 0  # to take care of the case when some proportions are zero
        
@@ -236,7 +237,7 @@ generate.scenario <- function(model.params,model.propagate.func,T,seed=NULL)
 updateWeights <- function(dX, curY, prop, weights)
 {
     for (jj in 1:N.RXNS)
-      weights <- weights*dbinom(curY[jj], floor(dX[,jj]), prop[,jj])
+      weights <- weights*dbinom(curY[jj], (dX[,jj]), prop[,jj])
       
     return(weights)
 
@@ -347,10 +348,10 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
     
        # Initialize particles
        X <- t(array(rep(initX, N),dim=c(N.RXNS,N)))
-       X[,2] <- rpois(N, initX[2])  # initial infecteds
-       X[,1] <- sum(initX) - X[,2]           # S_0 = N - I_0, R_0 =0, D_0 = 0
+       #X[,2] <- rpois(N, initX[2])  # initial infecteds
+       #X[,1] <- sum(initX) - X[,2]           # S_0 = N - I_0, R_0 =0, D_0 = 0
        lambda <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
-       lambda[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
+       #lambda[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
        Suff <- t(array(rep(hyperPrior,N), dim=c(2*N.RXNS,N))) # sufficient conjugate statistics
        theta <- array(0,dim=c(N,N.RXNS))
        for (jj in 1:N.RXNS)
@@ -368,11 +369,12 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
            # Sample from the posterior Gamma mixtures
            for (jj in 1:N.RXNS)
                theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
+           #browser()
                
            # resample 
-           if (!is.nan(Y[i+1,1])) # else missing observation for that date
+           if (!is.nan(Y[i,1])) # else missing observation for that date
            {  
-             p.weights <- predictiveLikelihood(X, Y[i+1,], theta, lambda, p.weights)
+             p.weights <- predictiveLikelihood(X, Y[i,], theta, lambda, p.weights)
              newIndex <- resample.func(p.weights) 
          
              X <- X[newIndex,] 
@@ -382,7 +384,7 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
              p.weights <- rep(1/N, N)
            }
           
-           out <- model.propagate.func(t(X), t(theta),lambda,curY=Y[i+1,],hyper=Suff)
+           out <- model.propagate.func(t(X), t(theta),lambda,curY=Y[i,],hyper=Suff)
            X <- t(out$X); Suff <- out$hyper
 
            curt <- (i-1)*dt
