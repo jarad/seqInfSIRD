@@ -104,31 +104,41 @@ scenDeaths <- plSIR(8000,N.week,LOOPN=1,Y=Ydeaths,trueX=sampScen$X,verbose="CI",
 
 ########################
 # To run SIRDsims.RData examples
-sims.params <- list(    initP=c(0.05, 0, 0, 0),
-    initX=c(16000,2, 0,0),    hyperPrior = c(100,100,50,100,0,10,0.1,10),
-    trueTheta = array(c(0.8, 0.5, 0, 0.002),dim=c(4,1)) )
 N.week <- 52
 
-stt <- array(0, dim=c(3,N.week,24))
-  
-for (j in 1:16)
+sim.PL <- array(0, dim=c(16,N.week,24))
+sim.LW <- array(0, dim=c(16,N.week,24))
+sim.SV <- array(0, dim=c(16,N.week,24))
+load("../../data/SIRDsims/SIRDsims.RData")
+
+sims.params <- list(    initP=rep(0,N.RXNS),
+    initX=X0,    hyperPrior = as.vector(rbind(prior$theta$a,prior$theta$b)),
+    trueTheta = rep(0,N.RXNS) )
+
+
+for (j in 2:16)
 {
-  sims.params$initP <- c(probs[j,],0)
-  sims.params$initP[3:4] <- 0
-  sims.params$trueTheta <- gammas[j,]
+  sims.params$initP <- probs[j,]
+  sims.params$trueTheta <- thetas[j,]
   simY <- as.matrix(sims[[j]]$y)
   simY[,3:4] <- 0
   simX <- as.matrix(sims[[j]]$x)
-  simPL <- plSIR(8000,N.week-1,LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
-  simLW <- particleSampledSIR(8000,N.week-1,LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
-  simSV <- particleSampledSIR(aLW=2,8000,N.week-1,LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
-  stt[1,,] <- simPL$stat[1,,]
-  stt[2,,] <- simLW$stat[1,,]
-  stt[3,,] <- simSV$stat[1,,]
-  plot.ci(stt,simX,sims.params$trueTheta,plot.diff=1,col=5,in.legend=c("PL","LW","Storvik"))
+  simPL <- plSIR(8000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simLW <- particleSampledSIR(8000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simSV <- particleSampledSIR(aLW=2,8000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  sim.PL[j,1:(n[j]+1),] <- simPL$stat[1,,]
+  sim.LW[j,1:(n[j]+1),] <- simLW$stat[1,,]
+  sim.SV[j,1:(n[j]+1),] <- simSV$stat[1,,]
+}
+
+
+for (j in 1:16) {
+  stt <- array(0, dim=c(3,n[j],24))
+  stt[1,,] <- sim.PL[j,1:n[j],]; stt[2,1:n[j],] <- sim.LW[j,1:n[j],]; stt[3,,] <-  sim.SV[j,1:n[j],]
+  plot.ci(stt,as.matrix(sims[[j]]$x[1:n[j],]),thetas[j,],plot.diff=1,col=5,in.legend=c("PL","LW","Storvik"),sir.plotCI=1)
   savePlot(filename=paste("../SIRDsims",j,".eps",sep=""), type="eps")
   savePlot(filename=paste("../SIRDsims",j,".pdf",sep=""), type="pdf")
-  plot.ci(stt,simX,sims.params$trueTheta,plot.diff=0,col=5,in.legend=c("PL","LW","Storvik"))
+  plot.ci(stt,as.matrix(sims[[j]]$x[1:n[j],]),thetas[j,],plot.diff=0,col=5,in.legend=c("PL","LW","Storvik"),sir.plotCI=1)
   savePlot(filename=paste("../SIRDsims",j,"Abs.eps",sep=""), type="eps")
   savePlot(filename=paste("../SIRDsims",j,"Abs.pdf",sep=""), type="pdf")
   

@@ -13,7 +13,7 @@ plot.ci <- function(saved.stats,trueX,trueTheta,sir.plotCI=0,col="blue",plot.dif
    
    for (jj in which.dim)
    {
-      len <- dim(saved.stats)[2]
+      len <- dim(trueX)[1]
       if (plot.diff==1) {  # absolute difference
          for (k in 1:n.comps) {
             if (k==1)  
