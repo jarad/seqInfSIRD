@@ -36,7 +36,7 @@ prior$theta$b = c(100,100,10,10)
 for (i in 1:nrow(thetas)) {
   zeros = which(sims[[i]]$y$StoI==0)
   diff3 = diff(zeros,3)
-  n[i] = zeros[match(3,diff3)]
+  n[i] = min(zeros[match(3,diff3)]+3,52)
 }
 
 save(sims,thetas,probs,n,prior, file="SIRDsims.RData")
