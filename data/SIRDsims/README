@@ -1,0 +1,30 @@
+A list of files and their contents:
+
+
+  SIRDsims.R 
+  SIRDsims.RData
+
+    generates simulations for comparative purposes
+
+
+  SIRDsims-mcmc-script.R
+
+    runs an mcmc analysis on the above simulations
+
+
+  SIRDsims-mcmc-plotData.R
+  SIRDsims-mcmc-density.RData
+  SIRDsims-mcmc-quantiles.csv
+
+    creates datasets used to plot the above mcmc analysis
+
+
+  SIRDsims-plots.R
+
+    creates plots for analysis between mcmc and smc
+
+
+  *.eps, *.pdf
+
+    smc sequential inference plots
+
