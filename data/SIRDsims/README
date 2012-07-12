@@ -8,6 +8,7 @@ A list of files and their contents:
 
 
   SIRDsims-mcmc-script.R
+  SIRDsims-mcmc-script.RData (on ISU servers)
 
     runs an mcmc analysis on the above simulations
 
