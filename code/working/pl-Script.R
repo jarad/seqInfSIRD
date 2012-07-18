@@ -112,6 +112,7 @@ N.week <- 52
 
 
 load("../../data/SIRDsims/SIRDsims.RData")
+load("../../data/SIRDsims/SIRDsims-mcmc-density.RData")
 n.sims <- length(sims)
 
 sim.PL <- array(0, dim=c(n.sims,N.week,24))
@@ -128,7 +129,7 @@ sims.params <- list(    initP=rep(0,N.RXNS),
     trueTheta = rep(0,N.RXNS) )
 
 
-for (j in 1:2)
+for (j in 1:n.sims)
 {
   sims.params$initP <- probs[j,]
   sims.params$trueTheta <- thetas[j,]
@@ -169,7 +170,34 @@ write.csv(smc.LW,"../../data/SIRDsims/SIRDsims-smcLW-quantiles.csv",row.names=F)
 colnames(smc.SV) = paste(rep(c("S","SI","I","IR"),each=3),c("50","2.5","97.5"))
 write.csv(smc.SV,"../../data/SIRDsims/SIRDsims-smcSV-quantiles.csv",row.names=F)
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Make a plot to compare MCMC vs SMC
 
+mcmc.quantile <- read.csv("../../data/SIRDsims/SIRDsims-mcmc-quantiles.csv")
+pl.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcPL-quantiles.csv")
+lw.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcLW-quantiles.csv")
+sv.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcSV-quantiles.csv")
+
+plot.ndx <- 16
+par(mfcol=c(2,2),mar=c(4,4,2,1), oma=c(0,0,0,1))
+XLab <- c("S", "I", "S->I", "I->R")
+stat.ndx <- c(1,7,4,10);
+for (k in 1:4) {
+  plot( kd[[4*plot.ndx+k-4]], col=1, main=XLab[k], xlab="")
+  lines( kd.PL[[4*plot.ndx+k-4]], col=2)
+  points(mcmc.quantile[plot.ndx,stat.ndx[k]],0,pch=4,col=1, cex=1.5)
+  points(pl.quantile[plot.ndx,stat.ndx[k]],0,pch=5,col=2, cex=1.5)
+  points(lw.quantile[plot.ndx,stat.ndx[k]],0,pch=6,col=3, cex=1.5)
+  points(sv.quantile[plot.ndx,stat.ndx[k]],0,pch=7,col=4, cex=1.5)
+  lines( kd.LW[[4*plot.ndx+k-4]], col=3)
+  lines( kd.SV[[4*plot.ndx+k-4]], col=4)
+  if (k==2)
+     legend("topright", c("MCMC", "PL", "Liu-West", "Storvik"), lty=c(1,1,1,1),col=1:4)
+}
+savePlot(filename=paste("../../data/SIRDsims/density-comp",plot.ndx,".pdf",sep=""), type="pdf")
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Save all the plots
 for (j in 1:1) {
   nn <- n[j]+1
   stt <- array(0, dim=c(3,nn,24))
