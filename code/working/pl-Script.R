@@ -41,14 +41,16 @@ plot.ci.mcError(str$stat,1,col1="#ffeedd99", col2="black")
 plot.ci.mcError(tt$stat,1,col1="#eeddff99", col2="blue")
 plot.ci.mcError(lw$stat,1,col1="#ddffee99", col2="green")
 
-############
+#####################
 # To see a more realistic example
 temp <- plSIR(5000, 70, LOOPN=10,verbose="HIST")
 plot.ci(temp$stat[1,,],temp$trueX,temp$theta,1)
 plot.ci.mcError(temp$stat,1)
 
 
-### Try to handle the actual weekly data set: 59 weeks total
+#################################
+# Try to handle the actual weekly data set from Harare: 59 weeks total
+#################################
 Nweek <- 59
 harare <- read.csv("data/harare/harareClean.csv")
 harY <- array(0,dim=c(Nweek,4))
@@ -68,7 +70,10 @@ plot.ci.mcError(hararePL$stat,1,col1="#ddddddaa", col2="blue") # close to 0.5
 base.params$hyperPrior <- c(2.25,3,1,2,0,1000,0,1000)  # close to 1 due to the wide prior of Gamma
 hararePL <- plSIR(5000,Nweek-1,LOOPN=10,Y=harY,verbose="CI")
 
-################################################################
+###########################################################
+# Compare impact of observations on the inference
+###########################################################
+
 # Generate a scenario
 N.week <- 60
 scen.params <- base.params
@@ -106,6 +111,7 @@ Ydeaths[,4] <- sampScen$Y[,4]
 scen.params$initP <- c(0.2,0,0,1)
 scenDeaths <- plSIR(8000,N.week,LOOPN=1,Y=Ydeaths,trueX=sampScen$X,verbose="CI",model.params=scen.params)
 
+## Plot the resulting densities against each other to see the effect
 par(mfcol=c(2,2),mar=c(4,4,2,1), oma=c(0,0,0,1))
 XLab <- c("S", "I", "S->I", I->R")
 stat.ndx <- c(1,7,4,10);
@@ -118,10 +124,11 @@ for (k in 1:4) {
      legend("topright", c("Medium", "Low", "I->R", "Deaths"), lty=c(1,1,1,1),col=1:4)
 }
 
-########################
+################################################
 # To run SIRDsims.RData examples
+################################################
 N.week <- 52
-
+X0 = c(16000,2,0,0)
 
 load("../../data/SIRDsims/SIRDsims.RData")
 load("../../data/SIRDsims/SIRDsims-mcmc-density.RData")
@@ -148,11 +155,12 @@ for (j in 1:n.sims)
   simY <- as.matrix(sims[[j]]$y)
   simY[,3:4] <- 0
   simX <- as.matrix(sims[[j]]$x)
+  
   simPL <- plSIR(8000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   simLW <- particleSampledSIR(8000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   simSV <- particleSampledSIR(aLW=2,8000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   
-  
+  # store all the quantiles; the final quantiles of interest
   sim.PL[j,1:(n[j]+1),] <- simPL$stat[1,,]
   sim.LW[j,1:(n[j]+1),] <- simLW$stat[1,,]
   sim.SV[j,1:(n[j]+1),] <- simSV$stat[1,,]
@@ -160,6 +168,7 @@ for (j in 1:n.sims)
   smc.LW[j,] <- as.vector(simLW$stat[1,n[j]+1,1:12])
   smc.SV[j,] <- as.vector(simSV$stat[1,n[j]+1,1:12])
   
+  # and the final density estimates
   for (k in 1:4) {
      kd.PL[[i.pl]] <- simPL$density[[k]]
      i.pl <- i.pl + 1
@@ -190,8 +199,11 @@ pl.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcPL-quantiles.csv")
 lw.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcLW-quantiles.csv")
 sv.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcSV-quantiles.csv")
 
-plot.ndx <- 16
+plot.ndx <- 16  # which simulation to look at 
+
 par(mfcol=c(2,2),mar=c(4,4,2,1), oma=c(0,0,0,1))
+# Make 4 panels, each panel shows the 4 different algorithm outputs (in terms of terminal densities)
+
 XLab <- c("S", "I", "S->I", "I->R")
 stat.ndx <- c(1,7,4,10);
 for (k in 1:4) {
@@ -241,9 +253,11 @@ for (j in 1:4)
   simY <- as.matrix(sims[[.ndx]]$y)
   simY[,3:4] <- 0
   simX <- as.matrix(sims[[.ndx]]$x)
+  
+  # keep doubling number of particles each time
   simPL <- plSIR(2000*2^j,n[.ndx],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
-  #simLW <- particleSampledSIR(2000*2^j,n[.ndx],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
-  #simSV <- particleSampledSIR(aLW=2,2000*2^j,n[.ndx],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simLW <- particleSampledSIR(2000*2^j,n[.ndx],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simSV <- particleSampledSIR(aLW=2,2000*2^j,n[.ndx],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   
   quants.PL[j,] <- as.vector(simPL$stat[1,n[.ndx]+1,1:12])
   quants.LW[j,] <- as.vector(simLW$stat[1,n[.ndx]+1,1:12])
@@ -262,6 +276,7 @@ for (j in 1:4)
 key = paste("number of particles 2000, 4000, 8000, 16000",c("S","I","S->I","I->R"),sep="")
 save(kdp.PL,kdp.LW, kdp.SV, key,quants.PL, quants.LW, quants.SV, file="../../data/SIRDsims/SIRDsims-smc-noParts-density.RData")
 
+# plot the densities for PL output as an example
 par(mfcol=c(2,2),mar=c(4,4,2,1), oma=c(0,0,0,1))
 XLab <- c("S", "I", "S->I", "I->R")
 stat.ndx <- c(1,7,4,10);
