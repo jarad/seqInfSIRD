@@ -1,10 +1,14 @@
 source("inference.R")
 source("SMLib.R");
 require(smcUtils)
+require(Hmisc)
 source("pfSIR.R")
 
 options(error=recover)
 require(plotrix)
+
+dyn.load(paste("gillespieExactStep-",.Platform$r_arch,.Platform$dynlib.ext,sep=''))
+dyn.load(paste("inference-",.Platform$r_arch,.Platform$dynlib.ext,sep=''))
 
 #base.params <- list(    initP=c(0.25, 0.25, 0.5, 0.5),
 #    initX=c(19980,20, 0,0),    hyperPrior = c(22.5,30,15,30,0,1000,1.6,80),
@@ -106,17 +110,25 @@ scenDeaths <- plSIR(8000,N.week,LOOPN=1,Y=Ydeaths,trueX=sampScen$X,verbose="CI",
 # To run SIRDsims.RData examples
 N.week <- 52
 
-sim.PL <- array(0, dim=c(16,N.week,24))
-sim.LW <- array(0, dim=c(16,N.week,24))
-sim.SV <- array(0, dim=c(16,N.week,24))
+
 load("../../data/SIRDsims/SIRDsims.RData")
+n.sims <- length(sims)
+
+sim.PL <- array(0, dim=c(n.sims,N.week,24))
+sim.LW <- array(0, dim=c(n.sims,N.week,24))
+sim.SV <- array(0, dim=c(n.sims,N.week,24))
+smc.PL <- array(0, dim=c(n.sims,12))
+smc.LW <- array(0, dim=c(n.sims,12))
+smc.SV <- array(0, dim=c(n.sims,12))
+kd.PL <- list(); kd.LW <- list(); kd.SV <- list();
+i.pl <- 1; i.lw <- 1; i.sv <- 1;
 
 sims.params <- list(    initP=rep(0,N.RXNS),
     initX=X0,    hyperPrior = as.vector(rbind(prior$theta$a,prior$theta$b)),
     trueTheta = rep(0,N.RXNS) )
 
 
-for (j in 2:16)
+for (j in 1:2)
 {
   sims.params$initP <- probs[j,]
   sims.params$trueTheta <- thetas[j,]
@@ -126,21 +138,48 @@ for (j in 2:16)
   simPL <- plSIR(8000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   simLW <- particleSampledSIR(8000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   simSV <- particleSampledSIR(aLW=2,8000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  
+  
   sim.PL[j,1:(n[j]+1),] <- simPL$stat[1,,]
   sim.LW[j,1:(n[j]+1),] <- simLW$stat[1,,]
   sim.SV[j,1:(n[j]+1),] <- simSV$stat[1,,]
+  smc.PL[j,] <- as.vector(simPL$stat[1,n[j]+1,1:12])
+  smc.LW[j,] <- as.vector(simLW$stat[1,n[j]+1,1:12])
+  smc.SV[j,] <- as.vector(simSV$stat[1,n[j]+1,1:12])
+  
+  for (k in 1:4) {
+     kd.PL[[i.pl]] <- simPL$density[[k]]
+     i.pl <- i.pl + 1
+     kd.LW[[i.lw]] <- simLW$density[[k]]
+     i.lw <- i.lw + 1
+     kd.SV[[i.sv]] <- simSV$density[[k]]
+     i.sv <- i.sv + 1
+  }
 }
 
+key = paste("simulation ",rep(1:n.sims,each=4),", ",c("S","I","S->I","I->R"),sep="")
+save(kd.PL,key,file="../../data/SIRDsims/SIRDsims-smcPL-density.RData")
+save(kd.LW,key,file="../../data/SIRDsims/SIRDsims-smcLW-density.RData")
+save(kd.SV,key,file="../../data/SIRDsims/SIRDsims-smcSV-density.RData")
 
-for (j in 1:16) {
-  stt <- array(0, dim=c(3,n[j],24))
-  stt[1,,] <- sim.PL[j,1:n[j],]; stt[2,1:n[j],] <- sim.LW[j,1:n[j],]; stt[3,,] <-  sim.SV[j,1:n[j],]
-  plot.ci(stt,as.matrix(sims[[j]]$x[1:n[j],]),thetas[j,],plot.diff=1,col=5,in.legend=c("PL","LW","Storvik"),sir.plotCI=1)
-  savePlot(filename=paste("../SIRDsims",j,".eps",sep=""), type="eps")
-  savePlot(filename=paste("../SIRDsims",j,".pdf",sep=""), type="pdf")
-  plot.ci(stt,as.matrix(sims[[j]]$x[1:n[j],]),thetas[j,],plot.diff=0,col=5,in.legend=c("PL","LW","Storvik"),sir.plotCI=1)
-  savePlot(filename=paste("../SIRDsims",j,"Abs.eps",sep=""), type="eps")
-  savePlot(filename=paste("../SIRDsims",j,"Abs.pdf",sep=""), type="pdf")
+colnames(smc.PL) = paste(rep(c("S","SI","I","IR"),each=3),c("50","2.5","97.5"))
+write.csv(smc.PL,"../../data/SIRDsims/SIRDsims-smcPL-quantiles.csv",row.names=F)
+colnames(smc.LW) = paste(rep(c("S","SI","I","IR"),each=3),c("50","2.5","97.5"))
+write.csv(smc.LW,"../../data/SIRDsims/SIRDsims-smcLW-quantiles.csv",row.names=F)
+colnames(smc.SV) = paste(rep(c("S","SI","I","IR"),each=3),c("50","2.5","97.5"))
+write.csv(smc.SV,"../../data/SIRDsims/SIRDsims-smcSV-quantiles.csv",row.names=F)
+
+
+for (j in 1:1) {
+  nn <- n[j]+1
+  stt <- array(0, dim=c(3,nn,24))
+  stt[1,,] <- sim.PL[j,1:nn,]; stt[2,1:nn,] <- sim.LW[j,1:nn,]; stt[3,,] <-  sim.SV[j,1:nn,]
+  plot.ci(stt,as.matrix(sims[[j]]$x[1:nn,]),thetas[j,],plot.diff=1,col=5,in.legend=c("PL","LW","Storvik"),sir.plotCI=1)
+  #savePlot(filename=paste("../SIRDsims",j,".eps",sep=""), type="eps")
+  #savePlot(filename=paste("../SIRDsims",j,".pdf",sep=""), type="pdf")
+  plot.ci(stt,as.matrix(sims[[j]]$x[1:nn,]),thetas[j,],plot.diff=0,col=5,in.legend=c("PL","LW","Storvik"),sir.plotCI=1)
+  #savePlot(filename=paste("../SIRDsims",j,"Abs.eps",sep=""), type="eps")
+  #savePlot(filename=paste("../SIRDsims",j,"Abs.pdf",sep=""), type="pdf")
   
 }
 
