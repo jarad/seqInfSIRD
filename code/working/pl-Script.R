@@ -106,6 +106,18 @@ Ydeaths[,4] <- sampScen$Y[,4]
 scen.params$initP <- c(0.2,0,0,1)
 scenDeaths <- plSIR(8000,N.week,LOOPN=1,Y=Ydeaths,trueX=sampScen$X,verbose="CI",model.params=scen.params)
 
+par(mfcol=c(2,2),mar=c(4,4,2,1), oma=c(0,0,0,1))
+XLab <- c("S", "I", "S->I", I->R")
+stat.ndx <- c(1,7,4,10);
+for (k in 1:4) {
+  plot( scenMed$density[[k]], col=1, main=XLab[k], xlab="")
+  lines( scenLow$density[[k]], col=2)
+  lines( scenGamma$density[[k]], col=3)
+  lines( scenDeaths$density[[k]], col=4)
+  if (k==2)
+     legend("topright", c("Medium", "Low", "I->R", "Deaths"), lty=c(1,1,1,1),col=1:4)
+}
+
 ########################
 # To run SIRDsims.RData examples
 N.week <- 52
@@ -170,8 +182,8 @@ write.csv(smc.LW,"../../data/SIRDsims/SIRDsims-smcLW-quantiles.csv",row.names=F)
 colnames(smc.SV) = paste(rep(c("S","SI","I","IR"),each=3),c("50","2.5","97.5"))
 write.csv(smc.SV,"../../data/SIRDsims/SIRDsims-smcSV-quantiles.csv",row.names=F)
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Make a plot to compare MCMC vs SMC
+#####################################
+# Make a plot to compare MCMC vs SMC
 
 mcmc.quantile <- read.csv("../../data/SIRDsims/SIRDsims-mcmc-quantiles.csv")
 pl.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcPL-quantiles.csv")
@@ -196,8 +208,8 @@ for (k in 1:4) {
 }
 savePlot(filename=paste("../../data/SIRDsims/density-comp",plot.ndx,".pdf",sep=""), type="pdf")
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Save all the plots
+###################################
+# Save all the plots
 for (j in 1:1) {
   nn <- n[j]+1
   stt <- array(0, dim=c(3,nn,24))
@@ -211,6 +223,58 @@ for (j in 1:1) {
   
 }
 
+###########################################
+# Compare the number of particles impact
+###########################################
+quants.PL <- array(0, dim=c(4,12))
+quants.LW <- array(0, dim=c(4,12))
+quants.SV <- array(0, dim=c(4,12))
+kdp.PL <- list(); kdp.LW <- list(); kdp.SV <- list();
+i.pl <- 1; i.lw <- 1; i.sv <- 1;
+.ndx <- 3
+
+
+for (j in 1:4)
+{
+  sims.params$initP <- probs[.ndx,]
+  sims.params$trueTheta <- thetas[.ndx,]
+  simY <- as.matrix(sims[[.ndx]]$y)
+  simY[,3:4] <- 0
+  simX <- as.matrix(sims[[.ndx]]$x)
+  simPL <- plSIR(2000*2^j,n[.ndx],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  #simLW <- particleSampledSIR(2000*2^j,n[.ndx],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  #simSV <- particleSampledSIR(aLW=2,2000*2^j,n[.ndx],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  
+  quants.PL[j,] <- as.vector(simPL$stat[1,n[.ndx]+1,1:12])
+  quants.LW[j,] <- as.vector(simLW$stat[1,n[.ndx]+1,1:12])
+  quants.SV[j,] <- as.vector(simSV$stat[1,n[.ndx]+1,1:12])
+  
+  for (k in 1:4) {
+     kdp.PL[[i.pl]] <- simPL$density[[k]]
+     i.pl <- i.pl + 1
+     kdp.LW[[i.lw]] <- simLW$density[[k]]
+     i.lw <- i.lw + 1
+     kdp.SV[[i.sv]] <- simSV$density[[k]]
+     i.sv <- i.sv + 1
+  }
+}
+
+key = paste("number of particles 2000, 4000, 8000, 16000",c("S","I","S->I","I->R"),sep="")
+save(kdp.PL,kdp.LW, kdp.SV, key,quants.PL, quants.LW, quants.SV, file="../../data/SIRDsims/SIRDsims-smc-noParts-density.RData")
+
+par(mfcol=c(2,2),mar=c(4,4,2,1), oma=c(0,0,0,1))
+XLab <- c("S", "I", "S->I", "I->R")
+stat.ndx <- c(1,7,4,10);
+for (k in 1:4) {
+  plot( kd[[4*.ndx+k-4]], col=1, main=XLab[k], xlab="")
+  lines( kdp.PL[[4+k-4]], col=2)
+  lines( kdp.PL[[8+k-4]], col=3)
+  lines( kdp.PL[[12+k-4]], col=4)
+  lines( kdp.PL[[16+k-4]], col=5)
+  if (k==2)
+     legend("topright", c("MCMC", "2000", "4000", "8000","16000"), lty=c(1,1,1,1,1),col=1:5)
+}
+savePlot(filename=paste("../../data/SIRDsims/density-comp-parts-PL",.ndx,".pdf",sep=""), type="pdf")
 
 
 
