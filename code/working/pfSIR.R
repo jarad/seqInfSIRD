@@ -59,7 +59,7 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
 
        ######### MAIN LOOP OVER OBSERVATIONS ##############
        while (curt < T-dt) {
-         if (aLW > 1 & is.null(Suff) == 0 && i %% 3 == 1)  # Storvik filter: sample from the posterior Gamma mixture
+         if (aLW > 1 & is.null(Suff) == 0)  # Storvik filter: sample from the posterior Gamma mixture
            for (jj in 1:N.RXNS)
                theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
            
@@ -201,8 +201,8 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL)
     # update the hyperparameters
     if (!is.null(hyper) & !is.nan(Y[1])) 
       for (i in 1:N.RXNS) {
-        hyper[,2*i-1] <- hyper[,2*i-1] + Y[i]
-        hyper[,2*i] <- hyper[,2*i] + prop[,i]* h[,i]
+        hyper[,2*i-1] <- hyper[,2*i-1] + newX[i,] #Y[i]
+        hyper[,2*i] <- hyper[,2*i] +  h[,i] # prop[,i]*
       }
     
     return(list(X=out$X,dX=newX,hyper=hyper,Y=Y))
@@ -249,7 +249,7 @@ updateWeights <- function(dX, curY, prop, weights)
 
 #######################################################
 # Predictive likelihood of the next observation using Poisson approximations
-predictiveLikelihood <- function(X, nextY, theta, prop, weights)
+predictiveLikelihood <- function(X, nextY, theta, prop, weights, Suff)
 {
     h <- X  # just to set the size of h correctly
     
@@ -257,7 +257,13 @@ predictiveLikelihood <- function(X, nextY, theta, prop, weights)
        h[j,]  <- hazard.R(X[j,], sum(X[j,]))   
        
     for (jj in 1:N.RXNS) {
-        weights <- weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])      
+        weights <- weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])
+        #Analytic form for the predictive likelihood
+        #Use logs to make sure things do not blow up
+        #GamTerm <- log(Suff[,2*jj])*Suff[,2*jj-1]- log(Suff[,2*jj]+prop[,jj]*h[,jj])*(nextY[jj]+Suff[,2*jj-1])
+        #if (nextY[jj] > 0)
+        #   GamTerm <- GamTerm + lgamma( nextY[jj] + Suff[,2*jj-1]) - lgamma(Suff[,2*jj-1]) - lgamma(nextY[jj]+1) + log(prop[,jj]*h[,jj])*nextY[jj]
+        #weights <- weights*exp(GamTerm)  
     }
     #browser()
     return(weights)
@@ -378,7 +384,7 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
            # resample 
            if (!is.nan(Y[i,1])) # else missing observation for that date
            {  
-             p.weights <- predictiveLikelihood(X, Y[i,], theta, lambda, p.weights)
+             p.weights <- predictiveLikelihood(X, Y[i,], theta, lambda, p.weights,Suff)
              newIndex <- resample.func(p.weights) 
          
              X <- X[newIndex,] 
