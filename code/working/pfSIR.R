@@ -177,7 +177,7 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL)
 {
     h <- t(X)
     dX <- X
-    hyper2 <- array(1, dim=c(N.RXNS,2,dim(X)[2]))
+    hyper2 <- array(1, dim=c(N.RXNS,2,dim(X)[2])) # one.step.C takes in 4x2xN while hyper is Nx8
     
     out <- one.step.C(X, hyper2, theta, t(prop), sample=T)
     
@@ -257,13 +257,13 @@ predictiveLikelihood <- function(X, nextY, theta, prop, weights, Suff)
        h[j,]  <- hazard.R(X[j,], sum(X[j,]))   
        
     for (jj in 1:N.RXNS) {
-        weights <- weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])
+        #weights <- weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])
         #Analytic form for the predictive likelihood
         #Use logs to make sure things do not blow up
-        #GamTerm <- log(Suff[,2*jj])*Suff[,2*jj-1]- log(Suff[,2*jj]+prop[,jj]*h[,jj])*(nextY[jj]+Suff[,2*jj-1])
-        #if (nextY[jj] > 0)
-        #   GamTerm <- GamTerm + lgamma( nextY[jj] + Suff[,2*jj-1]) - lgamma(Suff[,2*jj-1]) - lgamma(nextY[jj]+1) + log(prop[,jj]*h[,jj])*nextY[jj]
-        #weights <- weights*exp(GamTerm)  
+        GamTerm <- log(Suff[,2*jj])*Suff[,2*jj-1]- log(Suff[,2*jj]+prop[,jj]*h[,jj])*(nextY[jj]+Suff[,2*jj-1])
+        if (nextY[jj] > 0)
+           GamTerm <- GamTerm + lgamma( nextY[jj] + Suff[,2*jj-1]) - lgamma(Suff[,2*jj-1]) - lgamma(nextY[jj]+1) + log(prop[,jj]*h[,jj])*nextY[jj]
+        weights <- weights*exp(GamTerm)  
     }
     #browser()
     return(weights)
@@ -376,9 +376,6 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
 
        ####### MAIN LOOP OVER OBSERVATIONS
        while (curt < T-dt) {
-           # Sample from the posterior Gamma mixtures
-           for (jj in 1:N.RXNS)
-               theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
            #browser()
                
            # resample 
@@ -390,10 +387,13 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
              X <- X[newIndex,] 
              Suff <- Suff[newIndex,]
              lambda <- lambda[newIndex,]
-             theta <- theta[newIndex,]
+             #theta <- theta[newIndex,]
              p.weights <- rep(1/N, N)
            }
-          
+           # Sample from the posterior Gamma mixtures
+           for (jj in 1:N.RXNS)
+               theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
+       
            out <- model.propagate.func(t(X), t(theta),lambda,curY=Y[i,],hyper=Suff)
            X <- t(out$X); Suff <- out$hyper
 
@@ -407,7 +407,7 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
                for (jj in 1:length(gridx))
                   gridy[jj] <- sum(dgamma(gridx[jj],Suff[,1],Suff[,2]))
 
-               plot(gridx,gridy/N,type="l",col=col,main=sprintf("t=%d",curt),xlab='S->I Rate')
+               plot(gridx,gridy/N,type="l",col=col,main=sprintf("t=%d",curt),xlab='S->I Rate',yaxt="n")
              
                abline(v=trueTheta[1], col="red")
            }
