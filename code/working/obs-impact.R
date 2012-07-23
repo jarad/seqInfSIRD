@@ -24,7 +24,7 @@ scenFull <- plSIR(16000,N.week,LOOPN=1,Y=Yfull,trueX=sampScen$X,verbose="CI",mod
 ##########################
 # Full obs of S->I only
 Ybeta <- array(0,dim=c(N.week+1,4))
-Ymed[,1] <-sampScen$Y[,1]
+Ybeta[,1] <-sampScen$Y[,1]
 scen.params$initP <- c(1,0,0,0)
 scenBeta <- plSIR(16000,N.week,LOOPN=1,Y=Ybeta,trueX=sampScen$X,verbose="CI",model.params=scen.params)
 
