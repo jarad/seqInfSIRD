@@ -128,12 +128,8 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
       }
    }
    
-     kd <- list() 
-    kd[[1]] = density(X[,1]) # S
-    kd[[2]] = density(X[,2],bw=1) # I
-    kd[[3]] = density(theta[,1]) # S->I
-    kd[[4]] = density(theta[,2]) # I->R
-   
+    kd <- build.density(X,theta,Suff)
+    
    if (verbose=='CI')  # plot some CI over time 
       plot.ci(saved.stats,trueX[1:i,],trueTheta,1,col)
  
@@ -287,6 +283,36 @@ saveStats <- function(X, theta)
     return(summ.stat)
 }
 
+#######################################################
+# Construct the densities of the particles
+build.density <- function(X, theta, Suff)
+{
+   N <- dim(X)[1]
+   kd <- list()
+   h1 <- hist(X[,1],breaks=seq(min(X[,1]),max(X[,1])+5, by=5),plot=F) # for S 
+   kd[[1]] <- stepfun(h1$breaks, c(0,h1$counts/N/5,0)) # S
+   
+   h1 <- hist(X[,2],breaks=min(X[,2]):(max(X[,2])+1),plot=F) # for I 
+   kd[[2]] <- stepfun(h1$breaks, c(0,h1$counts/N,0)) #(density(X[,2],bw=1) # I
+   
+   kd[[3]] = density(theta[,1]) # S->I
+   kd[[4]] = density(theta[,2]) # I->R
+   
+   if (is.null(Suff) == F) {
+     h1 <- array(0, length(kd[[3]]$x))
+     for (jj in 1:length(kd[[3]]$x))
+        h1[jj] <- sum(dgamma(kd[[3]]$x[jj],Suff[,1],Suff[,2]))
+     kd[[3]]$y <- h1/N
+   
+     h1 <- array(0, length(kd[[4]]$x))
+     for (jj in 1:length(kd[[4]]$x))
+        h1[jj] <- sum(dgamma(kd[[4]]$x[jj],Suff[,3],Suff[,4]))
+     kd[[4]]$y <- h1/N
+   }
+   return(kd)
+}
+
+
 ################################################# 
 # Resample using Crisan min-variance method
 # branching from Crisan (2006) p .10
@@ -419,11 +445,16 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
       }
    }
   
-   kd <- list() 
-   kd[[1]] = density(X[,1]) # S
-   kd[[2]] = density(X[,2],bw=1) # I
-   kd[[3]] = density(theta[,1]) # S->I
-   kd[[4]] = density(theta[,2]) # I->R
+   kd <- build.density(X,theta,Suff)
+   
+   
+   #browser()
+   
+   # high-quality quantile computation
+   for (jj in 1:N.RXNS) {
+      theta <- rgamma(max(N,25000),Suff[,2*jj-1],Suff[,2*jj])
+      saved.stats[loop, i, ((jj-1)*6+4):((jj-1)*6+6)] <- quantile(theta,c(0.5,0.025,0.975))
+   }      
 
    if (verbose=='CI') 
       plot.ci(saved.stats,trueX[1:i,],trueTheta,1,col)
