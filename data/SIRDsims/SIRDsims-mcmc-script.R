@@ -5,7 +5,7 @@ N.RXNS = 2
 N.STATES = 3
 
 res = list()
-run.time = rep(NA,length(sims))
+run.time = matrix(NA,length(sims),3)
 for (i in 1:length(sims)) {
   cat("Simulation",i,"\n")
   X0 = as.numeric(sims[[i]]$x[1,1:N.STATES])
@@ -17,13 +17,13 @@ for (i in 1:length(sims)) {
   inits = list(dx=as.matrix(sims[[i]]$dx[1:n[i],1:N.RXNS]),
                theta=thetas[i,1:N.RXNS])
 
-  ptr = proc.time()
+  ptr = proc.time()[1:3]
 
   mod   = jags.model("../../code/working/SIR.txt", data=dat, 
                     inits=inits, n.adapt=1e6)
   res[[i]]   = coda.samples(mod, c("theta","x"), 1e6, thin=10) 
 
-  run.time[i] = proc.time()-ptr
+  run.time[i,] = proc.time()[1:3]-ptr
 
   save.image("SIRDsims-mcmc-script.RData")
 }
