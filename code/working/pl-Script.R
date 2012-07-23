@@ -36,6 +36,7 @@ tt <- plSIR(5000, 52, LOOPN=10,verbose="f")
 lw <- particleSampledSIR(5000, 50, LOOPN=10,aLW=0.99,verbose="f",trueX=tt$trueX,Y=tt$Y) # liu-west
 str <- particleSampledSIR(5000, 50, LOOPN=10,aLW=1.99,verbose="f",trueX=tt$trueX,Y=tt$Y) # storvik
 
+
 plot(c(0,50), c(0.75,0.75), type="l",col="red",xlab="Periods t",ylab="Beta Posterior",lwd=2)
 plot.ci.mcError(str$stat,1,col1="#ffeedd99", col2="black")
 plot.ci.mcError(tt$stat,1,col1="#eeddff99", col2="blue")
@@ -91,38 +92,49 @@ scen.params$trueTheta <- sampScen$theta
 Ymed <- array(0,dim=c(N.week+1,4))
 Ymed[,1] <-rbinom(N.week+1,sampScen$Y[,1],0.2)
 scen.params$initP <- c(0.2,0,0,0)
-scenMed <- plSIR(8000,N.week,LOOPN=1,Y=Ymed,trueX=sampScen$X,verbose="CI",model.params=scen.params)
+scenMed <- plSIR(16000,N.week,LOOPN=1,Y=Ymed,trueX=sampScen$X,verbose="CI",model.params=scen.params)
 
 # typical low observations (like in Zimbabwe)
 Ylow <- array(0,dim=c(N.week+1,4))
 Ylow[,1] <-rbinom(N.week+1,sampScen$Y[,1],0.05)
 scen.params$initP <- c(0.05,0,0,0)
-scenLow <- plSIR(8000,N.week,LOOPN=1,Y=Ylow,trueX=sampScen$X,verbose="CI",model.params=scen.params)
+scenLow <- plSIR(16000,N.week,LOOPN=1,Y=Ylow,trueX=sampScen$X,verbose="CI",model.params=scen.params)
 
 # 20%-observations of infecteds transitioning to recovereds as well
 Ygam <- Ymed
 Ygam[,2] <- rbinom(N.week+1,sampScen$Y[,2],0.2)
 scen.params$initP <- c(0.2,0.2,0,0)
-scenGamma <- plSIR(8000,N.week,LOOPN=1,Y=Ygam,trueX=sampScen$X,verbose="CI",model.params=scen.params)
+scenGamma <- plSIR(16000,N.week,LOOPN=1,Y=Ygam,trueX=sampScen$X,verbose="CI",model.params=scen.params)
 
 # observe 20% of infecteds as well as ALL deaths (very implicit info about current infecteds)
 Ydeaths <- Ymed
 Ydeaths[,4] <- sampScen$Y[,4]
 scen.params$initP <- c(0.2,0,0,1)
-scenDeaths <- plSIR(8000,N.week,LOOPN=1,Y=Ydeaths,trueX=sampScen$X,verbose="CI",model.params=scen.params)
+scenDeaths <- plSIR(16000,N.week,LOOPN=1,Y=Ydeaths,trueX=sampScen$X,verbose="CI",model.params=scen.params)
 
 ## Plot the resulting densities against each other to see the effect
-par(mfcol=c(2,2),mar=c(4,4,2,1), oma=c(0,0,0,1))
-XLab <- c("S", "I", "S->I", I->R")
-stat.ndx <- c(1,7,4,10);
+stat.ndx <- list();
+stat.ndx[[1]] <- 1:3;  stat.ndx[[2]] <- 7:9; 
+stat.ndx[[3]] <- 4:6;  stat.ndx[[4]] <- 10:12;
+
+par(mfrow=c(2,2),mar=c(3,3,2,1)+0.1, oma=c(0,0,0,1),mxp=c(1,1,0))
+XLab <- c("S", "I", "S->I", "I->R")
+truth <- c( sampScen$X[N.week+1,1], sampScen$X[N.week+1,2], sampScen$theta[1],  sampScen$theta[2])
 for (k in 1:4) {
-  plot( scenMed$density[[k]], col=1, main=XLab[k], xlab="")
+  plot( scenMed$density[[k]], col=1, main=XLab[k], xlab="", yaxt="n", ylab="Posterior  Density")
   lines( scenLow$density[[k]], col=2)
   lines( scenGamma$density[[k]], col=3)
   lines( scenDeaths$density[[k]], col=4)
-  if (k==2)
-     legend("topright", c("Medium", "Low", "I->R", "Deaths"), lty=c(1,1,1,1),col=1:4)
+  #points(scenMed$stat[1,N.week+1,stat.ndx[[k]] ],rep(0,3),pch=19,col=1, cex=1.5)
+  #points(scenLow$stat[1,N.week+1,stat.ndx[[k]] ],rep(0,3),pch=19,col=2, cex=1.5)
+  #points(scenGamma$stat[1,N.week+1,stat.ndx[[k]] ],rep(0,3),pch=19,col=3, cex=1.5)
+  #points(scenDeaths$stat[1,N.week+1,stat.ndx[[k]] ],rep(0,3),pch=19,col=4, cex=1.5)
+
+  abline(v=truth[k])
+  if (k >2)
+     legend("topright", c("Base case", "Low p_1 ", "Positive p_2", "Positive p_4"), lty=c(1,1,1,1),col=1:4)
 }
+savePlot(filename="20120722-density-comp-p", type="pdf")
 
 ################################################
 # To run SIRDsims.RData examples
@@ -156,9 +168,9 @@ for (j in 1:n.sims)
   simY[,3:4] <- 0
   simX <- as.matrix(sims[[j]]$x)
   
-  simPL <- plSIR(8000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
-  simLW <- particleSampledSIR(8000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
-  simSV <- particleSampledSIR(aLW=2,8000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simPL <- plSIR(10000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="CI",model.params=sims.params)
+  simLW <- particleSampledSIR(10000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simSV <- particleSampledSIR(aLW=2,10000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   
   # store all the quantiles; the final quantiles of interest
   sim.PL[j,1:(n[j]+1),] <- simPL$stat[1,,]
@@ -199,15 +211,15 @@ pl.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcPL-quantiles.csv")
 lw.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcLW-quantiles.csv")
 sv.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcSV-quantiles.csv")
 
-plot.ndx <- 16  # which simulation to look at 
+plot.ndx <- 6 # which simulation to look at 
 
-par(mfcol=c(2,2),mar=c(4,4,2,1), oma=c(0,0,0,1))
+par(mfrow=c(2,2),mar=c(4,3,2,1), oma=c(0,0,0,1), mgp=c(1,1,0))
 # Make 4 panels, each panel shows the 4 different algorithm outputs (in terms of terminal densities)
 
 XLab <- c("S", "I", "S->I", "I->R")
 stat.ndx <- c(1,7,4,10);
 for (k in 1:4) {
-  plot( kd[[4*plot.ndx+k-4]], col=1, main=XLab[k], xlab="")
+  plot( kd[[4*plot.ndx+k-4]], col=1, main=XLab[k], xlab="", yaxt="n", ylab="Posterior Density")
   lines( kd.PL[[4*plot.ndx+k-4]], col=2)
   points(mcmc.quantile[plot.ndx,stat.ndx[k]],0,pch=4,col=1, cex=1.5)
   points(pl.quantile[plot.ndx,stat.ndx[k]],0,pch=5,col=2, cex=1.5)
@@ -215,10 +227,29 @@ for (k in 1:4) {
   points(sv.quantile[plot.ndx,stat.ndx[k]],0,pch=7,col=4, cex=1.5)
   lines( kd.LW[[4*plot.ndx+k-4]], col=3)
   lines( kd.SV[[4*plot.ndx+k-4]], col=4)
-  if (k==2)
+  if (k > 2 )
      legend("topright", c("MCMC", "PL", "Liu-West", "Storvik"), lty=c(1,1,1,1),col=1:4)
 }
 savePlot(filename=paste("../../data/SIRDsims/density-comp",plot.ndx,".pdf",sep=""), type="pdf")
+
+
+diff.pl <- array(0,dim=c(16,8))
+diff.lw <- array(0,dim=c(16,8))
+diff.sv <- array(0,dim=c(16,8))
+for (j in 1:n.sims) {
+  for (k in 1:4) {
+   diff.pl[j,2*k-1] <- mcmc.quantile[j,3*k-2]-pl.quantile[j,3*k-2]
+   diff.pl[j,2*k] <- (pl.quantile[j,3*k]-pl.quantile[j,3*k-1])/(mcmc.quantile[j,3*k]-mcmc.quantile[j,3*k-1])
+   diff.lw[j,2*k-1] <- mcmc.quantile[j,3*k-2]-lw.quantile[j,3*k-2]
+   diff.lw[j,2*k] <- (lw.quantile[j,3*k]-lw.quantile[j,3*k-1])/(mcmc.quantile[j,3*k]-mcmc.quantile[j,3*k-1])
+   diff.sv[j,2*k-1] <- mcmc.quantile[j,3*k-2]-sv.quantile[j,3*k-2]
+   diff.sv[j,2*k] <- (sv.quantile[j,3*k]-sv.quantile[j,3*k-1])/(mcmc.quantile[j,3*k]-mcmc.quantile[j,3*k-1])
+  }
+}
+apply(diff.pl, 2, mean)
+apply(diff.lw, 2, mean)
+apply(diff.sv, 2, mean)
+
 
 ###################################
 # Save all the plots
@@ -243,7 +274,7 @@ quants.LW <- array(0, dim=c(4,12))
 quants.SV <- array(0, dim=c(4,12))
 kdp.PL <- list(); kdp.LW <- list(); kdp.SV <- list();
 i.pl <- 1; i.lw <- 1; i.sv <- 1;
-.ndx <- 3
+.ndx <- 12
 
 
 for (j in 1:4)
@@ -273,8 +304,8 @@ for (j in 1:4)
   }
 }
 
-key = paste("number of particles 2000, 4000, 8000, 16000",c("S","I","S->I","I->R"),sep="")
-save(kdp.PL,kdp.LW, kdp.SV, key,quants.PL, quants.LW, quants.SV, file="../../data/SIRDsims/SIRDsims-smc-noParts-density.RData")
+#key = paste("number of particles 2000, 4000, 8000, 16000",c("S","I","S->I","I->R"),sep="")
+#save(kdp.PL,kdp.LW, kdp.SV, key,quants.PL, quants.LW, quants.SV, file="../../data/SIRDsims/SIRDsims-smc-noParts-density.RData")
 
 # plot the densities for PL output as an example
 par(mfcol=c(2,2),mar=c(4,4,2,1), oma=c(0,0,0,1))
@@ -282,10 +313,10 @@ XLab <- c("S", "I", "S->I", "I->R")
 stat.ndx <- c(1,7,4,10);
 for (k in 1:4) {
   plot( kd[[4*.ndx+k-4]], col=1, main=XLab[k], xlab="")
-  lines( kdp.PL[[4+k-4]], col=2)
-  lines( kdp.PL[[8+k-4]], col=3)
-  lines( kdp.PL[[12+k-4]], col=4)
-  lines( kdp.PL[[16+k-4]], col=5)
+  lines( kdp.LW[[4+k-4]], col=2)
+  lines( kdp.LW[[8+k-4]], col=3)
+  lines( kdp.LW[[12+k-4]], col=4)
+  lines( kdp.LW[[16+k-4]], col=5)
   if (k==2)
      legend("topright", c("MCMC", "2000", "4000", "8000","16000"), lty=c(1,1,1,1,1),col=1:5)
 }
