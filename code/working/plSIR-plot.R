@@ -5,7 +5,7 @@
 #
 plot.ci <- function(saved.stats,trueX,trueTheta,sir.plotCI=0,col="blue",plot.diff=0, which.dim=c(1,2),in.legend=NULL)
 {
-   par(mfcol=c(2,length(which.dim)),mar=c(4,4,2,1), oma=c(0,0,0,1))
+   par(mfcol=c(2,length(which.dim)),mar=c(4,3,2,1)+0.1, oma=c(0,0,0,1))
    XLab <- c("S", "I", "R", "D")
    TLab <- c("S->I", "I->R", "S->R","I->D")
    n.comps <- dim(saved.stats)[1]
@@ -43,7 +43,7 @@ plot.ci <- function(saved.stats,trueX,trueTheta,sir.plotCI=0,col="blue",plot.dif
       else { # plot absolute values
          for (k in 1:n.comps) {
             if (k==1)
-               plot(1:len,saved.stats[k,,(6*jj-5)],col=col.list[k],lwd=2,type="l",ylab=XLab[jj],
+               plot(1:len,saved.stats[k,,(6*jj-5)],col=col.list[k],lwd=2,type="l",ylab='',main=XLab[jj],
                   xlab='',ylim=c(min(saved.stats[k,,(6*jj-4)]),max(max(saved.stats[k,,(6*jj-5)]),0.7*max(saved.stats[k,,(6*jj-3)]))))
             else
                lines(1:len,saved.stats[k,,(6*jj-5)],col=col.list[k],lwd=2)
@@ -53,6 +53,8 @@ plot.ci <- function(saved.stats,trueX,trueTheta,sir.plotCI=0,col="blue",plot.dif
 
             if (!is.null(trueX))
                lines(1:len,trueX[,jj],col ='red',xlim=c(0,len),lwd=1.5)
+            if (n.comps == 1)
+              legend("topright", c("Truth", "Median", "95% CI"), col=c("red",col,col), lty=c(1,1,3), lwd=c(1.5,2,1))
           }
       }
       if (n.comps > 1 & !is.null(in.legend) & jj == which.dim[1])
@@ -60,9 +62,9 @@ plot.ci <- function(saved.stats,trueX,trueTheta,sir.plotCI=0,col="blue",plot.dif
 
       for (k in 1:n.comps) {
          if (k==1) {
-            plot(1:len,saved.stats[k,,(6*jj-2)],col=col.list[k],xlab='time',ylab=TLab[jj],type="l",
-               ylim=c(trueTheta[jj]*0.75,trueTheta[jj]*1.25), lwd=2 )
-      
+            plot(1:len,saved.stats[k,,(6*jj-2)],col=col.list[k],xlab='Period',ylab='',main=TLab[jj],type="l",
+               ylim=c(min(saved.stats[k,,(6*jj-1)])*1.02, max(saved.stats[k,,6*jj]))*0.98 , lwd=2)
+      #c(trueTheta[jj]*0.75,trueTheta[jj]*1.25)
             abline(h=trueTheta[jj],col='red',lwd=1.5)  
          }
          else 
