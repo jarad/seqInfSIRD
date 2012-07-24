@@ -71,70 +71,6 @@ plot.ci.mcError(hararePL$stat,1,col1="#ddddddaa", col2="blue") # close to 0.5
 base.params$hyperPrior <- c(2.25,3,1,2,0,1000,0,1000)  # close to 1 due to the wide prior of Gamma
 hararePL <- plSIR(5000,Nweek-1,LOOPN=10,Y=harY,verbose="CI")
 
-###########################################################
-# Compare impact of observations on the inference
-###########################################################
-
-# Generate a scenario
-N.week <- 60
-scen.params <- base.params
-scen.params$initP <- c(1,1,1,1) # use full observations first
-set.seed(5)
-sampScen <- generate.scenario(scen.params,tauLeap,N.week) 
-sampScen$theta
-# [1] 0.7159145 0.5000000 0.0000000 0.0020000
-plot(sampScen$X[,2]/2,type="l")
-lines(sampScen$Y[,1],col="green") 
-scen.params$trueTheta <- sampScen$theta 
-
-# now generate various observations by sub-sampling
-# case 1: typical good observations
-Ymed <- array(0,dim=c(N.week+1,4))
-Ymed[,1] <-rbinom(N.week+1,sampScen$Y[,1],0.2)
-scen.params$initP <- c(0.2,0,0,0)
-scenMed <- plSIR(16000,N.week,LOOPN=1,Y=Ymed,trueX=sampScen$X,verbose="CI",model.params=scen.params)
-
-# typical low observations (like in Zimbabwe)
-Ylow <- array(0,dim=c(N.week+1,4))
-Ylow[,1] <-rbinom(N.week+1,sampScen$Y[,1],0.05)
-scen.params$initP <- c(0.05,0,0,0)
-scenLow <- plSIR(16000,N.week,LOOPN=1,Y=Ylow,trueX=sampScen$X,verbose="CI",model.params=scen.params)
-
-# 20%-observations of infecteds transitioning to recovereds as well
-Ygam <- Ymed
-Ygam[,2] <- rbinom(N.week+1,sampScen$Y[,2],0.2)
-scen.params$initP <- c(0.2,0.2,0,0)
-scenGamma <- plSIR(16000,N.week,LOOPN=1,Y=Ygam,trueX=sampScen$X,verbose="CI",model.params=scen.params)
-
-# observe 20% of infecteds as well as ALL deaths (very implicit info about current infecteds)
-Ydeaths <- Ymed
-Ydeaths[,4] <- sampScen$Y[,4]
-scen.params$initP <- c(0.2,0,0,1)
-scenDeaths <- plSIR(16000,N.week,LOOPN=1,Y=Ydeaths,trueX=sampScen$X,verbose="CI",model.params=scen.params)
-
-## Plot the resulting densities against each other to see the effect
-stat.ndx <- list();
-stat.ndx[[1]] <- 1:3;  stat.ndx[[2]] <- 7:9; 
-stat.ndx[[3]] <- 4:6;  stat.ndx[[4]] <- 10:12;
-
-par(mfrow=c(2,2),mar=c(3,3,2,1)+0.1, oma=c(0,0,0,1),mxp=c(1,1,0))
-XLab <- c("S", "I", "S->I", "I->R")
-truth <- c( sampScen$X[N.week+1,1], sampScen$X[N.week+1,2], sampScen$theta[1],  sampScen$theta[2])
-for (k in 1:4) {
-  plot( scenMed$density[[k]], col=1, main=XLab[k], xlab="", yaxt="n", ylab="Posterior  Density")
-  lines( scenLow$density[[k]], col=2)
-  lines( scenGamma$density[[k]], col=3)
-  lines( scenDeaths$density[[k]], col=4)
-  #points(scenMed$stat[1,N.week+1,stat.ndx[[k]] ],rep(0,3),pch=19,col=1, cex=1.5)
-  #points(scenLow$stat[1,N.week+1,stat.ndx[[k]] ],rep(0,3),pch=19,col=2, cex=1.5)
-  #points(scenGamma$stat[1,N.week+1,stat.ndx[[k]] ],rep(0,3),pch=19,col=3, cex=1.5)
-  #points(scenDeaths$stat[1,N.week+1,stat.ndx[[k]] ],rep(0,3),pch=19,col=4, cex=1.5)
-
-  abline(v=truth[k])
-  if (k >2)
-     legend("topright", c("Base case", "Low p_1 ", "Positive p_2", "Positive p_4"), lty=c(1,1,1,1),col=1:4)
-}
-savePlot(filename="20120722-density-comp-p", type="pdf")
 
 ################################################
 # To run SIRDsims.RData examples
@@ -160,7 +96,7 @@ sims.params <- list(    initP=rep(0,N.RXNS),
     trueTheta = rep(0,N.RXNS) )
 
 
-for (j in 1:n.sims)
+for (j in 1:1)
 {
   sims.params$initP <- probs[j,]
   sims.params$trueTheta <- thetas[j,]
@@ -168,9 +104,9 @@ for (j in 1:n.sims)
   simY[,3:4] <- 0
   simX <- as.matrix(sims[[j]]$x)
   
-  simPL <- plSIR(10000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="CI",model.params=sims.params)
-  simLW <- particleSampledSIR(10000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
-  simSV <- particleSampledSIR(aLW=2,10000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simPL <- plSIR(12000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simLW <- particleSampledSIR(aLW=0.98,12000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simSV <- particleSampledSIR(aLW=2,12000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   
   # store all the quantiles; the final quantiles of interest
   sim.PL[j,1:(n[j]+1),] <- simPL$stat[1,,]
@@ -211,7 +147,7 @@ pl.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcPL-quantiles.csv")
 lw.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcLW-quantiles.csv")
 sv.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcSV-quantiles.csv")
 
-plot.ndx <- 6 # which simulation to look at 
+plot.ndx <- 1 # which simulation to look at 
 
 par(mfrow=c(2,2),mar=c(4,3,2,1), oma=c(0,0,0,1), mgp=c(1,1,0))
 # Make 4 panels, each panel shows the 4 different algorithm outputs (in terms of terminal densities)
@@ -220,13 +156,13 @@ XLab <- c("S", "I", "S->I", "I->R")
 stat.ndx <- c(1,7,4,10);
 for (k in 1:4) {
   plot( kd[[4*plot.ndx+k-4]], col=1, main=XLab[k], xlab="", yaxt="n", ylab="Posterior Density")
-  lines( kd.PL[[4*plot.ndx+k-4]], col=2)
-  points(mcmc.quantile[plot.ndx,stat.ndx[k]],0,pch=4,col=1, cex=1.5)
-  points(pl.quantile[plot.ndx,stat.ndx[k]],0,pch=5,col=2, cex=1.5)
-  points(lw.quantile[plot.ndx,stat.ndx[k]],0,pch=6,col=3, cex=1.5)
-  points(sv.quantile[plot.ndx,stat.ndx[k]],0,pch=7,col=4, cex=1.5)
-  lines( kd.LW[[4*plot.ndx+k-4]], col=3)
-  lines( kd.SV[[4*plot.ndx+k-4]], col=4)
+  lines( kd.PL[[4*plot.ndx+k-4]], col=2, do.p="F", vert="T")
+  abline(v=mcmc.quantile[plot.ndx,stat.ndx[k]],pch=4,col=1, cex=1.5)
+  abline(v=pl.quantile[plot.ndx,stat.ndx[k]],pch=5,col=2, cex=1.5)
+  abline(v=lw.quantile[plot.ndx,stat.ndx[k]],pch=6,col=3, cex=1.5)
+  abline(v=sv.quantile[plot.ndx,stat.ndx[k]],pch=7,col=4, cex=1.5)
+  lines( kd.LW[[4*plot.ndx+k-4]], col=3 , do.p="F", vert="T")
+  lines( kd.SV[[4*plot.ndx+k-4]], col=4 , do.p="F", vert="T")
   if (k > 2 )
      legend("topright", c("MCMC", "PL", "Liu-West", "Storvik"), lty=c(1,1,1,1),col=1:4)
 }
@@ -323,4 +259,29 @@ for (k in 1:4) {
 savePlot(filename=paste("../../data/SIRDsims/density-comp-parts-PL",.ndx,".pdf",sep=""), type="pdf")
 
 
+###################################
+# Compare the impact of the prior
 
+sims.params <- list(    initP=rep(0,N.RXNS),
+    initX=X0,    hyperPrior = as.vector(rbind(prior$theta$a,prior$theta$b))/2,
+    trueTheta = rep(0,N.RXNS) )
+
+.ndx <- 1
+simY <- as.matrix(sims[[.ndx]]$y)
+simX <- as.matrix(sims[[.ndx]]$x)
+sims.params$trueTheta <- thetas[.ndx,]
+sims.params$initP <- probs[.ndx,]
+
+pl.prior <- array(0, dim=c(3,n[.ndx]+1,24))
+for (j in 1:3)
+{
+  
+  simPL <- plSIR(10000,n[.ndx],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  
+  # store all the quantiles; the final quantiles of interest
+  pl.prior[.ndx,1:(n[.ndx]+1),] <- simPL$stat[1,,]
+  
+  sims.params$hyperPrior <- sims.params$hyperPrior*2
+
+}
+plot.ci(pl.prior,simX,thetas[.ndx,],1, col=c("red","blue","green"), in.legend=c("Wide", "Base", "Low"))
