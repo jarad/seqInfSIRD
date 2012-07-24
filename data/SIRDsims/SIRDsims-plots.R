@@ -28,7 +28,7 @@ for (i in 1:length(kd)) {
   j <- floor((i-1)/4)+1
   plot(kd[[i]], main=key[i], 
        xlim=range(kd[[i]]$x, kd.LW[[i]]$x, kd.SV[[i]]$x, kd.PL[[i]]$x),
-       ylim=range(kd[[i]]$y, kd.LW[[i]]$y, kd.SV[[i]]$y, kd.PL[[i]]$y))
+       ylim=range(kd[[i]]$y, kd.LW[[i]]$y, kd.SV[[i]]$y, kd.PL[[i]]$y), ylab="Posterior Density", yaxt="n")
   lines(kd.LW[[i]], col=2)
   lines(kd.SV[[i]], col=3)
   lines(kd.PL[[i]], col=4)
@@ -37,9 +37,9 @@ for (i in 1:length(kd)) {
   points(sv.quantile[j,stat.ndx[[k]] ],rep(0,3),pch=6,col=3, cex=1.5)
   points(pl.quantile[j,stat.ndx[[k]] ],rep(0,3),pch=7,col=4, cex=1.5)
   
-  abline(v=truth[i], col="black")
+  abline(v=truth[i], col="black", lwd=2)
   if (k==2)
-    legend("right", c("MCMC","LW","SV","PL"), col=1:4, lwd=1, bg="white")
+    legend("topright", c("MCMC","LW","SV","PL"), col=1:4, lwd=1, bg="white")
   if (i%%4==0) readline("hit <enter>:")
 }
 
