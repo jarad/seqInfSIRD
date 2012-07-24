@@ -12,6 +12,10 @@ A list of files and their contents:
 
     runs an mcmc analysis on the above simulations
 
+  SIRDsims-mcmc-squential.R
+  SIRDsims-mcmc-sequential.RData (on ISU servers)
+
+    runs a sequential mcmc analysis on one of the above simulations
 
   SIRDsims-mcmc-plotData.R
   SIRDsims-mcmc-density.RData
