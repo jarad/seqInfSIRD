@@ -254,12 +254,16 @@ predictiveLikelihood <- function(X, nextY, theta, prop, weights, Suff)
        
     for (jj in 1:N.RXNS) {
         #weights <- weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])
-        #Analytic form for the predictive likelihood
+        #Analytic form for the predictive likelihood using Negative Binomial
+        pr <- Suff[,2*jj]/(prop[,jj]*h[,jj] + Suff[,2*jj])
+        
+        ndx <- which (Suff[,2*jj-1] > 0 & pr > 0)
+        weights[ndx] <- weights[ndx]*dnbinom(nextY[jj],size=Suff[ndx,2*jj-1],prob=pr[ndx])
         #Use logs to make sure things do not blow up
-        GamTerm <- log(Suff[,2*jj])*Suff[,2*jj-1]- log(Suff[,2*jj]+prop[,jj]*h[,jj])*(nextY[jj]+Suff[,2*jj-1])
-        if (nextY[jj] > 0)
-           GamTerm <- GamTerm + lgamma( nextY[jj] + Suff[,2*jj-1]) - lgamma(Suff[,2*jj-1]) - lgamma(nextY[jj]+1) + log(prop[,jj]*h[,jj])*nextY[jj]
-        weights <- weights*exp(GamTerm)  
+        #GamTerm <- log(Suff[,2*jj])*Suff[,2*jj-1]- log(Suff[,2*jj]+prop[,jj]*h[,jj])*(nextY[jj]+Suff[,2*jj-1])
+        #if (nextY[jj] > 0)
+        #   GamTerm <- GamTerm + lgamma( nextY[jj] + Suff[,2*jj-1]) - lgamma(Suff[,2*jj-1]) - lgamma(nextY[jj]+1) + log(prop[,jj]*h[,jj])*nextY[jj]
+        #weights <- weights*exp(GamTerm)  
     }
     #browser()
     return(weights)
