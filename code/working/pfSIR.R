@@ -39,8 +39,8 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
        X <- t(array(rep(initX,N),dim=c(N.RXNS,N)))
        #X[,2] <- rpois(N, initX[2])  # initial infecteds
        #X[,1] <- sum(initX) - X[,2]           # S_0 = N - I_0, R_0 =0, D_0 = 0
-       lambda <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
-       #lambda[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
+       pSamp <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
+       #pSamp[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
        Suff <- t(array(rep(hyperPrior,N), dim=c(2*N.RXNS,N))) # sufficient conjugate statistics
        fixTheta <- array(0,dim=c(N,N.RXNS))
 
@@ -67,11 +67,11 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
             theta <- fixTheta
         
         # propagate particles 
-        out <- model.propagate.func(t(X), t(theta),lambda,curY=Y[i,],hyper=Suff)
+        out <- model.propagate.func(t(X), t(theta),pSamp,curY=Y[i,],hyper=Suff)
         X <- t(out$X); dX <- t(out$dX); Suff <- out$hyper
         
         # update weights
-        p.weights <- updateWeights(dX,Y[i,],lambda,p.weights)
+        p.weights <- updateWeights(dX,Y[i,],pSamp,p.weights)
         curt <- (i-1)*dt
 
          if ( i %%15  == 6 & verbose =="HIST") # plot posterior of infectiousness parameter every 15 steps
@@ -104,7 +104,7 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
          X <- X[newIndex,] 
          if (is.null(Suff) == 0)
              Suff <- Suff[newIndex,]
-         lambda <- lambda[newIndex,]
+         pSamp <- pSamp[newIndex,]
          fixTheta <- fixTheta[newIndex,]
          theta <- theta[newIndex,]
          
@@ -128,7 +128,8 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
       }
    }
    
-    kd <- build.density(X,theta,Suff)
+   if (verbose != "NONE")
+      kd <- build.density(X,theta,Suff)
     
    if (verbose=='CI')  # plot some CI over time 
       plot.ci(saved.stats,trueX[1:i,],trueTheta,1,col)
@@ -199,6 +200,9 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL)
       for (i in 1:N.RXNS) {
         hyper[,2*i-1] <- hyper[,2*i-1] + newX[i,] #Y[i]
         hyper[,2*i] <- hyper[,2*i] +  h[,i] # prop[,i]*
+        
+        hyper[,2*(i+N.RXNS)-1] <- hyper[,2*(i+N.RXNS)-1] + Y[i]
+        hyper[,2*(i+N.RXNS)] <- hyper[,2*(i+N.RXNS)] + newX[i,] - Y[i]
       }
     
     return(list(X=out$X,dX=newX,hyper=hyper,Y=Y))
@@ -253,12 +257,12 @@ predictiveLikelihood <- function(X, nextY, theta, prop, weights, Suff)
        h[j,]  <- hazard.R(X[j,], sum(X[j,]))   
        
     for (jj in 1:N.RXNS) {
-        #weights <- weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])
+        weights <- weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])
         #Analytic form for the predictive likelihood using Negative Binomial
-        pr <- Suff[,2*jj]/(prop[,jj]*h[,jj] + Suff[,2*jj])
+        #pr <- Suff[,2*jj]/(prop[,jj]*h[,jj] + Suff[,2*jj])
         
-        ndx <- which (Suff[,2*jj-1] > 0 & pr > 0)
-        weights[ndx] <- weights[ndx]*dnbinom(nextY[jj],size=Suff[ndx,2*jj-1],prob=pr[ndx])
+        #ndx <- which (Suff[,2*jj-1] > 0 & pr > 0)
+        #weights[ndx] <- weights[ndx]*dnbinom(nextY[jj],size=Suff[ndx,2*jj-1],prob=pr[ndx])
         #Use logs to make sure things do not blow up
         #GamTerm <- log(Suff[,2*jj])*Suff[,2*jj-1]- log(Suff[,2*jj]+prop[,jj]*h[,jj])*(nextY[jj]+Suff[,2*jj-1])
         #if (nextY[jj] > 0)
@@ -289,7 +293,7 @@ saveStats <- function(X, theta)
 
 #######################################################
 # Construct the densities of the particles
-build.density <- function(X, theta, Suff)
+build.density <- function(X, theta, Suff,sampP=NULL)
 {
    N <- dim(X)[1]
    kd <- list()
@@ -313,6 +317,12 @@ build.density <- function(X, theta, Suff)
         h1[jj] <- sum(dgamma(kd[[4]]$x[jj],Suff[,3],Suff[,4]))
      kd[[4]]$y <- h1/N
    }
+   
+   if (is.null(sampP) == F) {
+     kd[[5]] <- density(sampP[,1])
+     kd[[6]] <- density(sampP[,2])
+   }  
+   
    return(kd)
 }
 
@@ -390,12 +400,14 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
        X <- t(array(rep(initX, N),dim=c(N.RXNS,N)))
        #X[,2] <- rpois(N, initX[2])  # initial infecteds
        #X[,1] <- sum(initX) - X[,2]           # S_0 = N - I_0, R_0 =0, D_0 = 0
-       lambda <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
-       #lambda[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
-       Suff <- t(array(rep(hyperPrior,N), dim=c(2*N.RXNS,N))) # sufficient conjugate statistics
+       pSamp <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
+       #pSamp[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
+       Suff <- t(array(rep(hyperPrior,N), dim=c(4*N.RXNS,N))) # sufficient conjugate statistics
        theta <- array(0,dim=c(N,N.RXNS))
        for (jj in 1:N.RXNS)
                theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
+       for (jj in 1:N.RXNS)
+               pSamp[,jj] <- rbeta(N,Suff[,2*(jj+N.RXNS)-1],Suff[,2*(jj+N.RXNS)])
        
        p.weights <- array(1, N)/N
 
@@ -407,24 +419,28 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
        ####### MAIN LOOP OVER OBSERVATIONS
        while (curt < T-dt) {
            #browser()
+           
+           # Sample from the posterior mixtures
+           for (jj in 1:N.RXNS)
+               theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
+           for (jj in 1:N.RXNS)
+               pSamp[,jj] <- rbeta(N,Suff[,2*(jj+N.RXNS)-1],Suff[,2*(jj+N.RXNS)])
+            
                
            # resample 
            if (!is.nan(Y[i,1])) # else missing observation for that date
            {  
-             p.weights <- predictiveLikelihood(X, Y[i,], theta, lambda, p.weights,Suff)
+             p.weights <- predictiveLikelihood(X, Y[i,], theta, pSamp, p.weights,Suff)
              newIndex <- resample.func(p.weights) 
          
              X <- X[newIndex,] 
              Suff <- Suff[newIndex,]
-             lambda <- lambda[newIndex,]
-             #theta <- theta[newIndex,]
+             pSamp <- pSamp[newIndex,]
+             theta <- theta[newIndex,]
              p.weights <- rep(1/N, N)
            }
-           # Sample from the posterior Gamma mixtures
-           for (jj in 1:N.RXNS)
-               theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
-       
-           out <- model.propagate.func(t(X), t(theta),lambda,curY=Y[i,],hyper=Suff)
+           
+           out <- model.propagate.func(t(X), t(theta),pSamp,curY=Y[i,],hyper=Suff)
            X <- t(out$X); Suff <- out$hyper
 
            curt <- (i-1)*dt
@@ -432,14 +448,21 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
            if ( i %%15  == 6 & verbose =="HIST") # plot posterior of infectiousness parameter
            {
                # construct exact Gamma pdf on a grid
-               gridx <- seq(trueTheta[1]-0.25,trueTheta[1]+0.25,by=0.005)
+               gridx <- seq(initP[1]-0.1,initP[1]+0.1,by=0.001)
                gridy <- array(0, length(gridx))
                for (jj in 1:length(gridx))
-                  gridy[jj] <- sum(dgamma(gridx[jj],Suff[,1],Suff[,2]))
+                  gridy[jj] <- sum(dbeta(gridx[jj],Suff[,9],Suff[,10]))
+               
+               #gridx <- seq(trueTheta[1]-0.25,trueTheta[1]+0.25,by=0.005)
+               #gridy <- array(0, length(gridx))
+               #for (jj in 1:length(gridx))
+               #   gridy[jj] <- sum(dgamma(gridx[jj],Suff[,1],Suff[,2]))
+               #browser()
 
-               plot(gridx,gridy/N,type="l",col=col,main=sprintf("t=%d",curt),xlab='S->I Rate',yaxt="n")
+               par(mfg=c(1,ceiling(i/15))) 
+               lines(gridx,gridy/N,type="l",col=col,main=sprintf("t=%d",curt),xlab='S->I Rate',yaxt="n")
              
-               abline(v=trueTheta[1], col="red")
+               abline(v=initP[1], col="red")
            }
            totalWeight <- totalWeight*sum(p.weights)
 
@@ -449,7 +472,8 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
       }
    }
   
-   kd <- build.density(X,theta,Suff)
+   if (verbose != "NONE")
+     kd <- build.density(X,theta,Suff,pSamp)
    
    
    #browser()
