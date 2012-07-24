@@ -110,3 +110,20 @@ plot.ci.mcError <- function(in.stats, which.var,col1="#ddddddaa", col2="blue")
 
 }
 
+#######################################
+# Compute absolute difference between two cdfs specified as (x,y) lists
+cdf.diff <- function( density1, density2)
+{
+   cdf1 <- cumsum(density1$y)/sum(density1$y)
+   step1 <- stepfun(density1$x, c(cdf1,1))
+   
+   cdf2 <- cumsum(density2$y)/sum(density2$y)
+   step2 <- stepfun(density2$x, c(cdf2,1))
+   
+   ss <- seq( min(min(density1$x),min(density2$x)), max(max(density1$x),max(density2$x)), len=1000)
+   
+   df <- sum(abs(step1(ss)-step2(ss)))*(ss[2]-ss[1])
+
+   return(list(diff=df,cdf1=step1,cdf2=step2))
+}
+
