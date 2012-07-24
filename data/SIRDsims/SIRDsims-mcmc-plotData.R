@@ -31,4 +31,21 @@ for (i in 1:n.sims) {
 
 colnames(sims.MCMC) = paste(rep(c("S","SI","I","IR"),each=3),c("50","2.5","97.5"))
 write.csv(sims.MCMC,"SIRDsims-mcmc-quantiles.csv",row.names=F)
-this = read.csv("SIRDsims-mcmc-quantiles.csv")
+
+
+################################################
+# Sequential MCMC analysis
+################################################
+rm(list=ls())
+load("SIRDsims-mcmc-sequential.RData")
+
+sims.MCMC = matrix(NA,n,3*4)
+for (i in 2:n) {
+  cols = c(2+i,1,2+2*i,2)
+  tmp = apply(as.matrix(res[[i]][,cols]), 2, function(x) quantile(x,prob=c(.5,.025,.975)))
+  sims.MCMC[i,] = as.vector(tmp[])
+}
+
+colnames(sims.MCMC) = paste(rep(c("S","SI","I","IR"),each=3),c("50","2.5","97.5"))
+write.csv(sims.MCMC,"SIRDsims-mcmc-seq-quants.csv",row.names=F)
+
