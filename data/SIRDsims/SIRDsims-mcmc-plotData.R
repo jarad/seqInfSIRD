@@ -10,7 +10,11 @@ ii = 1
 for (i in 1:n.sims) {
   kd[[ii]] = density(unlist(res[[i]][,2+n[i]])) # S
   ii = ii+1
-  kd[[ii]] = density(unlist(res[[i]][,2+2*n[i]]),bw=1) # I
+  dat = unlist(res[[i]][,2+2*n[i]])
+  x = seq(range(dat)[1],range(dat)[2])
+  y = rep(NA,length(x))
+  for (i in 1:length(x)) y[i] = mean(dat==x[i])
+  kd[[ii]] =  # I
   ii = ii+1
   kd[[ii]] = density(unlist(res[[i]][,1])) # S->I
   ii = ii+1
