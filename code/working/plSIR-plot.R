@@ -3,13 +3,21 @@
 # Plot the 95% CI over time: default is to show beta/gamma only
 # which.dim -- what to plot
 #
-plot.ci <- function(saved.stats,trueX,trueTheta,sir.plotCI=0,col="blue",plot.diff=0, which.dim=c(1,2),in.legend=NULL,ltype=1)
+plot.ci <- function(saved.stats,trueX,trueTheta,sir.plotCI=0,col=NULL,plot.diff=0, which.dim=c(1,2),in.legend=NULL,ltype=1,shade.poly=F)
 {
    par(mfcol=c(2,length(which.dim)),mar=c(4,3,2,1)+0.1, oma=c(0,0,0,1))
    XLab <- c("S", "I", "R", "D")
    TLab <- c("S->I", "I->R", "S->R","I->D")
    n.comps <- dim(saved.stats)[1]
-   col.list <- c(col,2:n.comps)
+   if (length(col) == 1 && is.numeric(col))
+      col.list <- c(col:(col+n.comps-1))
+   else if (length(col) == 0)
+      col.list <- c("#bbbbbbcc", "#6666bbcc", "#bb6666cc", "#66bb66cc", "#666666cc") #
+   else
+      col.list <- rep(col, n.comps)
+   
+   if (length(ltype)==1)
+     ltype = rep(ltype, n.comps)
    
    for (jj in which.dim)
    {
@@ -44,7 +52,7 @@ plot.ci <- function(saved.stats,trueX,trueTheta,sir.plotCI=0,col="blue",plot.dif
          for (k in 1:n.comps) {
             if (k==1)
                plot(1:len,saved.stats[k,,(6*jj-5)],col=col.list[k],lwd=2,type="l",ylab='',main=XLab[jj],lty=ltype[k],
-                  xlab='',ylim=c(min(saved.stats[k,,(6*jj-4)]),max(max(saved.stats[k,,(6*jj-5)]),0.7*max(saved.stats[k,,(6*jj-3)]))))
+                  xlab='',ylim=c(min(saved.stats[k,,(6*jj-4)]),max(max(saved.stats[k,,(6*jj-5)]),0.97*max(saved.stats[k,,(6*jj-3)]))))
             else
                lines(1:len,saved.stats[k,,(6*jj-5)],col=col.list[k],lwd=2,lty=ltype[k])
             
@@ -71,6 +79,9 @@ plot.ci <- function(saved.stats,trueX,trueTheta,sir.plotCI=0,col="blue",plot.dif
             lines(1:len,saved.stats[k,,(6*jj-2)],col=col.list[k], lwd=2.5,lty=ltype[k])  
           
          if (sir.plotCI == 1) {
+            len <- dim(saved.stats)[2]
+            if (shade.poly == T)
+                polygon(c(1:len,len:1),c(saved.stats[k,,(6*jj-1)],saved.stats[k,len:1,(6*jj)]),col=col.list[k],border=NA)
             lines(1:len,saved.stats[k,,(6*jj-1)],col=col.list[k],lty=3)
             lines(1:len,saved.stats[k,,6*jj],col=col.list[k],lty=3)
          }
