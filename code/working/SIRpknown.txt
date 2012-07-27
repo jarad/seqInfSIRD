@@ -1,0 +1,47 @@
+# This will not work for second-order or higher transitions,
+# i.e. when Pre>1 for any element
+#
+# sampling proportion, p, is assumed known
+# 
+model {
+  ################# Observation equation #################
+  for (i in 1:n) {
+    for (j in 1:n.transitions) {
+      y[i,j]  ~ dbin(p[j],dx[i,j]) # Observed transitions
+      dx[i,j] ~ dpois(h[i,j])      # Actual transitions
+    }
+  } 
+
+  ################ Evolution equation #####################
+  for (i in 2:n) {
+    for (j in 1:n.transitions) {
+      # Transition hazard
+      h[i,j]    <- theta[j]*exp(logf[i,j])  # would prefer a function that takes the product of the component-wise a^b
+      logf[i,j] <- inprod(Pre[j,],log(x[i-1,]))
+    }
+
+    for (j in 1:n.states) {
+      # Update states
+      x[i,j] <- x[i-1,j]+inprod(stoich[,j], dx[i,])
+    }
+  }
+
+  ############### Evolution for t=1 ###################### 
+  for (j in 1:n.transitions) {
+    # Transition hazard
+    h[i,j]    <- theta[j]*exp(logf[i,j])    # would prefer a function that takes the product of the component-wise a^b
+    logf[i,j] <- inprod(Pre[j,],log(x[i-1,]))
+  }
+
+  for (j in 1:n.states) {
+    # Update states
+    x[i,j] <- X0+inprod(stoich[,j], dx[i,])
+  }
+
+
+  ###################### Priors #########################
+  for (j in 1:n.transitions) {
+    theta[j] ~ dgamma(a[j],b[j])
+  }
+}
+
