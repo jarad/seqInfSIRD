@@ -173,28 +173,43 @@ gillespieStep <- function(X, theta, prop,curY = NULL,hyper=NULL)
 tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL)
 {
     h <- t(X)
-    dX <- X
     hyper2 <- array(1, dim=c(N.RXNS,2,dim(X)[2])) # one.step.C takes in 4x2xN while hyper is Nx8
-    
-    out <- one.step.C(X, hyper2, theta, t(prop), sample=T)
-    
-    for (j in 1:dim(X)[2])
-    {    
-       #out <- simulate.one.step.C(X[,j],theta[,j],sum(X[,j]) )
-       #dX[,j] <- out$dX
-       #X[,j] <- out$X
+    for (j in 1:dim(X)[2]) # needed for hyper-parameter updating
        h[j,]  <- hazard.R(X[,j], sum(X[,j]))   
-    }
-    #browser()
-    newX <- out$newX
-    newX[is.nan(newX)] <- 0  # to take care of the case when some proportions are zero
-       
-    if (is.null(curY))
+    
+        
+ if (is.null(curY))  {  # generate X directly, no observations available   
+        out <- one.step.C(X, hyper2, theta, t(prop), sample=T)
+        newX <- out$newX
+        newX[is.nan(newX)] <- 0  # to take care of the case when some proportions are zero
         Y <- rbinom(N.RXNS, newX[,1], prop)
-    else
-        Y <- curY
-    #Y[is.nan(Y)] <- 0
-
+        X2 <- out$X
+ }
+ else {
+    Y <- curY
+    ndx <- 1:dim(X)[2]
+    X2 <- X
+    newX <- X
+    
+    while (length(ndx)> 0) {
+      out <-  one.step.C(X[,ndx],hyper2[,,ndx], theta[,ndx]*(1-t(prop[ndx,])), t(prop[ndx,]), sample=T)
+    
+      X2[,ndx] <- out$X
+      newX[,ndx] <- out$newX
+      for (i in 1:N.RXNS)
+        newX[i,ndx] <- newX[i,ndx] + Y[i]
+      
+      X2[1,ndx] <- X[1,ndx]-newX[1,ndx]            -newX[3,ndx]
+      X2[2,ndx] <- X[2,ndx]+newX[1,ndx]-newX[2,ndx]          -newX[4,ndx]
+      X2[3,ndx] <- X[3,ndx]            +newX[2,ndx]+newX[3,ndx]
+      X2[4,ndx] <- X[4,ndx]                                  +newX[4,ndx]
+    
+      ndx <- which( apply(X2>=0,2,all) == F)
+      if (length(ndx) == 1)
+        ndx <- c(1,ndx)
+      #browser()
+    }
+    
     # update the hyperparameters
     if (!is.null(hyper) & !is.nan(Y[1])) 
       for (i in 1:N.RXNS) {
@@ -204,8 +219,9 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL)
         hyper[,2*(i+N.RXNS)-1] <- hyper[,2*(i+N.RXNS)-1] + Y[i]
         hyper[,2*(i+N.RXNS)] <- pmax(1, hyper[,2*(i+N.RXNS)] + newX[i,] - Y[i]) ## HACK FOR NOW to make sure its nonneg
       }
-    
-    return(list(X=out$X,dX=newX,hyper=hyper,Y=Y))
+ 
+ }   
+ return(list(X=X2,dX=newX,hyper=hyper,Y=Y))
 }
 
 ###############################################
