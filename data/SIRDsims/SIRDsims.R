@@ -10,8 +10,8 @@ X0 = c(16000,2,0,0)
 
 
 # Parameters
-ItoRrate = rgamma(2, .5*100,100)
-R        = runif( 2,1,3)
+ItoRrate = c(.4,.6)
+R        = c(1.5,2.0,2.5)
 
 probs    = c(.1,.5)
 parms    = expand.grid(ItoRrate=ItoRrate,R=R,StoIprob=probs, ItoRprob=probs)
