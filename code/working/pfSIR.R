@@ -202,7 +202,7 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL)
         hyper[,2*i] <- hyper[,2*i] +  h[,i] # prop[,i]*
         
         hyper[,2*(i+N.RXNS)-1] <- hyper[,2*(i+N.RXNS)-1] + Y[i]
-        hyper[,2*(i+N.RXNS)] <- hyper[,2*(i+N.RXNS)] + newX[i,] - Y[i]
+        hyper[,2*(i+N.RXNS)] <- pmax(1, hyper[,2*(i+N.RXNS)] + newX[i,] - Y[i]) ## HACK FOR NOW to make sure its nonneg
       }
     
     return(list(X=out$X,dX=newX,hyper=hyper,Y=Y))
@@ -257,12 +257,15 @@ predictiveLikelihood <- function(X, nextY, theta, prop, weights, Suff)
        h[j,]  <- hazard.R(X[j,], sum(X[j,]))   
        
     for (jj in 1:N.RXNS) {
-        weights <- weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])
+        if (.UNKNOWNP)
+           weights <- weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])
         #Analytic form for the predictive likelihood using Negative Binomial
-        #pr <- Suff[,2*jj]/(prop[,jj]*h[,jj] + Suff[,2*jj])
+        else {
+           pr <- Suff[,2*jj]/(prop[,jj]*h[,jj] + Suff[,2*jj])
         
-        #ndx <- which (Suff[,2*jj-1] > 0 & pr > 0)
-        #weights[ndx] <- weights[ndx]*dnbinom(nextY[jj],size=Suff[ndx,2*jj-1],prob=pr[ndx])
+           ndx <- which (Suff[,2*jj-1] > 0 & pr > 0)
+           weights[ndx] <- weights[ndx]*dnbinom(nextY[jj],size=Suff[ndx,2*jj-1],prob=pr[ndx])
+        }
         #Use logs to make sure things do not blow up
         #GamTerm <- log(Suff[,2*jj])*Suff[,2*jj-1]- log(Suff[,2*jj]+prop[,jj]*h[,jj])*(nextY[jj]+Suff[,2*jj-1])
         #if (nextY[jj] > 0)
@@ -297,8 +300,9 @@ build.density <- function(X, theta, Suff,sampP=NULL)
 {
    N <- dim(X)[1]
    kd <- list()
-   h1 <- hist(X[,1],breaks=seq(min(X[,1]),max(X[,1])+5, by=5),plot=F) # for S 
-   kd[[1]] <- stepfun(h1$breaks, c(0,h1$counts/N/5,0)) # S
+   #h1 <- hist(X[,1],breaks=seq(min(X[,1]),max(X[,1])+5, by=5),plot=F) # for S 
+   #kd[[1]] <- stepfun(h1$breaks, c(0,h1$counts/N/5,0)) # S
+   kd[[1]] <- density(X[,1])
    
    h1 <- hist(X[,2],breaks=min(X[,2]):(max(X[,2])+1),plot=F) # for I 
    kd[[2]] <- stepfun(h1$breaks, c(0,h1$counts/N,0)) #(density(X[,2],bw=1) # I
@@ -402,11 +406,15 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
        #X[,1] <- sum(initX) - X[,2]           # S_0 = N - I_0, R_0 =0, D_0 = 0
        pSamp <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
        #pSamp[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
-       Suff <- t(array(rep(hyperPrior,N), dim=c(4*N.RXNS,N))) # sufficient conjugate statistics
+       if (.UNKNOWNP)
+         Suff <- t(array(rep(hyperPrior,N), dim=c(4*N.RXNS,N))) # sufficient conjugate statistics
+       else
+         Suff <- t(array(rep(hyperPrior,N), dim=c(4*N.RXNS,N)))
        theta <- array(0,dim=c(N,N.RXNS))
        for (jj in 1:N.RXNS)
                theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
-       for (jj in 1:N.RXNS)
+       if (.UNKNOWNP)          
+           for (jj in 1:N.RXNS)
                pSamp[,jj] <- rbeta(N,Suff[,2*(jj+N.RXNS)-1],Suff[,2*(jj+N.RXNS)])
        
        p.weights <- array(1, N)/N
@@ -423,8 +431,9 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
            # Sample from the posterior mixtures
            for (jj in 1:N.RXNS)
                theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
-           for (jj in 1:N.RXNS)
-               pSamp[,jj] <- rbeta(N,Suff[,2*(jj+N.RXNS)-1],Suff[,2*(jj+N.RXNS)])
+           if (.UNKNOWNP)
+              for (jj in 1:N.RXNS)
+                 pSamp[,jj] <- rbeta(N,Suff[,2*(jj+N.RXNS)-1],Suff[,2*(jj+N.RXNS)])
             
                
            # resample 
@@ -432,6 +441,7 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
            {  
              p.weights <- predictiveLikelihood(X, Y[i,], theta, pSamp, p.weights,Suff)
              newIndex <- resample.func(p.weights) 
+             
          
              X <- X[newIndex,] 
              Suff <- Suff[newIndex,]
@@ -439,6 +449,9 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
              theta <- theta[newIndex,]
              p.weights <- rep(1/N, N)
            }
+           if (.UNKNOWNP == "F")
+              for (jj in 1:N.RXNS)
+                 theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
            
            out <- model.propagate.func(t(X), t(theta),pSamp,curY=Y[i,],hyper=Suff)
            X <- t(out$X); Suff <- out$hyper
@@ -448,21 +461,23 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
            if ( i %%15  == 6 & verbose =="HIST") # plot posterior of infectiousness parameter
            {
                # construct exact Gamma pdf on a grid
-               gridx <- seq(initP[1]-0.1,initP[1]+0.1,by=0.001)
-               gridy <- array(0, length(gridx))
-               for (jj in 1:length(gridx))
-                  gridy[jj] <- sum(dbeta(gridx[jj],Suff[,9],Suff[,10]))
-               
-               #gridx <- seq(trueTheta[1]-0.25,trueTheta[1]+0.25,by=0.005)
-               #gridy <- array(0, length(gridx))
-               #for (jj in 1:length(gridx))
-               #   gridy[jj] <- sum(dgamma(gridx[jj],Suff[,1],Suff[,2]))
+               if (.UNKNOWNP) {
+                 gridx <- seq(initP[1]-0.1,initP[1]+0.1,by=0.001)
+                 gridy <- array(0, length(gridx))
+                 for (jj in 1:length(gridx))
+                    gridy[jj] <- sum(dbeta(gridx[jj],Suff[,9],Suff[,10]))
+               } else {
+                 gridx <- seq(trueTheta[1]-0.25,trueTheta[1]+0.25,by=0.005)
+                 gridy <- array(0, length(gridx))
+                 for (jj in 1:length(gridx))
+                  gridy[jj] <- sum(dgamma(gridx[jj],Suff[,1],Suff[,2]))
+               }
                #browser()
 
-               par(mfg=c(1,ceiling(i/15))) 
-               lines(gridx,gridy/N,type="l",col=col,main=sprintf("t=%d",curt),xlab='S->I Rate',yaxt="n")
+               #par(mfg=c(1,ceiling(i/15))) 
+               plot(gridx,gridy/N,type="l",col=col,main=sprintf("t=%d",curt),xlab='S->I Rate',yaxt="n")
              
-               abline(v=initP[1], col="red")
+               #abline(v=initP[1], col="red")
            }
            totalWeight <- totalWeight*sum(p.weights)
 

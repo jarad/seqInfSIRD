@@ -104,7 +104,7 @@ for (j in 1:1)
   simY[,3:4] <- 0
   simX <- as.matrix(sims[[j]]$x)
   
-  simPL <- plSIR(12000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simPL <- plSIR(10000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   simLW <- particleSampledSIR(aLW=0.98,12000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   simSV <- particleSampledSIR(aLW=2,12000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   
@@ -141,6 +141,20 @@ write.csv(smc.SV,"../../data/SIRDsims/SIRDsims-smcSV-quantiles.csv",row.names=F)
 
 #####################################
 # Make a plot to compare MCMC vs SMC
+######################################
+# Compare the sequential run for scenario 1
+seq.mcmc <- read.csv("SIRDsims-mcmc-seq-quants.csv")
+comp.quants <- array(0, dim=c(2,n[1],12))
+
+comp.quants[2,,]<-as.matrix(seq.mcmc)
+comp.quants[1,,]<-simPL$stat[1,2:(n[1]+1),1:12]
+ plot.ci(comp.quants,simX[2:(n[1]+1),],sims.params$trueTheta,col=8,in.legend=c("PL","MCMC"),sir.plotCI=1,ltype=c(1,1))
+
+
+
+
+######################################
+# Compare terminal densities
 
 mcmc.quantile <- read.csv("../../data/SIRDsims/SIRDsims-mcmc-quantiles.csv")
 pl.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcPL-quantiles.csv")
@@ -155,14 +169,22 @@ par(mfrow=c(2,2),mar=c(4,3,2,1), oma=c(0,0,0,1), mgp=c(1,1,0))
 XLab <- c("S", "I", "S->I", "I->R")
 stat.ndx <- c(1,7,4,10);
 for (k in 1:4) {
-  plot( kd[[4*plot.ndx+k-4]], col=1, main=XLab[k], xlab="", yaxt="n", ylab="Posterior Density")
-  lines( kd.PL[[4*plot.ndx+k-4]], col=2, do.p="F", vert="T")
+  if (k==2) {
+      plot( kd[[4*plot.ndx+k-4]], col=1, main=XLab[k], xlab="", yaxt="n", ylab="Posterior Density",ylim=c(0,20))
+      lines( kd.PL[[4*plot.ndx+k-4]], col=2 , do.p="F", vert="T")
+      lines( kd.LW[[4*plot.ndx+k-4]], col=3 , do.p="F", vert="T")
+      lines( kd.SV[[4*plot.ndx+k-4]], col=4 , do.p="F", vert="T")
+  }
+  else {
+        plot( kd[[4*plot.ndx+k-4]], col=1, main=XLab[k], xlab="", yaxt="n", ylab="Posterior Density")
+        lines( kd.LW[[4*plot.ndx+k-4]], col=3)
+        lines( kd.SV[[4*plot.ndx+k-4]], col=4)
+        lines( kd.PL[[4*plot.ndx+k-4]], col=2)
+  }
   abline(v=mcmc.quantile[plot.ndx,stat.ndx[k]],pch=4,col=1, cex=1.5)
   abline(v=pl.quantile[plot.ndx,stat.ndx[k]],pch=5,col=2, cex=1.5)
   abline(v=lw.quantile[plot.ndx,stat.ndx[k]],pch=6,col=3, cex=1.5)
   abline(v=sv.quantile[plot.ndx,stat.ndx[k]],pch=7,col=4, cex=1.5)
-  lines( kd.LW[[4*plot.ndx+k-4]], col=3 , do.p="F", vert="T")
-  lines( kd.SV[[4*plot.ndx+k-4]], col=4 , do.p="F", vert="T")
   if (k > 2 )
      legend("topright", c("MCMC", "PL", "Liu-West", "Storvik"), lty=c(1,1,1,1),col=1:4)
 }
@@ -272,16 +294,25 @@ simX <- as.matrix(sims[[.ndx]]$x)
 sims.params$trueTheta <- thetas[.ndx,]
 sims.params$initP <- probs[.ndx,]
 
-pl.prior <- array(0, dim=c(3,n[.ndx]+1,24))
+pl.prior <- array(0, dim=c(4,n[.ndx]+1,24))
 for (j in 1:3)
 {
   
   simPL <- plSIR(10000,n[.ndx],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   
   # store all the quantiles; the final quantiles of interest
-  pl.prior[.ndx,1:(n[.ndx]+1),] <- simPL$stat[1,,]
+  pl.prior[j,1:(n[.ndx]+1),] <- simPL$stat[1,,]
   
   sims.params$hyperPrior <- sims.params$hyperPrior*2
 
 }
-plot.ci(pl.prior,simX,thetas[.ndx,],1, col=c("red","blue","green"), in.legend=c("Wide", "Base", "Low"))
+
+# mis-specified S-> I
+sims.params$hyperPrior <- as.vector(rbind(prior$theta$a,prior$theta$b))
+sims.params$hyperPrior[1] <- 100  # rather than 150
+simPL <- plSIR(10000,n[.ndx],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  
+pl.prior[2,1:(n[.ndx]+1),] <- simPL$stat[1,,]
+
+plot.ci(pl.prior,simX[1:(n[.ndx]+1),],thetas[.ndx,],1, col=c("#000000","#7777ff","#ff3333"), in.legend=c("Wide", "Low", "Narrow"),ltype=1:3)
+savePlot(filename="20120723-prior-sensitivity", type="pdf")
