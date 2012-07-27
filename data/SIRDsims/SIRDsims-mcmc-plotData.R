@@ -14,7 +14,7 @@ for (i in 1:n.sims) {
   x = seq(range(dat)[1],range(dat)[2])
   y = rep(NA,length(x))
   for (j in 1:length(x)) y[j] = mean(dat==x[j])
-  kd[[ii]] =  # I
+  kd[[ii]] = list(x=x,y=y) # I
   ii = ii+1
   kd[[ii]] = density(unlist(res[[i]][,1])) # S->I
   ii = ii+1
