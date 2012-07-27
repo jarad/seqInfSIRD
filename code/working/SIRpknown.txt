@@ -16,26 +16,24 @@ model {
   for (i in 2:n) {
     for (j in 1:n.transitions) {
       # Transition hazard
-      h[i,j]    <- theta[j]*exp(logf[i,j])  # would prefer a function that takes the product of the component-wise a^b
-      logf[i,j] <- inprod(Pre[j,],log(x[i-1,]))
+      h[i,j]    <- theta[j]*prod(x[i-1,]^Pre[j,]) 
     }
 
     for (j in 1:n.states) {
       # Update states
-      x[i,j] <- x[i-1,j]+inprod(stoich[,j], dx[i,])
+      x[i,j] <- x[i-1,j]+inprod(stoich[j,], dx[i,])
     }
   }
 
   ############### Evolution for t=1 ###################### 
   for (j in 1:n.transitions) {
     # Transition hazard
-    h[i,j]    <- theta[j]*exp(logf[i,j])    # would prefer a function that takes the product of the component-wise a^b
-    logf[i,j] <- inprod(Pre[j,],log(x[i-1,]))
+    h[1,j]    <- theta[j]*prod(X0^Pre[,j]) 
   }
 
   for (j in 1:n.states) {
     # Update states
-    x[i,j] <- X0+inprod(stoich[,j], dx[i,])
+    x[1,j] <- X0+inprod(stoich[j,], dx[1,])
   }
 
 
