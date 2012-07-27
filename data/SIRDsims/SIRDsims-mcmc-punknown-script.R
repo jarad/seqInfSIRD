@@ -1,6 +1,9 @@
 require(rjags)
 load("SIRDsims.RData")
 
+N.RXNS = 2
+N.STATES = 3
+
 res = list()
 run.time = matrix(NA,length(sims),3)
 for (i in 1:length(sims)) {
