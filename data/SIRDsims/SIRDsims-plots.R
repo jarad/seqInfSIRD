@@ -23,6 +23,8 @@ par(mfrow=c(2,2),mar=c(4,4,2,1), oma=c(0,0,0,1))
 stat.ndx <- list();
 stat.ndx[[1]] <- 1:3;  stat.ndx[[2]] <- 7:9; 
 stat.ndx[[3]] <- 4:6;  stat.ndx[[4]] <- 10:12;
+
+pdf("method-comparison.pdf")
 for (i in 1:length(kd)) {
   k <- (i-1) %% 4 + 1
   j <- floor((i-1)/4)+1
@@ -40,6 +42,7 @@ for (i in 1:length(kd)) {
   abline(v=truth[i], col="black", lwd=2)
   if (k==2)
     legend("topright", c("MCMC","LW","SV","PL"), col=1:4, lwd=1, bg="white")
-  if (i%%4==0) readline("hit <enter>:")
+  #if (i%%4==0) readline("hit <enter>:")
 }
+dev.off()
 
