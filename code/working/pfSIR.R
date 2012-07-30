@@ -36,7 +36,7 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
     for (loop in 1:LOOPN) {    # run the filter LOOPN times to understand MC variance if needed
     
        # Initialize particles
-       X <- t(array(rep(initX,N),dim=c(N.RXNS,N)))
+       X <- t(array(rep(initX,N),dim=c(N.STATES,N)))
        #X[,2] <- rpois(N, initX[2])  # initial infecteds
        #X[,1] <- sum(initX) - X[,2]           # S_0 = N - I_0, R_0 =0, D_0 = 0
        #pSamp[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
@@ -203,8 +203,9 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL,cond=FALSE)
     ndx <- 1:dim(X)[2]
     X2 <- X
     newX <- X
+    counter <- 1
     
-    while (length(ndx)> 0) {
+    while (length(ndx)> 0 & counter < 10) {
       out <-  one.step.C(X[,ndx],hyper2[,,ndx], theta[,ndx]*(1-t(prop[ndx,])), t(prop[ndx,]), sample=T)
     
       #X2[,ndx] <- out$X
@@ -212,16 +213,16 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL,cond=FALSE)
       for (i in 1:N.RXNS)
         newX[i,ndx] <- newX[i,ndx] + Y[i]
       
-      X2[1,ndx] <- X[1,ndx]-newX[1,ndx]            -newX[3,ndx]
-      X2[2,ndx] <- X[2,ndx]+newX[1,ndx]-newX[2,ndx]          -newX[4,ndx]
-      X2[3,ndx] <- X[3,ndx]            +newX[2,ndx]+newX[3,ndx]
-      X2[4,ndx] <- X[4,ndx]                                  +newX[4,ndx]
-    
+      X2[,ndx] <- X[,ndx] + stoichSIRD %*% newX[,ndx]
+          
       ndx <- which( apply(X2>=0,2,all) == F)
       if (length(ndx) == 1)
         ndx <- c(1,ndx)
+      
+      counter <- counter+1
       #browser()
     }
+    X2 <- pmax(X2,0)
 }
     
     # update the hyperparameters
@@ -246,7 +247,7 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL,cond=FALSE)
 generate.scenario <- function(model.params,model.propagate.func,T,seed=NULL)    
 {
 
-        X <- array(0, dim=c(T+1,N.RXNS))
+        X <- array(0, dim=c(T+1,N.STATES))
         Y <- array(0,dim=c(T+1,N.RXNS))
        
          X[1,] <- model.params$initX
@@ -434,14 +435,14 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
     for (loop in 1:LOOPN) {
     
        # Initialize particles
-       X <- t(array(rep(initX, N),dim=c(N.RXNS,N)))
+       X <- t(array(rep(initX, N),dim=c(N.STATES,N)))
        #X[,2] <- rpois(N, initX[2])  # initial infecteds
        #X[,1] <- sum(initX) - X[,2]           # S_0 = N - I_0, R_0 =0, D_0 = 0
        pSamp <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
        #pSamp[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
-       if (.UNKNOWNP)
+       if (.UNKNOWNP) # both for p and theta
          Suff <- t(array(rep(hyperPrior,N), dim=c(4*N.RXNS,N))) # sufficient conjugate statistics
-       else
+       else  # only for theta
          Suff <- t(array(rep(hyperPrior,N), dim=c(2*N.RXNS,N)))
        theta <- array(0,dim=c(N,N.RXNS))
        for (jj in 1:N.RXNS)
