@@ -23,7 +23,7 @@ N.RXNS   = ncol(stoich)
 # S -> I -> R -> D & S -> R
 # These are here for Mike's ease of use, but should be deprecated
 PreSIRD  = rbind(c(1,1,0,0),c(0,1,0,0),c(1,0,0,0),c(0,1,0,0))
-PostSIRD = rbind(c(0,2,0,0),c(0,0,1,0),c(0,0,1,0),c(0,0,0,1)
+PostSIRD = rbind(c(0,2,0,0),c(0,0,1,0),c(0,0,1,0),c(0,0,0,1))
 stoichSIRD = t(PostSIRD-PreSIRD)
 
 
@@ -63,7 +63,7 @@ for (i in 1:nrow(thetas)) {
   n[i] = min(zeros[match(3,diff3)]+3,N)
 }
 
-save(sims,thetas,probs,n,prior, file="SIRDsims.RData")
+save.image(file="SIRDsims.RData")
 
 q("no")
 
