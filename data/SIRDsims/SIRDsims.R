@@ -9,9 +9,24 @@ N = 52 # weekly for a year
 # Initial state
 X0 = c(16000,10,0,0)
 
-# 
-N.STATES = 3
-N.RXNS   = 2
+
+
+# Transition/reaction network
+# S -> I -> R
+Pre  = rbind(c(1,1,0), c(0,1,0))
+Post = rbind(c(0,2,0), c(0,0,1))
+stoich = t(Post-Pre)
+
+N.STATES = nrow(stoich)
+N.RXNS   = ncol(stoich)
+
+# S -> I -> R -> D & S -> R
+# These are here for Mike's ease of use, but should be deprecated
+PreSIRD  = rbind(c(1,1,0,0),c(0,1,0,0),c(1,0,0,0),c(0,1,0,0))
+PostSIRD = rbind(c(0,2,0,0),c(0,0,1,0),c(0,0,1,0),c(0,0,0,1)
+stoichSIRD = t(PostSIRD-PreSIRD)
+
+
 
 # Parameters
 ItoRrate = c(.9,1.1)
