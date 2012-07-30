@@ -3,6 +3,7 @@ source("SMLib.R");
 require(smcUtils)
 require(Hmisc)
 source("pfSIR.R")
+source("plSIR-plot.R")
 
 options(error=recover)
 require(plotrix)
@@ -82,18 +83,19 @@ load("../../data/SIRDsims/SIRDsims.RData")
 load("../../data/SIRDsims/SIRDsims-mcmc-density.RData")
 n.sims <- length(sims)
 
-sim.PL <- array(0, dim=c(n.sims,N.week,24))
-sim.LW <- array(0, dim=c(n.sims,N.week,24))
-sim.SV <- array(0, dim=c(n.sims,N.week,24))
-smc.PL <- array(0, dim=c(n.sims,12))
-smc.LW <- array(0, dim=c(n.sims,12))
-smc.SV <- array(0, dim=c(n.sims,12))
+sim.PL <- array(0, dim=c(2*n.sims,N.week,24))
+sim.LW <- array(0, dim=c(2*n.sims,N.week,24))
+sim.SV <- array(0, dim=c(2*n.sims,N.week,24))
+smc.PL <- array(0, dim=c(2*n.sims,12))
+smc.LW <- array(0, dim=c(2*n.sims,12))
+smc.SV <- array(0, dim=c(2*n.sims,12))
 kd.PL <- list(); kd.LW <- list(); kd.SV <- list();
 i.pl <- 1; i.lw <- 1; i.sv <- 1;
+hp <- c(as.vector(rbind(prior$theta$a,prior$theta$b)),0,10,0,10,as.vector(rbind(prior$p$a,prior$p$b)),0.01,10,0.01,10)
 
 sims.params <- list(    initP=rep(0,N.RXNS),
-    initX=X0,    hyperPrior = as.vector(rbind(prior$theta$a,prior$theta$b)),
-    trueTheta = rep(0,N.RXNS) )
+    initX=X0, trueTheta = rep(0,N.RXNS)
+    )
 
 
 for (j in 1:1)
@@ -103,10 +105,11 @@ for (j in 1:1)
   simY <- as.matrix(sims[[j]]$y)
   simY[,3:4] <- 0
   simX <- as.matrix(sims[[j]]$x)
+  sims.params$hyperPrior <- hp[1:(2*N.RXNS)]
   
-  simPL <- plSIR(10000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
-  simLW <- particleSampledSIR(aLW=0.98,12000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
-  simSV <- particleSampledSIR(aLW=2,12000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simPL <- plSIR(5000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simLW <- particleSampledSIR(aLW=0.99,5000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simSV <- particleSampledSIR(aLW=2,5000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   
   # store all the quantiles; the final quantiles of interest
   sim.PL[j,1:(n[j]+1),] <- simPL$stat[1,,]
