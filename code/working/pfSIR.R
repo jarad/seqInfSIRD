@@ -39,15 +39,23 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
        X <- t(array(rep(initX,N),dim=c(N.RXNS,N)))
        #X[,2] <- rpois(N, initX[2])  # initial infecteds
        #X[,1] <- sum(initX) - X[,2]           # S_0 = N - I_0, R_0 =0, D_0 = 0
-       pSamp <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
        #pSamp[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
-       Suff <- t(array(rep(hyperPrior,N), dim=c(2*N.RXNS,N))) # sufficient conjugate statistics
+       if (.UNKNOWNP)
+         Suff <- t(array(rep(hyperPrior,N), dim=c(4*N.RXNS,N))) # sufficient conjugate statistics
+       else
+         Suff <- t(array(rep(hyperPrior,N), dim=c(2*N.RXNS,N)))
+       
        fixTheta <- array(0,dim=c(N,N.RXNS))
+       pSamp <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
+
 
        # fixed theta particles if implementing Liu-West
        for (jj in 1:N.RXNS)
           fixTheta[,jj] <- rgamma(N, hyperPrior[2*jj-1],hyperPrior[2*jj])
-       
+       if (.UNKNOWNP)
+          for (jj in 1:N.RXNS)
+             pSamp[,jj] <- rbeta(N,hyperPrior[2*(jj+N.RXNS)-1],hyperPrior[2*(jj+N.RXNS)])
+                 
        theta <- fixTheta
        p.weights <- array(1, N)/N
 
@@ -60,8 +68,11 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
        ######### MAIN LOOP OVER OBSERVATIONS ##############
        while (curt < T-dt) {
          if (aLW > 1 & is.null(Suff) == 0)  # Storvik filter: sample from the posterior Gamma mixture
-           for (jj in 1:N.RXNS)
+            for (jj in 1:N.RXNS)
                theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
+         if (.UNKNOWNP & is.null(Suff) == 0)
+            for (jj in 1:N.RXNS)
+               pSamp[,jj] <- rbeta(N,Suff[,2*(jj+N.RXNS)-1],Suff[,2*(jj+N.RXNS)])  
            
          else if (aLW < 1) # use the Liu-West thetas
             theta <- fixTheta
@@ -129,7 +140,7 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
    }
    
    if (verbose != "NONE")
-      kd <- build.density(X,theta,Suff)
+     kd <- build.density(X,theta,Suff,pSamp)
     
    if (verbose=='CI')  # plot some CI over time 
       plot.ci(saved.stats,trueX[1:i,],trueTheta,1,col)
@@ -170,23 +181,25 @@ gillespieStep <- function(X, theta, prop,curY = NULL,hyper=NULL)
 #
 # X is a matrix: each column has 4 rows for SIRD states 
 # theta is a matrix, each column has 4 rows for SIRD rates 
-tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL)
+tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL,cond=FALSE)
 {
     h <- t(X)
     hyper2 <- array(1, dim=c(N.RXNS,2,dim(X)[2])) # one.step.C takes in 4x2xN while hyper is Nx8
     for (j in 1:dim(X)[2]) # needed for hyper-parameter updating
-       h[j,]  <- hazard.R(X[,j], sum(X[,j]))   
+        h[j,]  <- hazard.R(X[,j], sum(X[,j]))   
     
+     Y <- curY
+
         
- if (is.null(curY))  {  # generate X directly, no observations available   
+    if (cond==F)  {  # generate X directly,    
         out <- one.step.C(X, hyper2, theta, t(prop), sample=T)
         newX <- out$newX
         newX[is.nan(newX)] <- 0  # to take care of the case when some proportions are zero
-        Y <- rbinom(N.RXNS, newX[,1], prop)
+        if (is.null(curY))    
+            Y <- rbinom(N.RXNS, newX[,1], prop)
         X2 <- out$X
- }
+   }
  else {
-    Y <- curY
     ndx <- 1:dim(X)[2]
     X2 <- X
     newX <- X
@@ -194,7 +207,7 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL)
     while (length(ndx)> 0) {
       out <-  one.step.C(X[,ndx],hyper2[,,ndx], theta[,ndx]*(1-t(prop[ndx,])), t(prop[ndx,]), sample=T)
     
-      X2[,ndx] <- out$X
+      #X2[,ndx] <- out$X
       newX[,ndx] <- out$newX
       for (i in 1:N.RXNS)
         newX[i,ndx] <- newX[i,ndx] + Y[i]
@@ -209,6 +222,7 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL)
         ndx <- c(1,ndx)
       #browser()
     }
+}
     
     # update the hyperparameters
     if (!is.null(hyper) & !is.nan(Y[1])) 
@@ -216,11 +230,13 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL)
         hyper[,2*i-1] <- hyper[,2*i-1] + newX[i,] #Y[i]
         hyper[,2*i] <- hyper[,2*i] +  h[,i] # prop[,i]*
         
-        hyper[,2*(i+N.RXNS)-1] <- hyper[,2*(i+N.RXNS)-1] + Y[i]
-        hyper[,2*(i+N.RXNS)] <- pmax(1, hyper[,2*(i+N.RXNS)] + newX[i,] - Y[i]) ## HACK FOR NOW to make sure its nonneg
+        if (dim(hyper)[2] == 4*N.RXNS) {
+           hyper[,2*(i+N.RXNS)-1] <- hyper[,2*(i+N.RXNS)-1] + Y[i]
+           hyper[,2*(i+N.RXNS)] <-   hyper[,2*(i+N.RXNS)] + newX[i,] - Y[i]
+        }
       }
  
- }   
+    
  return(list(X=X2,dX=newX,hyper=hyper,Y=Y))
 }
 
@@ -273,15 +289,16 @@ predictiveLikelihood <- function(X, nextY, theta, prop, weights, Suff)
        h[j,]  <- hazard.R(X[j,], sum(X[j,]))   
        
     for (jj in 1:N.RXNS) {
-        if (.UNKNOWNP)
+        if (dim(Suff)[2] == 4*N.RXNS)
            weights <- weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])
-        #Analytic form for the predictive likelihood using Negative Binomial
         else {
+           #Analytic form for the predictive likelihood using Negative Binomial
            pr <- Suff[,2*jj]/(prop[,jj]*h[,jj] + Suff[,2*jj])
         
            ndx <- which (Suff[,2*jj-1] > 0 & pr > 0)
            weights[ndx] <- weights[ndx]*dnbinom(nextY[jj],size=Suff[ndx,2*jj-1],prob=pr[ndx])
         }
+        
         #Use logs to make sure things do not blow up
         #GamTerm <- log(Suff[,2*jj])*Suff[,2*jj-1]- log(Suff[,2*jj]+prop[,jj]*h[,jj])*(nextY[jj]+Suff[,2*jj-1])
         #if (nextY[jj] > 0)
@@ -425,7 +442,7 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
        if (.UNKNOWNP)
          Suff <- t(array(rep(hyperPrior,N), dim=c(4*N.RXNS,N))) # sufficient conjugate statistics
        else
-         Suff <- t(array(rep(hyperPrior,N), dim=c(4*N.RXNS,N)))
+         Suff <- t(array(rep(hyperPrior,N), dim=c(2*N.RXNS,N)))
        theta <- array(0,dim=c(N,N.RXNS))
        for (jj in 1:N.RXNS)
                theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
@@ -469,7 +486,7 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
               for (jj in 1:N.RXNS)
                  theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
            
-           out <- model.propagate.func(t(X), t(theta),pSamp,curY=Y[i,],hyper=Suff)
+           out <- model.propagate.func(t(X), t(theta),pSamp,curY=Y[i,],hyper=Suff,cond=T)
            X <- t(out$X); Suff <- out$hyper
 
            curt <- (i-1)*dt
