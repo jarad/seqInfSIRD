@@ -4,17 +4,17 @@ source("../../code/working/SIRD.R")
 set.seed(1)
       
 # Number of steps              
-N = 100 # weekly for a year
+N = 52 # weekly for a year
 
 # Initial state
-X0 = c(16000,2,0,0)
+X0 = c(16000,10,0,0)
 
 # 
 N.STATES = 3
 N.RXNS   = 2
 
 # Parameters
-ItoRrate = c(.4,.6)
+ItoRrate = c(.9,1.1)
 R        = c(1.5,2.0,2.5)
 
 probs    = c(.1,.5)
@@ -32,10 +32,10 @@ for (i in 1:nrow(thetas)) sims[[i]] = SIRDsim(X0,thetas[i,],probs[i,],N)
 
 prior = list()
 prior$theta = list()
-prior$theta$a = c(150, 50, 0, 0)
-prior$theta$b = c(100,100, 10, 10)
-prior$p$a     = c(1,1,1,1)
-prior$p$b     = c(1,1,1,1)
+prior$theta$a = c(200, 100,  0,  0)
+prior$theta$b = c(100, 100, 10, 10)
+prior$p$a     = c(1, 1, 1, 1)
+prior$p$b     = c(1, 1, 1, 1)
 
 # Find the end of the outbreak
 # defined as 4 consecutive weeks of zero S->I observed
