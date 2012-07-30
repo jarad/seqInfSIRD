@@ -8,6 +8,9 @@ n = 52 # weekly for a year
 # Initial state
 X0 = c(16000,2,0,0)
 
+# 
+N.STATES = 3
+N.RXNS   = 2
 
 # Parameters
 ItoRrate = c(.4,.6)
@@ -29,7 +32,9 @@ for (i in 1:nrow(thetas)) sims[[i]] = SIRDsim(X0,thetas[i,],probs[i,],n)
 prior = list()
 prior$theta = list()
 prior$theta$a = c(150, 50, 0, 0)
-prior$theta$b = c(100,100,10,10)
+prior$theta$b = c(100,100, 10, 10)
+prior$p$a     = c(1,1,1,1)
+prior$p$b     = c(1,1,1,1)
 
 # Find the end of the outbreak
 # defined as 4 consecutive weeks of zero S->I observed
