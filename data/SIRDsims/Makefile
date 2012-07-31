@@ -13,27 +13,23 @@ TARGETS = SIRDsims-mcmc-density.RData \
 
 method-comparison.pdf: $(TARGETS)
 	R CMD BATCH SIRDsims-plots.R
+	git pull origin master
+	git add method-comparison.pdf
+	git commit -m "make: updated method-comparison.pdf"
+	git push
 
 SIRDsims-mcmc-density.RData: SIRDsims-mcmc-script.RData SIRDsims-mcmc-plotData.R
 	R CMD BATCH SIRDsims-mcmc-plotData.R
 	git pull origin master
 	git add SIRDsims-mcmc-density.RData SIRDsims-mcmc-quantiles.csv
-	git commit -m "make:updated SIRDsims-mcmc-sequential.RData and SIRDsims-mcmc-quantiles.csv"
+	git commit -m "make: updated SIRDsims-mcmc-density.RData and SIRDsims-mcmc-quantiles.csv"
 	git push
 
 SIRDsims-mcmc-sequential.RData: SIRDsims-mcmc-script.RData SIRDsims-mcmc-sequential.R
 	R CMD BATCH SIRDsims-mcmc-sequential.R
-	git pull origin master
-	git add SIRDsims-mcmc-sequential.RData
-	git commit -m "make:updated SIRDsims-mcmc-sequential.RData"
-	git push
 
 SIRDsims-mcmc-script.RData: SIRDsims.RData SIRDsims-mcmc-script.R
 	R CMD BATCH SIRDsims-mcmc-script.R
-	git pull origin master
-	git add SIRDsims-mcmc-script.RData
-	git commit -m "make: updated SIRDsims-mcmc-script.RData"
-	git push
 
 SIRDsims.RData: SIRDsims.R
 	R CMD BATCH SIRDsims.R
