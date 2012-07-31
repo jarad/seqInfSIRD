@@ -47,7 +47,7 @@ for (i in 1:nrow(thetas)) sims[[i]] = SIRDsim(X0,thetas[i,],probs[i,],N)
 
 prior = list()
 prior$theta = list()
-prior$theta$a = c(200, 100,  0,  0)
+prior$theta$a = c( 40,  20,  0,  0)
 prior$theta$b = c(100, 100, 10, 10)
 prior$p$a     = c(1, 1, 1, 1)
 prior$p$b     = c(1, 1, 1, 1)
