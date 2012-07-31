@@ -8,7 +8,7 @@
 #  N is the number of particles
 #  T is the horizon in periods of length dt (eg T=50,dt=1)
 #  LOOPN is the number of repetitions to do
-#  aLW is the Liu-West weight alpha; if aLW > 1 then Storvik algorithm is done instead
+#  aLW is the Liu-West tuning parameter alpha; if aLW > 1 then Storvik algorithm is done instead
 #  verbose=CI/HIST will output some summary plots using the given color
 #  if trueX/Y is provided, that would be used as the true scenario
 #  model.propagate.func is the method to use for particle mutation/true system evolution: tauLeap/gillespie
@@ -24,7 +24,7 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
     trueTheta <- model.params$trueTheta
 
 
-    saved.stats <- array(0, dim=c(LOOPN,ceil(T/dt)+1,24))  # all the saved summary statistics
+    saved.stats <- array(0, dim=c(LOOPN,ceil(T/dt)+1,3*(N.STATES + N.RXNS)))  # all the saved summary statistics
 
     if (is.null(Y)) # generate a scenario on the fly
     {
@@ -155,6 +155,8 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
 # In this case there are no sufficient hyper-parameters, so last parameter is never used
 # X is a matrix: each column has 4 rows for SIRD states 
 # theta is a matrix, each column has 4 rows for SIRD rates 
+# prop is a matrix, each column has 4 rows for SIRD sampling proportions
+# hyper is not used
 # 
 gillespieStep <- function(X, theta, prop,curY = NULL,hyper=NULL)
 {
@@ -181,6 +183,11 @@ gillespieStep <- function(X, theta, prop,curY = NULL,hyper=NULL)
 #
 # X is a matrix: each column has 4 rows for SIRD states 
 # theta is a matrix, each column has 4 rows for SIRD rates 
+# prop is a matrix, each row has 4 columns for SIRD sampling proportions
+# curY is the latest observation (will be generated if not provided)
+# hyper is a matrix of hyper-parameters; each column has N.RXNS*2 or N.RXNS*4
+# rows specifying the theta/pSamp parameters
+# cond is a flag indicating whether to generate X conditional on Y
 tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL,cond=FALSE)
 {
     h <- t(X)
@@ -202,18 +209,17 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL,cond=FALSE)
  else {
     ndx <- 1:dim(X)[2]
     X2 <- X
-    newX <- X
+    newX <- array(0,dim=c(N.RXNS,dim(X)[2]))
     counter <- 1
     
     while (length(ndx)> 0 & counter < 10) {
       out <-  one.step.C(X[,ndx],hyper2[,,ndx], theta[,ndx]*(1-t(prop[ndx,])), t(prop[ndx,]), sample=T)
     
-      #X2[,ndx] <- out$X
       newX[,ndx] <- out$newX
       for (i in 1:N.RXNS)
         newX[i,ndx] <- newX[i,ndx] + Y[i]
       
-      X2[,ndx] <- X[,ndx] + stoichSIRD %*% newX[,ndx]
+      X2[,ndx] <- X[,ndx] + STOICH_MATRIX %*% newX[,ndx]
           
       ndx <- which( apply(X2>=0,2,all) == F)
       if (length(ndx) == 1)
@@ -222,7 +228,12 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL,cond=FALSE)
       counter <- counter+1
       #browser()
     }
-    X2 <- pmax(X2,0)
+    # set to zero infecteds (end of outbreak) if still cannot satisfy the constraints
+    if (length(ndx) > 0) {
+      X2[2,ndx] <- 0
+      browser()
+      X2[,ndx] <-pmax(0,X2[,ndx])
+    }
 }
     
     # update the hyperparameters
@@ -271,6 +282,11 @@ generate.scenario <- function(model.params,model.propagate.func,T,seed=NULL)
 
 #######################################################
 # Update the weights of the particles using the binomial sampling
+# dX is a matrix with N.RXNS columns indicating transitions
+# curY is the vector of length N.RXNS giving the latest observations
+# prop is a matrix with N.RXNS columns giving the sampling proportions
+# weights is a matrix with the input weights (to be updated)
+
 updateWeights <- function(dX, curY, prop, weights)
 {
     for (jj in 1:N.RXNS)
@@ -282,6 +298,13 @@ updateWeights <- function(dX, curY, prop, weights)
 
 #######################################################
 # Predictive likelihood of the next observation using Poisson approximations
+# X is a matrix with N.STATES columns giving the current states
+# nextY is a vector with N.RXNS columns listing the NEXT observation
+# theta is a matrix with N.RXNS columns listing the transition rates
+# prop is a matrix with N.RXNS columns listing the sampling proportions
+# weights is a vector 
+# Suff is a matrix of the hyper-parameters (either 2*N.RXNS or 4*N.RXNS columns)
+
 predictiveLikelihood <- function(X, nextY, theta, prop, weights, Suff)
 {
     h <- X  # just to set the size of h correctly
@@ -306,30 +329,42 @@ predictiveLikelihood <- function(X, nextY, theta, prop, weights, Suff)
         #   GamTerm <- GamTerm + lgamma( nextY[jj] + Suff[,2*jj-1]) - lgamma(Suff[,2*jj-1]) - lgamma(nextY[jj]+1) + log(prop[,jj]*h[,jj])*nextY[jj]
         #weights <- weights*exp(GamTerm)  
     }
-    #browser()
-    return(weights)
 
+    return(weights)
 }
 
 #######################################################
 # Summary statistics: for each X-coordinate and theta parameter
 # save the 95% CI and the median generated by the particle cloud
-saveStats <- function(X, theta)
+# theta is a matrix listing current Gamma hyper-parameters for transition rates
+# prop is a matrix listing the current Beta hyper-parameters for sampling proportions (optional)
+saveStats <- function(X, theta,prop=NULL)
 {
-    summ.stat <- array(0,dim=c(6*dim(X)[2],1))
+    len <- 3*dim(X)[2] + 3*dim(theta)[2] + if(is.null(prop)) 0 else 3*dim(prop)[2]
+    
+    summ.stat <- array(0,dim=c(len,1))
     for (jj in 1:dim(X)[2])
-    {
-      #summ.stat[(jj-1)*6+1] <- mean(X[,jj])
-      summ.stat[((jj-1)*6+1):((jj-1)*6+3)] <- quantile(X[,jj],c(0.5,0.025,0.975))
+      summ.stat[((jj-1)*3+1):((jj-1)*3+3)] <- quantile(X[,jj],c(0.5,0.025,0.975),na.rm=T)
+    
+    offset <- 3*dim(X)[2]
+    
+    for (jj in 1:dim(theta)[2])
+      summ.stat[(offset+(jj-1)*3+1):(offset+(jj-1)*3+3)] <- quantile(theta[,jj],c(0.5,0.025,0.975))
+    
+    offset <- 3*(dim(X)[2] + dim(theta)[2])
+    if (is.null(prop) == 0)
+       for (jj in 1:dim(prop)[2])
+          summ.stat[(offset+(jj-1)*3+1):(offset+(jj-1)*3+3)] <- quantile(prop[,jj],c(0.5,0.025,0.975))
 
-      #summ.stat[(jj-1)*6+4] <- mean(theta[,jj])
-      summ.stat[((jj-1)*6+4):((jj-1)*6+6)] <- quantile(theta[,jj],c(0.5,0.025,0.975))
-    }
     return(summ.stat)
 }
 
 #######################################################
 # Construct the densities of the particles
+# X is a matrix listing the current states
+# theta is a matrix listing the current transition rates
+# Suff is a matrix listing the current hyper-parameters (for theta and prop)
+# sampP is a matrix listing the current sampling proportions
 build.density <- function(X, theta, Suff,sampP=NULL)
 {
    N <- dim(X)[1]
@@ -422,7 +457,7 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
     hyperPrior <- model.params$hyperPrior
     trueTheta <- model.params$trueTheta
 
-    saved.stats <- array(0, dim=c(LOOPN,ceil(T/dt)+1,24))
+    saved.stats <- array(0, dim=c(LOOPN,ceil(T/dt)+1,3*(N.STATES + N.RXNS)))
 
     if (is.null(Y)) # generate a scenario
     {
@@ -528,9 +563,10 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
    #browser()
    
    # high-quality quantile computation
+   offset <- 3*N.STATES
    for (jj in 1:N.RXNS) {
       theta <- rgamma(max(N,25000),Suff[,2*jj-1],Suff[,2*jj])
-      saved.stats[loop, i, ((jj-1)*6+4):((jj-1)*6+6)] <- quantile(theta,c(0.5,0.025,0.975))
+      saved.stats[loop, i, (offset+(jj-1)*3+1):(offset+(jj-1)*3+3)] <- quantile(theta,c(0.5,0.025,0.975))
    }      
 
    if (verbose=='CI') 
