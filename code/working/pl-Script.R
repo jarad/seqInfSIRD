@@ -76,48 +76,61 @@ hararePL <- plSIR(5000,Nweek-1,LOOPN=10,Y=harY,verbose="CI")
 ################################################
 # To run SIRDsims.RData examples
 ################################################
-N.week <- 52
-X0 = c(16000,2,0,0)
 
 load("../../data/SIRDsims/SIRDsims.RData")
-load("../../data/SIRDsims/SIRDsims-mcmc-density.RData")
 n.sims <- length(sims)
+N.week <- max(n) +1
+STOICH_MATRIX <- array(0,dim=c(4,2))
+STOICH_MATRIX[1:3,] <- stoich
+
 
 sim.PL <- array(0, dim=c(2*n.sims,N.week,24))
 sim.LW <- array(0, dim=c(2*n.sims,N.week,24))
+sim.LW2 <- array(0, dim=c(2*n.sims,N.week,24))
+
 sim.SV <- array(0, dim=c(2*n.sims,N.week,24))
 smc.PL <- array(0, dim=c(2*n.sims,12))
 smc.LW <- array(0, dim=c(2*n.sims,12))
+smc.LW2 <- array(0, dim=c(2*n.sims,12))
+
 smc.SV <- array(0, dim=c(2*n.sims,12))
-kd.PL <- list(); kd.LW <- list(); kd.SV <- list();
-i.pl <- 1; i.lw <- 1; i.sv <- 1;
-hp <- c(as.vector(rbind(prior$theta$a,prior$theta$b)),0,10,0,10,as.vector(rbind(prior$p$a,prior$p$b)),0.01,10,0.01,10)
+kd.PL <- list(); kd.LW <- list(); kd.LW2 <- list(); kd.SV <- list();
+i.pl <- 1; i.lw <- 1; i.sv <- 1; i.lw2 <- 1;
+hp <- c(as.vector(rbind(prior$theta$a,prior$theta$b)),as.vector(rbind(prior$p$a,prior$p$b)))
+hp[1:2] <- c(40,20)
 
 sims.params <- list(    initP=rep(0,N.RXNS),
     initX=X0, trueTheta = rep(0,N.RXNS)
     )
 
+offset <- n.sims
+i.pl = i.lw = i.sv = i.lw2 = n.sims*4 + 1;
 
-for (j in 1:1)
+for (j in 1:n.sims)
 {
   sims.params$initP <- probs[j,]
   sims.params$trueTheta <- thetas[j,]
   simY <- as.matrix(sims[[j]]$y)
   simY[,3:4] <- 0
   simX <- as.matrix(sims[[j]]$x)
-  sims.params$hyperPrior <- hp[1:(2*N.RXNS)]
+  sims.params$hyperPrior <- hp[1:(4*N.RXNS)]
   
-  simPL <- plSIR(5000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simPL <- plSIR(15000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   simLW <- particleSampledSIR(aLW=0.99,5000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simLW2 <- particleSampledSIR(aLW=0.96,5000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+
   simSV <- particleSampledSIR(aLW=2,5000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   
   # store all the quantiles; the final quantiles of interest
-  sim.PL[j,1:(n[j]+1),] <- simPL$stat[1,,]
-  sim.LW[j,1:(n[j]+1),] <- simLW$stat[1,,]
-  sim.SV[j,1:(n[j]+1),] <- simSV$stat[1,,]
-  smc.PL[j,] <- as.vector(simPL$stat[1,n[j]+1,1:12])
-  smc.LW[j,] <- as.vector(simLW$stat[1,n[j]+1,1:12])
-  smc.SV[j,] <- as.vector(simSV$stat[1,n[j]+1,1:12])
+  sim.PL[j+offset,1:(n[j]+1),] <- simPL$stat[1,,]
+  sim.LW[j+offset,1:(n[j]+1),] <- simLW$stat[1,,]
+  sim.LW2[j+offset,1:(n[j]+1),] <- simLW2$stat[1,,]
+  sim.SV[j+offset,1:(n[j]+1),] <- simSV$stat[1,,]
+  
+  smc.PL[j+offset,] <- as.vector(simPL$stat[1,n[j]+1,1:12])
+  smc.LW[j+offset,] <- as.vector(simLW$stat[1,n[j]+1,1:12])
+  smc.LW2[j+offset,] <- as.vector(simLW2$stat[1,n[j]+1,1:12])
+  smc.SV[j+offset,] <- as.vector(simSV$stat[1,n[j]+1,1:12])
   
   # and the final density estimates
   for (k in 1:4) {
@@ -125,6 +138,9 @@ for (j in 1:1)
      i.pl <- i.pl + 1
      kd.LW[[i.lw]] <- simLW$density[[k]]
      i.lw <- i.lw + 1
+     kd.LW2[[i.lw2]] <- simLW2$density[[k]]
+     i.lw2 <- i.lw2 + 1
+
      kd.SV[[i.sv]] <- simSV$density[[k]]
      i.sv <- i.sv + 1
   }
@@ -132,13 +148,17 @@ for (j in 1:1)
 
 key = paste("simulation ",rep(1:n.sims,each=4),", ",c("S","I","S->I","I->R"),sep="")
 save(kd.PL,key,file="../../data/SIRDsims/SIRDsims-smcPL-density.RData")
-save(kd.LW,key,file="../../data/SIRDsims/SIRDsims-smcLW-density.RData")
+save(kd.LW,key,file="../../data/SIRDsims/SIRDsims-smcLW99-density.RData")
+save(kd.LW2,key,file="../../data/SIRDsims/SIRDsims-smcLW96-density.RData")
 save(kd.SV,key,file="../../data/SIRDsims/SIRDsims-smcSV-density.RData")
 
 colnames(smc.PL) = paste(rep(c("S","SI","I","IR"),each=3),c("50","2.5","97.5"))
 write.csv(smc.PL,"../../data/SIRDsims/SIRDsims-smcPL-quantiles.csv",row.names=F)
 colnames(smc.LW) = paste(rep(c("S","SI","I","IR"),each=3),c("50","2.5","97.5"))
-write.csv(smc.LW,"../../data/SIRDsims/SIRDsims-smcLW-quantiles.csv",row.names=F)
+write.csv(smc.LW,"../../data/SIRDsims/SIRDsims-smcLW99-quantiles.csv",row.names=F)
+colnames(smc.LW2) = paste(rep(c("S","SI","I","IR"),each=3),c("50","2.5","97.5"))
+write.csv(smc.LW2,"../../data/SIRDsims/SIRDsims-smcLW96-quantiles.csv",row.names=F)
+
 colnames(smc.SV) = paste(rep(c("S","SI","I","IR"),each=3),c("50","2.5","97.5"))
 write.csv(smc.SV,"../../data/SIRDsims/SIRDsims-smcSV-quantiles.csv",row.names=F)
 
@@ -147,6 +167,8 @@ write.csv(smc.SV,"../../data/SIRDsims/SIRDsims-smcSV-quantiles.csv",row.names=F)
 ######################################
 # Compare the sequential run for scenario 1
 seq.mcmc <- read.csv("SIRDsims-mcmc-seq-quants.csv")
+load("../../data/SIRDsims/SIRDsims-mcmc-density.RData")
+
 comp.quants <- array(0, dim=c(2,n[1],12))
 
 comp.quants[2,,]<-as.matrix(seq.mcmc)
@@ -161,10 +183,11 @@ comp.quants[1,,]<-simPL$stat[1,2:(n[1]+1),1:12]
 
 mcmc.quantile <- read.csv("../../data/SIRDsims/SIRDsims-mcmc-quantiles.csv")
 pl.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcPL-quantiles.csv")
-lw.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcLW-quantiles.csv")
+lw.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcLW99-quantiles.csv")
+lw2.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcLW96-quantiles.csv")
 sv.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcSV-quantiles.csv")
 
-plot.ndx <- 1 # which simulation to look at 
+plot.ndx <- 6 # which simulation to look at 
 
 par(mfrow=c(2,2),mar=c(4,3,2,1), oma=c(0,0,0,1), mgp=c(1,1,0))
 # Make 4 panels, each panel shows the 4 different algorithm outputs (in terms of terminal densities)
@@ -173,23 +196,23 @@ XLab <- c("S", "I", "S->I", "I->R")
 stat.ndx <- c(1,7,4,10);
 for (k in 1:4) {
   if (k==2) {
-      plot( kd[[4*plot.ndx+k-4]], col=1, main=XLab[k], xlab="", yaxt="n", ylab="Posterior Density",ylim=c(0,20))
-      lines( kd.PL[[4*plot.ndx+k-4]], col=2 , do.p="F", vert="T")
+      plot( kd.PL[[4*plot.ndx+k-4]], col=1, main=XLab[k], xlab="", yaxt="n", ylab="Posterior Density",ylim=c(0,20))
+      lines( kd.LW2[[4*plot.ndx+k-4]], col=2 , do.p="F", vert="T")
       lines( kd.LW[[4*plot.ndx+k-4]], col=3 , do.p="F", vert="T")
       lines( kd.SV[[4*plot.ndx+k-4]], col=4 , do.p="F", vert="T")
   }
   else {
-        plot( kd[[4*plot.ndx+k-4]], col=1, main=XLab[k], xlab="", yaxt="n", ylab="Posterior Density")
+        plot( kd.PL[[4*plot.ndx+k-4]], col=1, main=XLab[k], xlab="", yaxt="n", ylab="Posterior Density")
         lines( kd.LW[[4*plot.ndx+k-4]], col=3)
         lines( kd.SV[[4*plot.ndx+k-4]], col=4)
-        lines( kd.PL[[4*plot.ndx+k-4]], col=2)
+        lines( kd.LW2[[4*plot.ndx+k-4]], col=2)
   }
-  abline(v=mcmc.quantile[plot.ndx,stat.ndx[k]],pch=4,col=1, cex=1.5)
-  abline(v=pl.quantile[plot.ndx,stat.ndx[k]],pch=5,col=2, cex=1.5)
+  abline(v=pl.quantile[plot.ndx,stat.ndx[k]],pch=4,col=1, cex=1.5)
+  abline(v=lw2.quantile[plot.ndx,stat.ndx[k]],pch=5,col=2, cex=1.5)
   abline(v=lw.quantile[plot.ndx,stat.ndx[k]],pch=6,col=3, cex=1.5)
   abline(v=sv.quantile[plot.ndx,stat.ndx[k]],pch=7,col=4, cex=1.5)
   if (k > 2 )
-     legend("topright", c("MCMC", "PL", "Liu-West", "Storvik"), lty=c(1,1,1,1),col=1:4)
+     legend("topright", c("PL", "LW96", "Liu-West", "Storvik"), lty=c(1,1,1,1),col=1:4)
 }
 savePlot(filename=paste("../../data/SIRDsims/density-comp",plot.ndx,".pdf",sep=""), type="pdf")
 
@@ -218,7 +241,7 @@ for (j in 1:1) {
   nn <- n[j]+1
   stt <- array(0, dim=c(3,nn,24))
   stt[1,,] <- sim.PL[j,1:nn,]; stt[2,1:nn,] <- sim.LW[j,1:nn,]; stt[3,,] <-  sim.SV[j,1:nn,]
-  plot.ci(stt,as.matrix(sims[[j]]$x[1:nn,]),thetas[j,],plot.diff=1,col=5,in.legend=c("PL","LW","Storvik"),sir.plotCI=1)
+  plot.ci(stt,as.matrix(sims[[j]]$x[1:nn,]),thetas[j,],plot.diff=1,col=2,in.legend=c("PL","LW","Storvik"),sir.plotCI=1)
   #savePlot(filename=paste("../SIRDsims",j,".eps",sep=""), type="eps")
   #savePlot(filename=paste("../SIRDsims",j,".pdf",sep=""), type="pdf")
   plot.ci(stt,as.matrix(sims[[j]]$x[1:nn,]),thetas[j,],plot.diff=0,col=5,in.legend=c("PL","LW","Storvik"),sir.plotCI=1)
