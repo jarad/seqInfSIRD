@@ -3,6 +3,8 @@
 *.Rout
 *.out
 .RData
+*.o
+*.so
 
 # directories to ignore
 

@@ -3,5 +3,5 @@
 #include <R.h>
 
 void hazard_part(int *, int *, int *, int *, int *);
-void hazard(int *, int *, int *, int *, int *, double *)
+void hazard(int *, int *, int *, int *, double *, double *)
 

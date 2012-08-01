@@ -3,6 +3,7 @@
 */
 
 #include <R.h>
+#include <Rmath.h>
 
 void hazard_part(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anH) 
 {
@@ -12,20 +13,7 @@ void hazard_part(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anH)
         anH[i] = 1;
         for (j=0; j<*nSpecies; j++) 
         {
-            switch (anPre[rOffset+j])
-            {
-                case 0:
-                    break;
-                case 1:
-                    anH[i] *= anX[j];
-                    break;
-                case 2:
-                    anH[i] *= anX[j]*(anX[j]-1)/2;
-                    break;
-                default:
-                    error("Pre must have elements 0, 1, and 2.");
-                    break;
-             }
+            anH[i] *= choose(anX[j], anPre[rOffset+j]);            
         }
         rOffset += *nSpecies;
     }       
