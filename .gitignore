@@ -5,6 +5,7 @@
 .RData
 *.o
 *.so
+*.history
 
 # directories to ignore
 
