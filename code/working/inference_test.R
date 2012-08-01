@@ -11,13 +11,16 @@ random.system = function(s=rpois(1,5)+1, r=rpois(1,5)+1) {
   return(list(s=s,r=r,Pre=Pre,Post=Post,stoich=stoich))
 }
 
-sys = random.system()
 
 
-sys$X = rpois(sys$s,5)
-stopifnot(all.equal(hazard.part(sys, engine="R"), hazard.part(sys, engine="C")))
+for (i in 1:10) 
+{
+  sys = random.system()
 
-sys$theta=rgamma(sys$r,1)
-stopifnot(all.equal(hazard(sys, engine="R"), hazard(sys, engine="C")))
+  sys$X = rpois(sys$s,5)
+  stopifnot(all.equal(hazard.part(sys, engine="R"), hazard.part(sys, engine="C")))
 
+  sys$theta=rgamma(sys$r,1)
+  stopifnot(all.equal(hazard(sys, engine="R"), hazard(sys, engine="C")))
+}
 
