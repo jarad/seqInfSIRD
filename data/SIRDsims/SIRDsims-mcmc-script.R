@@ -4,6 +4,7 @@ load("SIRDsims.RData")
 res = list()
 run.time = matrix(NA,length(sims),3)
 for (i in 1:length(sims)) {
+  n[i] = n[i]+1 # to make sure final I is positive (also change line below)
   cat("Simulation",i,"\n")
   X0 = as.numeric(sims[[i]]$x[1,1:N.STATES])
   dat   = list(X0 = X0, 
@@ -22,6 +23,7 @@ for (i in 1:length(sims)) {
 
   run.time[i,] = proc.time()[1:3]-ptr
 
+  n[i] = n[i] - 1 # to make sure final I positive (also change line above)
   save.image("SIRDsims-mcmc-script.RData")
 }
 
