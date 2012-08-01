@@ -3,12 +3,22 @@
 dyn.load("inference.so")
 
 hazard.part = function(sys, engine="R") {
-    stopifnot(all(sys$Pre%in%c(0,1))) # Dimerizations or above not supported 
+    stopifnot(all(sys$Pre%in%c(0,1,2))) # Dimerizations or above not supported 
  
     if (engine=="R") 
     {
-      h = numeric(sys$r)
-      for (i in 1:sys$r) h[i] = prod(sys$X^sys$Pre[i,])
+      h = rep(1,sys$r)
+      for (i in 1:sys$r) 
+      {
+        for (j in 1:sys$s) 
+        {
+          switch(sys$Pre[i,j]+1,
+                 {}, 
+                 { h[i] = h[i]*sys$X[j]},
+                 { h[i] = h[i]*sys$X[j]*(sys$X[j]-1)/2},
+                 { stop("Pre must have elements 0, 1, and 2.") })
+        }
+      }          
       return(h)
     } else if (engine=="C") 
     {
