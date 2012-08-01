@@ -5,6 +5,7 @@
 #include <R.h>
 #include <Rmath.h>
 
+/* Calculates the part of the hazard other than the fixed parameter */
 void hazard_part(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anH) 
 {
     int i, j, rOffset=0;
@@ -19,7 +20,8 @@ void hazard_part(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anH)
     }       
 }
 
-void hazard(int *nSpecies, int *nRxns, int *anX, int *anPre, double *adH, double *adTheta) 
+/* Calculates the hazard for the next reaction */
+void hazard(int *nSpecies, int *nRxns, int *anX, int *anPre, double *adTheta, double *adH) 
 {
     int anHp[*nRxns];
     hazard_part(nSpecies, nRxns, anX, anPre, anHp);
@@ -28,5 +30,55 @@ void hazard(int *nSpecies, int *nRxns, int *anX, int *anPre, double *adH, double
 }
 
 
+/* Simulates a set of reactions */
+void sim_poisson(int *nSpecies, int *nRxns, int *anX, int *anPre, double *adH, int *anRxns) 
+{
+    int i;
+    for (i=0; i<*nRxns; i++) anRxns[i]=rpois(adH[i]); 
+}
 
+int anyNegative(int n, int *v) 
+{
+    int i;
+    for (i=0; i<n; i++) 
+    {
+        if (v[i]<0) return 1;
+    }
+    return 1;
+}
+
+void update_species(int *nSpecies, int *nRxns, int *anX, int *anStoich, int *anRxns) 
+{
+    int i,j,rOffset=0;
+    for (i=0; i<*nSpecies; i++) 
+    {
+        for (j=0; j<*nRxns; j++) 
+        {
+            anX[i] += anStoich[rOffset+j]*anRxns[j];
+        }
+    } 
+}
+
+/* Moves the system ahead one time-step */
+void one_step(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anStoich, 
+              double *adTheta) 
+{
+    double *adH;
+    hazard(nSpecies, nRxns, anX, anPre, adTheta, adH);
+
+    int i, whileCount=0, anRxns[*nRxns], anNewX[*nSpecies];
+    while (1) 
+    {
+        for (i=0; i<*nSpecies; i++) anNewX[i] = anX[i];
+        sim_poisson(nSpecies, nRxns, anX, anPre, adH, anRxns);
+        update_species(nSpecies, nRxns, anNewX, anStoich, anRxns);
+        if (!anyNegative(*nSpecies, anNewX)) 
+        {
+            for (i=0; i<*nSpecies; i++) anX[i] = anNewX[i];
+            break;
+        }
+        whileCount++;
+        if (whileCount>1000) error("Too many unsuccessful simulation iterations.");
+    }
+} 
 

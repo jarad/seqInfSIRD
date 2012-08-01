@@ -36,7 +36,7 @@ hazard = function(sys, engine="R") {
     {
       out = .C("hazard", 
                as.integer(sys$s), as.integer(sys$r), as.integer(sys$X),
-               as.integer(t(sys$Pre)), h=double(sys$r), as.double(sys$theta))
+               as.integer(t(sys$Pre)), as.double(sys$theta), h=double(sys$r))
       return(out$h)
     } else 
     {
