@@ -18,7 +18,7 @@ method-comparison.pdf: $(TARGETS)
 	git commit -m "make: updated method-comparison.pdf"
 	git push
 
-SIRDsims-mcmc-density.RData: SIRDsims-mcmc-script.RData SIRDsims-mcmc-plotData.R
+SIRDsims-mcmc-density.RData: SIRDsims-mcmc-script.RData SIRDsis-mcmc-sequential.RData SIRDsims-mcmc-plotData.R
 	$(RCMD) SIRDsims-mcmc-plotData.R
 	git pull origin master
 	git add SIRDsims-mcmc-density.RData SIRDsims-mcmc-quantiles.csv
