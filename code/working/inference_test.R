@@ -36,6 +36,9 @@ for (i in 1:n.reps)
   a = .Random.seed; r = sim.one.step(sir, y, engine="R")
   .Random.seed = a; c = sim.one.step(sir, y, engine="C")
   stopifnot(all.equal(r,c))
+
+  dX = sim.one.step(sir, y, engine="R")$dX
+  stopifnot(all.equal(inf.one.step(sir,y,dX, engine="R"), inf.one.step(sir,y,dX, engine="C")))
 }
 
 

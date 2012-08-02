@@ -185,21 +185,20 @@ sim.one.step = function(sys, y=NULL, max.while.count=1e3, engine="R")
 
 
 
-inf.one.step = function(sys, y, engine="R")
+inf.one.step = function(sys, y, dX, engine="R")
 {
     hp = hazard.part(sys, "R")    
-    dX = sim.one.step(sys,"R")
     if (engine=="R")
     {        
         sys$hyper[,1] = sys$hyper[,1]+y     # Beta (alpha)        - observations
         sys$hyper[,2] = sys$hyper[,2]+dX-y  # Beta (beta)         - unobserved transitions
         sys$hyper[,3] = sys$hyper[,3]+dX    # Gamma shape (alpha) - transitions
         sys$hyper[,4] = sys$hyper[,4]+hp    # Gamma rate (beta)   - (\propto) expected transitions
-        return(hyper)
+        return(sys$hyper)
     } else if (engine=="C")
     {
         out = .C("inf_one_step",
-                 as.integer(sys$r), as.integer(sys$dX), as.integer(y), as.integer(hp), 
+                 as.integer(sys$r), as.integer(dX), as.integer(y), as.integer(hp), 
                  hyper=as.integer(sys$hyper))
         return(matrix(out$hyper,sys$r,4))
     } else 
