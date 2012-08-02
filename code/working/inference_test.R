@@ -22,5 +22,9 @@ for (i in 1:10)
 
   sys$theta=rgamma(sys$r,1)
   stopifnot(all.equal(hazard(sys, engine="R"), hazard(sys, engine="C")))
+
+  a = .Random.seed; b = sim.poisson(sys, engine="R")
+  .Random.seed = a; c = sim.poisson(sys, engine="C")
+  stopifnot(all.equal(b,c))
 }
 

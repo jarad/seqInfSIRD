@@ -2,7 +2,8 @@
 
 dyn.load("inference.so")
 
-hazard.part = function(sys, engine="R") { 
+hazard.part = function(sys, engine="R") 
+{ 
     if (engine=="R") 
     {
       h = rep(1,sys$r)
@@ -26,7 +27,8 @@ hazard.part = function(sys, engine="R") {
     }
 }
 
-hazard = function(sys, engine="R") { 
+hazard = function(sys, engine="R") 
+{ 
     if (engine=="R") 
     {
       h = hazard.part(sys)
@@ -41,6 +43,25 @@ hazard = function(sys, engine="R") {
     } else 
     {
         stop("`engine' must be `C' or `R'")
+    }
+}
+
+
+sim.poisson = function(sys, engine="R")
+{
+    h = hazard(sys)
+    if (engine=="R")
+    {
+        return(rpois(sys$r,h))
+    } else if (engine=="C")
+    {
+        out = .C("sim_poisson",
+                 as.integer(sys$s), as.integer(sys$r), as.integer(sys$X),
+                 as.integer(t(sys$Pre)), as.double(h), r=integer(sys$r))
+        return(out$r)
+    } else 
+    {
+        stop("'engine' must be 'C' or 'R'")
     }
 }
 

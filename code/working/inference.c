@@ -34,7 +34,9 @@ void hazard(int *nSpecies, int *nRxns, int *anX, int *anPre, double *adTheta, do
 void sim_poisson(int *nSpecies, int *nRxns, int *anX, int *anPre, double *adH, int *anRxns) 
 {
     int i;
-    for (i=0; i<*nRxns; i++) anRxns[i]=rpois(adH[i]); 
+    GetRNGstate();
+    for (i=0; i<*nRxns; i++) anRxns[i]=rpois(adH[i]);
+    PutRNGstate(); 
 }
 
 int anyNegative(int n, int *v) 
