@@ -2,6 +2,8 @@
 
 dyn.load("inference.so")
 
+engine.error = function() stop("'engine' must be 'C' or 'R'")
+
 hazard.part = function(sys, engine="R") 
 { 
     if (engine=="R") 
@@ -23,7 +25,7 @@ hazard.part = function(sys, engine="R")
       return(out$h)
     } else 
     {
-        stop("`engine' must be `C' or `R'")
+        engine.error()
     }
 }
 
@@ -42,7 +44,7 @@ hazard = function(sys, engine="R")
       return(out$h)
     } else 
     {
-        stop("`engine' must be `C' or `R'")
+        engine.error()
     }
 }
 
@@ -61,7 +63,7 @@ sim.poisson = function(sys, engine="R")
         return(out$r)
     } else 
     {
-        stop("'engine' must be 'C' or 'R'")
+        engine.error()
     }
 }
 
@@ -78,8 +80,33 @@ update.species = function(sys, nRxns, engine="R")
         return(out$X)
     } else 
     {
-        stop("'engine' must be 'C' or 'R'")
+        engine.error()
     }
 }
 
+sim.one.step = function(sys, engine="R")
+{
+    if (engine=="R")
+    {
+        r = sim.poisson(sys)
+        whileCount = 0
+        s = update.species(sys,r,engine="R")
+        while ( any(s<0) ) 
+        {
+            s = update.species(sys,r,engine="R")
+            whileCount = whileCount+1
+            if (whileCount>1000) stop("R:sim.one.step: Too many unsuccessful simulation iterations.")
+        }
+        return(s)    
+    } else if (engine=="C")
+    {
+        out = .C("sim_one_step", 
+                 as.integer(sys$s), as.integer(sys$r), X=as.integer(sys$X),
+                 as.integer(t(sys$Pre)), as.integer(sys$stoich), as.double(sys$theta))
+        return(out$X)
+    } else 
+    {
+        engine.error()
+    }
+}
 

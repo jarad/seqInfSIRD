@@ -46,7 +46,7 @@ int anyNegative(int n, int *v)
     {
         if (v[i]<0) return 1;
     }
-    return 1;
+    return 0;
 }
 
 void update_species(int *nSpecies, int *nRxns, int *anX, int *anStoich, int *anRxns) 
@@ -61,10 +61,10 @@ void update_species(int *nSpecies, int *nRxns, int *anX, int *anStoich, int *anR
 }
 
 /* Moves the system ahead one time-step */
-void one_step(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anStoich, 
+void sim_one_step(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anStoich, 
               double *adTheta) 
 {
-    double *adH;
+    double adH[*nRxns];
     hazard(nSpecies, nRxns, anX, anPre, adTheta, adH);
 
     int i, whileCount=0, anRxns[*nRxns], anNewX[*nSpecies];
@@ -79,7 +79,7 @@ void one_step(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anStoich,
             break;
         }
         whileCount++;
-        if (whileCount>1000) error("Too many unsuccessful simulation iterations.");
+        if (whileCount>1000) error("C:sim_one_step: Too many unsuccessful simulation iterations.");
     }
 } 
 
