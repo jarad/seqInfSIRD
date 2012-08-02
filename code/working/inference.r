@@ -98,13 +98,14 @@ sim.one.step = function(sys, engine="R")
             whileCount = whileCount+1
             if (whileCount>1000) stop("R:sim.one.step: Too many unsuccessful simulation iterations.")
         }
-        return(X)    
+        return(list(X=X,dX=r))    
     } else if (engine=="C")
     {
         out = .C("sim_one_step", 
                  as.integer(sys$s), as.integer(sys$r), X=as.integer(sys$X),
-                 as.integer(t(sys$Pre)), as.integer(sys$stoich), as.double(sys$theta))
-        return(out$X)
+                 as.integer(t(sys$Pre)), as.integer(sys$stoich), as.double(sys$theta),
+                 r=integer(sys$r))
+        return(list(X=out$X,dX=out$r))
     } else 
     {
         engine.error()

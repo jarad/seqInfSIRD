@@ -57,29 +57,43 @@ void update_species(int *nSpecies, int *nRxns, int *anX, int *anStoich, int *anR
         for (j=0; j<*nRxns; j++) 
         {
             anX[i] += anStoich[*nSpecies*j+i]*anRxns[j];
-        }    } 
+        }    
+    } 
 }
 
 /* Moves the system ahead one time-step */
 void sim_one_step(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anStoich, 
-              double *adTheta) 
+              double *adTheta, int *anRxns) 
 {
     double adH[*nRxns];
     hazard(nSpecies, nRxns, anX, anPre, adTheta, adH);
 
-    int i, whileCount=0, anRxns[*nRxns], anNewX[*nSpecies];
+    int i, whileCount=0, anTempX[*nSpecies];
     while (1) 
     {
-        for (i=0; i<*nSpecies; i++) anNewX[i] = anX[i];
+        // Copy current state for temporary use
+        for (i=0; i<*nSpecies; i++) anTempX[i] = anX[i];
+
+        // Get number of reactions
         sim_poisson(nSpecies, nRxns, anX, anPre, adH, anRxns);
-        update_species(nSpecies, nRxns, anNewX, anStoich, anRxns);
-        if (!anyNegative(*nSpecies, anNewX)) 
+
+        // Update species
+        update_species(nSpecies, nRxns, anTempX, anStoich, anRxns);
+
+        // Test if update has any negative species
+        if (!anyNegative(*nSpecies, anTempX)) 
         {
-            for (i=0; i<*nSpecies; i++) anX[i] = anNewX[i];
+            // Copy temporary state into current state
+            for (i=0; i<*nSpecies; i++) anX[i] = anTempX[i];
             break;
         }
+
+        // Limit how long the simulation tries to find a non-negative update
         whileCount++;
         if (whileCount>1000) error("C:sim_one_step: Too many unsuccessful simulation iterations.");
     }
 } 
+
+
+//void inf_one_step(int *nSpecies, int *nRxns, int *anX, int 
 

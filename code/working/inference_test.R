@@ -48,9 +48,9 @@ for (i in 1:100)
 {
   sir = random.sir()
 
-  a = .Random.seed; b = sim.one.step(sir, engine="R")
+  a = .Random.seed; r = sim.one.step(sir, engine="R")
   .Random.seed = a; c = sim.one.step(sir, engine="C")
-  stopifnot(all.equal(b,c))
+  stopifnot(all.equal(r,c))
 }
 
 
