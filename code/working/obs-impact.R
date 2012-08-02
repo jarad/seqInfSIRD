@@ -150,7 +150,7 @@ uncertain.P[2,,] <- scenUncertainPBase$stat[1,,]
 uncertain.P[3,,] <- scenUncertainPVague$stat[1,,]
 uncertain.P[4,,] <- scenUncertainPUnif$stat[1,,]
 
-plot.ci(uncertain.P,sampScen$X,scen.params$trueTheta,in.legend=c("Known P","Tight Prior", "Vague Prior", "Uniform Prior"),sir.plotCI=1,ltype=1,col=8)
+plot.ci(uncertain.P,sampScen$X,scen.params$trueTheta,in.legend=c("Known P","Tight Prior", "Vague Prior", "Uniform Prior"),ltype=1,col=8)
 
 
 
