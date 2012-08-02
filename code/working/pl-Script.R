@@ -46,7 +46,7 @@ plot.ci.mcError(lw$stat,1,col1="#ddffee99", col2="green")
 #####################
 # To see a more realistic example
 temp <- plSIR(5000, 70, LOOPN=10,verbose="HIST")
-plot.ci(temp$stat[1,,],temp$trueX,temp$theta,1)
+plot.ci(temp$stat[1,,],temp$trueX,temp$theta)
 plot.ci.mcError(temp$stat,1)
 
 
@@ -54,11 +54,101 @@ plot.ci.mcError(temp$stat,1)
 # Try to handle the actual weekly data set from Harare: 59 weeks total
 #################################
 Nweek <- 59
-harare <- read.csv("data/harare/harareClean.csv")
+harare <- read.csv("../../data/harare/harareClean.csv")
 harY <- array(0,dim=c(Nweek,4))
 harY[,1] <- diff(harare$total)
-hararePL <- plSIR(5000,Nweek,LOOPN=1,Y=harY,verbose="HIST")
-plot.ci(hararePL$stat[1,,],NULL,hararePL$theta,1)
+
+Nweek <- 30
+harare.den.I <- list(); harare.den.SI <- list(); harare.den.IR <- list(); harare.den.SIprop <- list()
+harare.quants <- array(0, dim=c(6,Nweek+1,24))
+
+
+.UNKNOWNP <- F
+harare.params$initP <- c(0.1,0,0,0)
+
+.ndx <-1
+harare.params$hyperPrior <- c(150,100,100,100)
+hararePL <- plSIR(10000,Nweek,Y=harY,verbose="CI",model.params=harare.params)
+harare.quants[.ndx,,1:(3*(N.STATES+N.RXNS))] <- hararePL$stat
+harare.den.I[[.ndx]] <- hararePL$density[[2]]
+harare.den.SI[[.ndx]] <- hararePL$density[[3]]
+harare.den.IR[[.ndx]] <- hararePL$density[[4]]
+
+.ndx <-2
+harare.params$hyperPrior <- c(3,2,100,100) # tight on I->R
+hararePL <- plSIR(10000,Nweek,Y=harY,verbose="CI",model.params=harare.params)
+harare.quants[.ndx,,1:(3*(N.STATES+N.RXNS))] <- hararePL$stat
+harare.den.I[[.ndx]] <- hararePL$density[[2]]
+harare.den.SI[[.ndx]] <- hararePL$density[[3]]
+harare.den.IR[[.ndx]] <- hararePL$density[[4]]
+
+.ndx <- 3
+harare.params$hyperPrior <- c(3,2,4,4)
+hararePL <- plSIR(10000,Nweek,LOOPN=1,Y=harY,verbose="CI",model.params=harare.params)
+harare.quants[.ndx,,1:(3*(N.STATES+N.RXNS))] <- hararePL$stat
+harare.den.I[[.ndx]] <- hararePL$density[[2]]
+harare.den.SI[[.ndx]] <- hararePL$density[[3]]
+harare.den.IR[[.ndx]] <- hararePL$density[[4]]
+
+
+####
+.UNKNOWNP <- T
+
+.ndx <- 4
+harare.params$hyperPrior <- c(150,100,100,100,1,1,1,1)   # tight theta, vague prop
+hararePL <- plSIR(10000,Nweek,LOOPN=1,Y=harY,verbose="CI",model.params=harare.params)
+harare.quants[.ndx,,] <- hararePL$stat
+harare.den.I[[.ndx]] <- hararePL$density[[2]]
+harare.den.SI[[.ndx]] <- hararePL$density[[3]]
+harare.den.IR[[.ndx]] <- hararePL$density[[4]]
+harare.den.SIprop[[.ndx]] <- hararePL$density[[5]]
+
+.ndx <-5
+harare.params$hyperPrior <- c(3,2,2,2,1,1,1,1)  # very vague priors all around
+hararePL <- plSIR(10000,Nweek,LOOPN=1,Y=harY,verbose="CI",model.params=harare.params)
+harare.quants[.ndx,,] <- hararePL$stat
+harare.den.I[[.ndx]] <- hararePL$density[[2]]
+harare.den.SI[[.ndx]] <- hararePL$density[[3]]
+harare.den.IR[[.ndx]] <- hararePL$density[[4]]
+harare.den.SIprop[[.ndx]] <- hararePL$density[[5]]
+
+.ndx<-6
+harare.params$hyperPrior <- c(3,2,100,100,1,5,0.1,5)  #tighter prior on prop
+hararePL <- plSIR(10000,Nweek,LOOPN=1,Y=harY,verbose="CI",model.params=harare.params)
+harare.quants[.ndx,,] <- hararePL$stat
+harare.den.I[[.ndx]] <- hararePL$density[[2]]
+harare.den.SI[[.ndx]] <- hararePL$density[[3]]
+harare.den.IR[[.ndx]] <- hararePL$density[[4]]
+harare.den.SIprop[[.ndx]] <- hararePL$density[[5]]
+
+cols <-rainbow(7,alpha=0.4)
+leg <- c("Tight","Vague S->I", "Both Vague","Tight + p","Vague +p","Tight on p")
+par(mfrow=c(2,4))
+plot.ci(harare.quants,which.dim=list(x=2,theta=c(1,2),prop=1),col=cols,in.legend=leg,shade=T)
+
+cols <-rainbow(7)
+plot( harare.den.I[[1]],do.p="F",col=cols[1],main="I",ylab="",xlab="",xlim=c(0,50))
+legend("topright",leg,col=cols,lwd=2,lty=1)
+for (kk in 2:6) 
+   lines(harare.den.I[[kk]],col=cols[kk],do.p="F")
+
+plot( harare.den.SI[[1]],type="l",col=cols[1],xlim=c(0.8,2),main="S->I",ylab="",xlab="")
+for (kk in 2:6) 
+   lines(harare.den.SI[[kk]],col=cols[kk])
+
+plot( harare.den.IR[[1]],type="l",col=cols[1],xlim=c(0.8,1.9),main="I->R",ylab="",xlab="")
+for (kk in 2:6) 
+   lines(harare.den.IR[[kk]],col=cols[kk])
+legend("topright",leg,col=cols,lwd=2,lty=1)     
+
+plot( harare.den.SIprop[[4]],type="l",col=cols[4],xlim=c(0.04,0.36),main="S->I Prop",ylab="",xlab="")
+for (kk in 5:6) 
+   lines(harare.den.SIprop[[kk]],col=cols[kk])
+# 
+
+
+
+plot.ci(hararePL$stat[1,,],which.dim=2)
 hararePL <- plSIR(5000,Nweek,LOOPN=5,Y=harY,verbose="CI")
 plot(c(0,60),c(0.6,0.6),type="l",col="red",ylab="Beta posterior",xlab="Periods")
 plot.ci.mcError(hararePL$stat,1,col1="#ddddddaa", col2="blue")
@@ -173,7 +263,7 @@ comp.quants <- array(0, dim=c(2,n[1],12))
 
 comp.quants[2,,]<-as.matrix(seq.mcmc)
 comp.quants[1,,]<-simPL$stat[1,2:(n[1]+1),1:12]
- plot.ci(comp.quants,simX[2:(n[1]+1),],sims.params$trueTheta,col=8,in.legend=c("PL","MCMC"),sir.plotCI=1,ltype=c(1,1))
+ plot.ci(comp.quants,simX[2:(n[1]+1),],sims.params$trueTheta,col=8,in.legend=c("PL","MCMC"),ltype=c(1,1))
 
 #########################################
 # Create a "hash" plot comparing CIs across methods/scenarios
@@ -202,32 +292,37 @@ lw.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcLW99-quantiles.csv")
 lw2.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcLW96-quantiles.csv")
 sv.quantile <- read.csv("../../data/SIRDsims/SIRDsims-smcSV-quantiles.csv")
 
-plot.ndx <- 6 # which simulation to look at 
+plot.ndx <- 1 # which simulation to look at 
 
-par(mfrow=c(2,2),mar=c(4,3,2,1), oma=c(0,0,0,1), mgp=c(1,1,0))
-# Make 4 panels, each panel shows the 4 different algorithm outputs (in terms of terminal densities)
+par(mfrow=c(1,2),mar=c(4,3,2,1), oma=c(0,0,0,1), mgp=c(1,1,0))
+# Make 2 panels, each panel shows the 5 different algorithm outputs (in terms of terminal densities)
 
+cols <- terrain.colors(6)
 XLab <- c("S", "I", "S->I", "I->R")
 stat.ndx <- c(1,7,4,10);
-for (k in 1:4) {
+for (k in 3:4) {
   if (k==2) {
-      plot( kd.PL[[4*plot.ndx+k-4]], col=1, main=XLab[k], xlab="", yaxt="n", ylab="Posterior Density",ylim=c(0,20))
-      lines( kd.LW2[[4*plot.ndx+k-4]], col=2 , do.p="F", vert="T")
-      lines( kd.LW[[4*plot.ndx+k-4]], col=3 , do.p="F", vert="T")
-      lines( kd.SV[[4*plot.ndx+k-4]], col=4 , do.p="F", vert="T")
+      plot( kd[[4*plot.ndx+k-4]], col=cols[1], main=XLab[k], xlab="", yaxt="n", ylab="Posterior Density",ylim=c(0,20))
+      lines( kd.LW2[[4*plot.ndx+k-4]], col=cols[2] , do.p="F", vert="T")
+      lines( kd.LW[[4*plot.ndx+k-4]], col=cols[3] , do.p="F", vert="T")
+      lines( kd.SV[[4*plot.ndx+k-4]], col=cols[4] , do.p="F", vert="T")
+       lines( kd.PL[[4*plot.ndx+k-4]], col=cols[5] , do.p="F", vert="T")
+  
   }
   else {
-        plot( kd.PL[[4*plot.ndx+k-4]], col=1, main=XLab[k], xlab="", yaxt="n", ylab="Posterior Density")
-        lines( kd.LW[[4*plot.ndx+k-4]], col=3)
-        lines( kd.SV[[4*plot.ndx+k-4]], col=4)
-        lines( kd.LW2[[4*plot.ndx+k-4]], col=2)
+        plot( kd[[4*plot.ndx+k-4]], col=cols[1], main=XLab[k], xlab="", yaxt="n", ylab="Posterior Density",lwd=2)
+         lines( kd.LW2[[4*plot.ndx+k-4]], col=cols[2], lwd=2)
+        lines( kd.LW[[4*plot.ndx+k-4]], col=cols[3], lwd=2)
+        lines( kd.SV[[4*plot.ndx+k-4]], col=cols[4], lwd=2)
+        lines( kd.PL[[4*plot.ndx+k-4]], col=cols[5], lwd=2)
   }
-  abline(v=pl.quantile[plot.ndx,stat.ndx[k]],pch=4,col=1, cex=1.5)
-  abline(v=lw2.quantile[plot.ndx,stat.ndx[k]],pch=5,col=2, cex=1.5)
-  abline(v=lw.quantile[plot.ndx,stat.ndx[k]],pch=6,col=3, cex=1.5)
-  abline(v=sv.quantile[plot.ndx,stat.ndx[k]],pch=7,col=4, cex=1.5)
+  abline(v=mcmc.quantile[plot.ndx,stat.ndx[k]],pch=3,col=cols[1], cex=1.5)
+  abline(v=pl.quantile[plot.ndx,stat.ndx[k]],pch=4,col=cols[5], cex=1.5)
+  abline(v=lw2.quantile[plot.ndx,stat.ndx[k]],pch=5,col=cols[2], cex=1.5)
+  abline(v=lw.quantile[plot.ndx,stat.ndx[k]],pch=6,col=cols[3], cex=1.5)
+  abline(v=sv.quantile[plot.ndx,stat.ndx[k]],pch=7,col=cols[4], cex=1.5)
   if (k > 2 )
-     legend("topright", c("PL", "LW96", "Liu-West", "Storvik"), lty=c(1,1,1,1),col=1:4)
+     legend("topright", c("MCMC", "LW96", "Liu-West", "Storvik", "PL"), lty=rep(1,5),col=cols[1:5])
 }
 savePlot(filename=paste("../../data/SIRDsims/density-comp",plot.ndx,".pdf",sep=""), type="pdf")
 
@@ -256,10 +351,10 @@ for (j in 1:1) {
   nn <- n[j]+1
   stt <- array(0, dim=c(3,nn,24))
   stt[1,,] <- sim.PL[j,1:nn,]; stt[2,1:nn,] <- sim.LW[j,1:nn,]; stt[3,,] <-  sim.SV[j,1:nn,]
-  plot.ci(stt,as.matrix(sims[[j]]$x[1:nn,]),thetas[j,],plot.diff=1,col=2,in.legend=c("PL","LW","Storvik"),sir.plotCI=1)
+  plot.ci(stt,as.matrix(sims[[j]]$x[1:nn,]),thetas[j,],plot.diff=1,col=2,in.legend=c("PL","LW","Storvik"))
   #savePlot(filename=paste("../SIRDsims",j,".eps",sep=""), type="eps")
   #savePlot(filename=paste("../SIRDsims",j,".pdf",sep=""), type="pdf")
-  plot.ci(stt,as.matrix(sims[[j]]$x[1:nn,]),thetas[j,],plot.diff=0,col=5,in.legend=c("PL","LW","Storvik"),sir.plotCI=1)
+  plot.ci(stt,as.matrix(sims[[j]]$x[1:nn,]),thetas[j,],plot.diff=0,col=5,in.legend=c("PL","LW","Storvik"))
   #savePlot(filename=paste("../SIRDsims",j,"Abs.eps",sep=""), type="eps")
   #savePlot(filename=paste("../SIRDsims",j,"Abs.pdf",sep=""), type="pdf")
   
@@ -355,5 +450,5 @@ simPL <- plSIR(10000,n[.ndx],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=
   
 pl.prior[2,1:(n[.ndx]+1),] <- simPL$stat[1,,]
 
-plot.ci(pl.prior,simX[1:(n[.ndx]+1),],thetas[.ndx,],1, col=c("#000000","#7777ff","#ff3333"), in.legend=c("Wide", "Low", "Narrow"),ltype=1:3)
+plot.ci(pl.prior,simX[1:(n[.ndx]+1),],thetas[.ndx,], col=c("#000000","#7777ff","#ff3333"), in.legend=c("Wide", "Low", "Narrow"),ltype=1:3)
 savePlot(filename="20120723-prior-sensitivity", type="pdf")

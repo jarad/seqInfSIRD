@@ -457,7 +457,7 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
     hyperPrior <- model.params$hyperPrior
     trueTheta <- model.params$trueTheta
 
-    saved.stats <- array(0, dim=c(LOOPN,ceil(T/dt)+1,3*(N.STATES + N.RXNS)))
+    saved.stats <- array(0, dim=c(LOOPN,ceil(T/dt)+1,3*(N.STATES + N.RXNS + (if (.UNKNOWNP) N.RXNS else 0))))
 
     if (is.null(Y)) # generate a scenario
     {
@@ -491,7 +491,7 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
        curt <- 0 
        i <- 1
        totalWeight <- 1
-       saved.stats[loop,i,] <- saveStats(X, theta)
+       saved.stats[loop,i,] <- saveStats(X, theta, prop=if (.UNKNOWNP)pSamp else NULL)
 
        ####### MAIN LOOP OVER OBSERVATIONS
        while (curt < T-dt) {
@@ -551,7 +551,7 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
            totalWeight <- totalWeight*sum(p.weights)
 
         i <- i+1
-        saved.stats[loop,i,] <- saveStats(X,theta)
+        saved.stats[loop,i,] <- saveStats(X,theta,prop=if (.UNKNOWNP)pSamp else NULL)
         # end of main loop
       }
    }
@@ -570,7 +570,7 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
    }      
 
    if (verbose=='CI') 
-      plot.ci(saved.stats,trueX[1:i,],trueTheta,1,col)
+      plot.ci(saved.stats,trueX[1:i,],trueTheta,col)
       
  
    return( list(stat=saved.stats,trueX=trueX,Y=Y,theta=trueTheta,density=kd))
