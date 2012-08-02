@@ -9,8 +9,10 @@ random.system = function(s=rpois(1,5)+1, r=rpois(1,5)+1) {
   stoich = t(Post-Pre)
   X = rpois(s,5)
   theta = rgamma(r,1)
+  sys = list(s=s,r=r,Pre=Pre,Post=Post,stoich=stoich,X=X,theta=theta)
+  sys$h = hazard(sys)$h
   
-  return(list(s=s,r=r,Pre=Pre,Post=Post,stoich=stoich,X=X,theta=theta))
+  return(sys)
 }
 
 
@@ -22,8 +24,10 @@ random.sir = function() {
   stoich = t(Post-Pre)
   X = c(rpois(1,1000),rpois(1,5),0)
   theta = rgamma(r,10,10)/c(sum(X),1) # S->I scaled by N
+  sys = list(s=s,r=r,Pre=Pre,Post=Post,stoich=stoich,X=X,theta=theta)
+  sys$h = hazard(sys)$h
   
-  return(list(s=s,r=r,Pre=Pre,Post=Post,stoich=stoich,X=X,theta=theta))
+  return(sys)
 }
 
 
@@ -35,11 +39,12 @@ for (i in 1:100)
 
   stopifnot(all.equal(hazard(sys, engine="R"), hazard(sys, engine="C")))
 
+  sys$h = hazard(sys)$h
   a = .Random.seed; b = sim.poisson(sys, engine="R")
   .Random.seed = a; c = sim.poisson(sys, engine="C")
   stopifnot(all.equal(b,c))
 
-  r = rpois(sys$r, hazard(sys))
+  r = sim.poisson(sys)
   stopifnot(all.equal(update.species(sys,r, engine="R"), update.species(sys,r,engine="C"))) 
 }
 

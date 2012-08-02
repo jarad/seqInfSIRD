@@ -6,24 +6,22 @@
 #include <Rmath.h>
 
 /* Calculates the part of the hazard other than the fixed parameter */
-void hazard_part(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anH) 
+void hazard_part(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anHp) 
 {
-    int i, j, nOffset=0;
+    int i, j;
     for (i=0; i<*nRxns; i++) 
     {
-        anH[i] = 1;
+        anHp[i] = 1;
         for (j=0; j<*nSpecies; j++) 
         {
-            anH[i] *= choose(anX[j], anPre[nOffset+j]);            
-        }
-        nOffset += *nSpecies;
+            anHp[i] *= choose(anX[j], anPre[i* *nSpecies+j]);            
+        }    
     }       
 }
 
 /* Calculates the hazard for the next reaction */
-void hazard(int *nSpecies, int *nRxns, int *anX, int *anPre, double *adTheta, double *adH) 
+void hazard(int *nSpecies, int *nRxns, int *anX, int *anPre, double *adTheta, int *anHp, double *adH) 
 {
-    int anHp[*nRxns];
     hazard_part(nSpecies, nRxns, anX, anPre, anHp);
     int i;
     for (i=0; i<*nRxns; i++) adH[i] = adTheta[i]*anHp[i];
@@ -31,7 +29,7 @@ void hazard(int *nSpecies, int *nRxns, int *anX, int *anPre, double *adTheta, do
 
 
 /* Simulates a set of reactions */
-void sim_poisson(int *nSpecies, int *nRxns, int *anX, int *anPre, double *adH, int *anRxns) 
+void sim_poisson(int *nRxns, double *adH, int *anRxns) 
 {
     int i;
     GetRNGstate();
@@ -62,12 +60,8 @@ void update_species(int *nSpecies, int *nRxns, int *anX, int *anStoich, int *anR
 }
 
 /* Moves the system ahead one time-step */
-void sim_one_step(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anStoich, 
-              double *adTheta, int *anRxns) 
+void sim_one_step(int *nSpecies, int *nRxns, int *anX, int *anStoich, int *anRxns, double *adH) 
 {
-    double adH[*nRxns];
-    hazard(nSpecies, nRxns, anX, anPre, adTheta, adH);
-
     int i, whileCount=0, anTempX[*nSpecies];
     while (1) 
     {
@@ -75,7 +69,7 @@ void sim_one_step(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anStoich
         for (i=0; i<*nSpecies; i++) anTempX[i] = anX[i];
 
         // Get number of reactions
-        sim_poisson(nSpecies, nRxns, anX, anPre, adH, anRxns);
+        sim_poisson(nRxns, adH, anRxns);
 
         // Update species
         update_species(nSpecies, nRxns, anTempX, anStoich, anRxns);
@@ -95,5 +89,26 @@ void sim_one_step(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anStoich
 } 
 
 
-//void inf_one_step(int *nSpecies, int *nRxns, int *anX, int 
+void inf_one_step(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anRxns, int *anY, int *anHp, int *anHyper) 
+{
+    
+}
+
+
+
+void one_step(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anStoich, 
+              double *adTheta, int *anY, int *anRxns, int *anHyper)
+{
+    // Calculate reaction hazard 
+    int    anHp[*nRxns];
+    double adH [*nRxns];
+    hazard(nSpecies, nRxns, anX, anPre, adTheta, anHp, adH);
+
+    // Forward simulate system
+    sim_one_step(nSpecies, nRxns, anX, anStoich, anRxns, adH);
+
+    // Inference for this simulated step
+    inf_one_step(nSpecies, nRxns, anX, anPre, anRxns, anY, anHp, anHyper);
+}
+
 
