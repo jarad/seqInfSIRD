@@ -26,5 +26,8 @@ for (i in 1:10)
   a = .Random.seed; b = sim.poisson(sys, engine="R")
   .Random.seed = a; c = sim.poisson(sys, engine="C")
   stopifnot(all.equal(b,c))
+
+  r = rpois(sys$r, hazard(sys))
+  stopifnot(all.equal(update.species(sys,r, engine="R"), update.species(sys,r,engine="C"))) 
 }
 

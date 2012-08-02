@@ -8,15 +8,15 @@
 /* Calculates the part of the hazard other than the fixed parameter */
 void hazard_part(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anH) 
 {
-    int i, j, rOffset=0;
+    int i, j, nOffset=0;
     for (i=0; i<*nRxns; i++) 
     {
         anH[i] = 1;
         for (j=0; j<*nSpecies; j++) 
         {
-            anH[i] *= choose(anX[j], anPre[rOffset+j]);            
+            anH[i] *= choose(anX[j], anPre[nOffset+j]);            
         }
-        rOffset += *nSpecies;
+        nOffset += *nSpecies;
     }       
 }
 
@@ -51,14 +51,13 @@ int anyNegative(int n, int *v)
 
 void update_species(int *nSpecies, int *nRxns, int *anX, int *anStoich, int *anRxns) 
 {
-    int i,j,rOffset=0;
+    int i,j;
     for (i=0; i<*nSpecies; i++) 
     {
         for (j=0; j<*nRxns; j++) 
         {
-            anX[i] += anStoich[rOffset+j]*anRxns[j];
-        }
-    } 
+            anX[i] += anStoich[*nSpecies*j+i]*anRxns[j];
+        }    } 
 }
 
 /* Moves the system ahead one time-step */

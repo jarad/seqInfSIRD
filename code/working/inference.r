@@ -65,3 +65,21 @@ sim.poisson = function(sys, engine="R")
     }
 }
 
+update.species = function(sys, nRxns, engine="R") 
+{
+    if (engine=="R")
+    {
+        return(as.numeric(sys$X+sys$stoich%*%nRxns))
+    } else if (engine=="C")
+    {
+        out = .C("update_species",
+                 as.integer(sys$s), as.integer(sys$r), X=as.integer(sys$X),
+                 as.integer(sys$stoich), as.integer(nRxns))
+        return(out$X)
+    } else 
+    {
+        stop("'engine' must be 'C' or 'R'")
+    }
+}
+
+
