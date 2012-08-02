@@ -175,6 +175,21 @@ comp.quants[2,,]<-as.matrix(seq.mcmc)
 comp.quants[1,,]<-simPL$stat[1,2:(n[1]+1),1:12]
  plot.ci(comp.quants,simX[2:(n[1]+1),],sims.params$trueTheta,col=8,in.legend=c("PL","MCMC"),sir.plotCI=1,ltype=c(1,1))
 
+#########################################
+# Create a "hash" plot comparing CIs across methods/scenarios
+
+which.col <- c("IR 2.5", "IR 97.5")
+plot(smc.PL[1,which.col], c(0,0), type="l", lwd=2.5, ylim=c(-0.5,25),xlim=c(0.75,1.25),col="#ff0000",yaxt="n",
+  xlab="S->I Posterior", ylab="Scenarios", main="I->R")
+cl = c("#ff0000","#000000","#777777","blue")
+
+for (j in 1:n.sims) {
+  lines(smc.PL[j,which.col], c(j-1+0,j-1+0), lwd=2.5, col=cl[1])
+  lines(smc.LW[j,which.col], c(j-1-0.2,j-1-0.2), lwd=2, col=cl[2])
+  lines(smc.LW2[j,which.col], c(j-1-0.1,j-1-0.1), lwd=2, col=cl[3])
+  lines(smc.SV[j,which.col], c(j-1+0.1,j-1+0.1), lwd=2, col=cl[4])
+}
+legend("topleft", c("PL", "Liu-West", "LW96", "Storvik"), lty=rep(1,4),col=cl,lwd=rep(2.5,4))
 
 
 
