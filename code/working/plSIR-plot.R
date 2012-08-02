@@ -3,89 +3,129 @@
 # Plot the 95% CI over time: default is to show beta/gamma only
 # which.dim -- what to plot
 #
-plot.ci <- function(saved.stats,trueX,trueTheta,sir.plotCI=0,col=NULL,plot.diff=0, which.dim=c(1,2),in.legend=NULL,ltype=1,shade.poly=F)
+plot.ci <- function(saved.stats,trueX=NULL,trueTheta=NULL,trueProp=NULL,
+                    col=NULL,plot.diff=0, which.dim=list(x=c(1,2),theta=NULL,prop=NULL),
+                    in.legend=NULL,ltype=1,shade.poly=F)
 {
-   par(mfcol=c(2,length(which.dim)),mar=c(4,3,2,1)+0.1, oma=c(0,0,0,1))
+   #par(mfcol=c(2,length(which.dim)),mar=c(4,3,2,1)+0.1, oma=c(0,0,0,1))
    XLab <- c("S", "I", "R", "D")
    TLab <- c("S->I", "I->R", "S->R","I->D")
+   
    n.comps <- dim(saved.stats)[1]
    if (length(col) == 1 && is.numeric(col))
       col.list <- c(col:(col+n.comps-1))
    else if (length(col) == 0)
       col.list <- c("#bbbbbbcc", "#6666bbcc", "#bb6666cc", "#66bb66cc", "#666666cc") #
    else
-      col.list <- rep(col, n.comps)
+      col.list <- col
    
    if (length(ltype)==1)
      ltype = rep(ltype, n.comps)
    
-   for (jj in which.dim)
+   for (jj in which.dim$x)
    {
-      len <- dim(trueX)[1]
+      len <- dim(saved.stats)[2]
       if (plot.diff==1) {  # absolute difference
          for (k in 1:n.comps) {
             if (k==1)  
-               plot(1:len,(saved.stats[k,,(6*jj-5)]-trueX[,jj]),col=col.list[k],lwd=2,type="l",
+               plot(1:len,(saved.stats[k,,(3*jj-2)]-trueX[,jj]),col=col.list[k],lwd=2,type="l",
                    ylab=XLab[jj], xlab='',lty=ltype[k])
             else 
-               lines(1:len,(saved.stats[k,,(6*jj-5)]-trueX[,jj]),col=col.list[k],lwd=2,lty=ltype[k])
+               lines(1:len,(saved.stats[k,,(3*jj-2)]-trueX[,jj]),col=col.list[k],lwd=2,lty=ltype[k])
             
-            lines(1:len,(saved.stats[k,,(6*jj-4)]-trueX[,jj]),col=col.list[k],lty=3)
-            lines(1:len,(saved.stats[k,,(6*jj-3)]-trueX[,jj]),col=col.list[k],lty=3)
+            lines(1:len,(saved.stats[k,,(3*jj-1)]-trueX[,jj]),col=col.list[k],lty=3)
+            lines(1:len,(saved.stats[k,,(3*jj)]-trueX[,jj]),col=col.list[k],lty=3)
           
          }
       }
       else if (plot.diff==2) {  # percent-difference
          for (k in 1:n.comps) {
             if (k==1) 
-               plot(1:len,log(saved.stats[k,,(6*jj-5)]/trueX[,jj]),col=col.list[k],lwd=2,type="l",
+               plot(1:len,log(saved.stats[k,,(3*jj-2)]/trueX[,jj]),col=col.list[k],lwd=2,type="l",
                    ylab=XLab[jj], xlab='',lty=ltype[k])
             else
-               lines(1:len,log(saved.stats[k,,(6*jj-5)]/trueX[,jj]),col=col.list[k],lwd=2,lty=ltype[k])
+               lines(1:len,log(saved.stats[k,,(3*jj-2)]/trueX[,jj]),col=col.list[k],lwd=2,lty=ltype[k])
       
-            lines(1:len,log(saved.stats[k,,(6*jj-4)]/trueX[,jj]),col=col.list[k],lty=3)
-            lines(1:len,log(saved.stats[k,,(6*jj-3)]/trueX[,jj]),col=col.list[k],lty=3)
+            lines(1:len,log(saved.stats[k,,(3*jj-1)]/trueX[,jj]),col=col.list[k],lty=3)
+            lines(1:len,log(saved.stats[k,,(3*jj)]/trueX[,jj]),col=col.list[k],lty=3)
           
          }
       }     
       else { # plot absolute values
          for (k in 1:n.comps) {
             if (k==1)
-               plot(1:len,saved.stats[k,,(6*jj-5)],col=col.list[k],lwd=2,type="l",ylab='',main=XLab[jj],lty=ltype[k],
-                  xlab='',ylim=c(min(saved.stats[k,,(6*jj-4)]),max(max(saved.stats[k,,(6*jj-5)]),0.97*max(saved.stats[k,,(6*jj-3)]))))
+               plot(1:len,saved.stats[k,,(3*jj-2)],col=col.list[k],type="l",ylab='',main=XLab[jj],lty=3,
+                  xlab='',ylim=c(min(saved.stats[,,(3*jj-1)]),max(max(saved.stats[,,(3*jj-2)]),0.97*max(saved.stats[,,(3*jj)]))))
             else
-               lines(1:len,saved.stats[k,,(6*jj-5)],col=col.list[k],lwd=2,lty=ltype[k])
+               lines(1:len,saved.stats[k,,(3*jj-2)],col=col.list[k],lty=3)
             
-            lines(1:len,saved.stats[k,,(6*jj-4)],col=col.list[k],lty=3)
-            lines(1:len,saved.stats[k,,(6*jj-3)],col=col.list[k],lty=3)
+            lines(1:len,saved.stats[k,,(3*jj-1)],col=col.list[k],lty=ltype[k],lwd=2.5)
+            lines(1:len,saved.stats[k,,(3*jj)],col=col.list[k],lty=ltype[k],lwd=2.5)
 
             if (!is.null(trueX))
-               lines(1:len,trueX[,jj],col ='red',xlim=c(0,len),lwd=1.5)
+               lines(1:len,trueX[1:len,jj],col ='red',xlim=c(0,len),lwd=1.5)
             if (n.comps == 1)
-              legend("topright", c("Truth", "Median", "95% CI"), col=c("red",col,col), lty=c(ltype[1],ltype[1],3), lwd=c(1.5,2,1))
+              legend("topright", c("Truth", "Median", "95% CI"), col=c("red",col.list[1],col.list[1]), lty=c(ltype[1],3,ltype[1]), lwd=c(1.5,1,2.5))
           }
       }
       if (n.comps > 1 & !is.null(in.legend))
          legend("topright", in.legend, lty=ltype, col=col.list, lwd=2)
-
+   } 
+   # loop to plot X-states
+   
+   
+   for (jj in which.dim$theta)
+   {
       for (k in 1:n.comps) {
          if (k==1) {
-            plot(1:len,saved.stats[k,,(6*jj-2)],col=col.list[k],xlab='Period',ylab='',main=TLab[jj],type="l",lty=ltype[k],
-               ylim=c(min(saved.stats[k,,(6*jj-1)])*1.02, max(saved.stats[k,,6*jj]))*0.98 , lwd=2.5)
+            plot(1:len,saved.stats[k,,(3*(jj+N.STATES)-2)],col=col.list[k],xlab='Period',ylab='',main=TLab[jj],type="l",lty=3,
+               ylim=c(min(saved.stats[,,(3*(jj+N.STATES)-1)])*1.02, max(saved.stats[,,3*(jj+N.STATES)]))*0.98)
       #c(trueTheta[jj]*0.75,trueTheta[jj]*1.25)
-            abline(h=trueTheta[jj],col='red',lwd=1.5)  
+            if (!is.null(trueTheta))
+               abline(h=trueTheta[jj],col='red',lwd=1.5)  
          }
          else 
-            lines(1:len,saved.stats[k,,(6*jj-2)],col=col.list[k], lwd=2.5,lty=ltype[k])  
+            lines(1:len,saved.stats[k,,(3*(jj+N.STATES)-2)],col=col.list[k], lty=3)  
           
-         if (sir.plotCI == 1) {
-            len <- dim(saved.stats)[2]
-            if (shade.poly == T)
-                polygon(c(1:len,len:1),c(saved.stats[k,,(6*jj-1)],saved.stats[k,len:1,(6*jj)]),col=col.list[k],border=NA)
-            lines(1:len,saved.stats[k,,(6*jj-1)],col=col.list[k],lty=3)
-            lines(1:len,saved.stats[k,,6*jj],col=col.list[k],lty=3)
+        
+         len <- dim(saved.stats)[2]
+         if (shade.poly == T)
+             polygon(c(1:len,len:1),c(saved.stats[k,,(3*(jj+N.STATES)-1)],saved.stats[k,len:1,3*(jj+N.STATES)]),col=col.list[k],border=NA)
+         else {
+            lines(1:len,saved.stats[k,,(3*(jj+N.STATES)-1)],col=col.list[k],lty=ltype[k],lwd=2.5)
+            lines(1:len,saved.stats[k,,3*(jj+N.STATES)],col=col.list[k],lty=ltype[k],lwd=2.5)
          }
+        
       }   
+
+   } 
+   # loop to plot thetas
+   
+   for (jj in which.dim$prop)
+   {
+      for (k in 1:n.comps) {
+         if (k==1) {
+            plot(1:len,saved.stats[k,,(3*(jj+N.STATES+N.RXNS)-2)],col=col.list[k],
+                xlab='Period',ylab='',main=paste(TLab[jj]," Sampling"), type="l",lty=3,
+               ylim=c(min(saved.stats[,,(3*(jj+N.STATES+N.RXNS)-1)])*1.02, max(saved.stats[,,3*(jj+N.STATES+N.RXNS)]))*0.9)
+            if (!is.null(trueProp))
+               abline(h=trueProp[jj],col='red',lwd=1.5)  
+         }
+         else 
+            lines(1:len,saved.stats[k,,(3*(jj+N.STATES+N.RXNS)-2)],col=col.list[k],lty=3)  
+          
+        
+         len <- dim(saved.stats)[2]
+         if (shade.poly == T & max(saved.stats[k,len:1,3*(jj+N.STATES+N.RXNS)] > 0) )
+             polygon(c(1:len,len:1),c(saved.stats[k,,(3*(jj+N.STATES+N.RXNS)-1)],saved.stats[k,len:1,3*(jj+N.STATES+N.RXNS)]),col=col.list[k],border=NA)
+         else {
+            lines(1:len,saved.stats[k,,(3*(jj+N.STATES+N.RXNS)-1)],col=col.list[k],lty=ltype[k],lwd=2.5)
+            lines(1:len,saved.stats[k,,3*(jj+N.STATES+N.RXNS)],col=col.list[k],lty=ltype[k],lwd=2.5)
+         }
+        
+      }
+      if (n.comps > 1 & !is.null(in.legend))
+         legend("topright", in.legend, lty=ltype, col=col.list, lwd=2)   
 
    }
 }
