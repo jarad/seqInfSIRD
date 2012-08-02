@@ -207,12 +207,5 @@ inf.one.step = function(sys, y, dX, engine="R")
     }   
 }
 
-#one.step = function(sys, engine="R")
-#{
-#    if (engine=="R")
-#    {
-#        sim.one.step(sys, engine="R")
-#        pl.one.step(sys        
-#}
 
 
