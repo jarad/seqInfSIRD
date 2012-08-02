@@ -14,6 +14,18 @@ random.system = function(s=rpois(1,5)+1, r=rpois(1,5)+1) {
 }
 
 
+random.sir = function() {
+  s = 3
+  r = 2
+  Pre  = rbind(c(1,1,0),c(0,1,0))
+  Post = rbind(c(0,2,0),c(0,0,1))
+  stoich = t(Post-Pre)
+  X = c(rpois(1,1000),rpois(1,5),0)
+  theta = rgamma(r,10,10)/c(sum(X),1) # S->I scaled by N
+  
+  return(list(s=s,r=r,Pre=Pre,Post=Post,stoich=stoich,X=X,theta=theta))
+}
+
 
 for (i in 1:100) 
 {
@@ -29,9 +41,17 @@ for (i in 1:100)
 
   r = rpois(sys$r, hazard(sys))
   stopifnot(all.equal(update.species(sys,r, engine="R"), update.species(sys,r,engine="C"))) 
+}
 
-  a = .Random.seed; b = sim.one.step(sys, engine="R")
-  .Random.seed = a; c = sim.one.step(sys, engine="C")
+
+for (i in 1:100) 
+{
+  sir = random.sir()
+
+  a = .Random.seed; b = sim.one.step(sir, engine="R")
+  .Random.seed = a; c = sim.one.step(sir, engine="C")
   stopifnot(all.equal(b,c))
 }
+
+
 

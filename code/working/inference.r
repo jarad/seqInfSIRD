@@ -90,14 +90,15 @@ sim.one.step = function(sys, engine="R")
     {
         r = sim.poisson(sys)
         whileCount = 0
-        s = update.species(sys,r,engine="R")
-        while ( any(s<0) ) 
+        X = update.species(sys,r,engine="R")
+        while ( any(X<0) ) 
         {
-            s = update.species(sys,r,engine="R")
+            r = sim.poisson(sys)
+            X = update.species(sys,r,engine="R")
             whileCount = whileCount+1
             if (whileCount>1000) stop("R:sim.one.step: Too many unsuccessful simulation iterations.")
         }
-        return(s)    
+        return(X)    
     } else if (engine=="C")
     {
         out = .C("sim_one_step", 
