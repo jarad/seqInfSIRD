@@ -2,20 +2,11 @@
 
 source("inference.r")
 
-random.system = function(s=rpois(1,5)+1, r=rpois(1,5)+1) {
-  d = s*r
-  Pre  = matrix(rpois(d,.5), r, s)
-  Post = matrix(rpois(d,.5), r, s)
-  stoich = t(Post-Pre)
-  X = rpois(s,5)
-  theta = rgamma(r,1)
+n.reps = 100
   
-  return(list(s=s,r=r,Pre=Pre,Post=Post,stoich=stoich,X=X,theta=theta))
-}
 
 
-
-for (i in 1:100) 
+for (i in 1:n.reps) 
 {
   sys = random.system()
 
@@ -23,15 +14,29 @@ for (i in 1:100)
 
   stopifnot(all.equal(hazard(sys, engine="R"), hazard(sys, engine="C")))
 
+  sys$h = hazard(sys)$h
   a = .Random.seed; b = sim.poisson(sys, engine="R")
   .Random.seed = a; c = sim.poisson(sys, engine="C")
   stopifnot(all.equal(b,c))
 
-  r = rpois(sys$r, hazard(sys))
+  r = sim.poisson(sys)
   stopifnot(all.equal(update.species(sys,r, engine="R"), update.species(sys,r,engine="C"))) 
-
-  a = .Random.seed; b = sim.one.step(sys, engine="R")
-  .Random.seed = a; c = sim.one.step(sys, engine="C")
-  stopifnot(all.equal(b,c))
 }
+
+
+for (i in 1:n.reps) 
+{
+  sir = random.sir()
+
+  a = .Random.seed; r = sim.one.step(sir, engine="R")
+  .Random.seed = a; c = sim.one.step(sir, engine="C")
+  stopifnot(all.equal(r,c))
+
+  y = rbinom(sir$r,r$dX,sir$p)
+  a = .Random.seed; r = sim.one.step(sir, y, engine="R")
+  .Random.seed = a; c = sim.one.step(sir, y, engine="C")
+  stopifnot(all.equal(r,c))
+}
+
+
 

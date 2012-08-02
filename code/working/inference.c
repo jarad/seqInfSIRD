@@ -6,24 +6,22 @@
 #include <Rmath.h>
 
 /* Calculates the part of the hazard other than the fixed parameter */
-void hazard_part(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anH) 
+void hazard_part(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anHp) 
 {
-    int i, j, nOffset=0;
+    int i, j;
     for (i=0; i<*nRxns; i++) 
     {
-        anH[i] = 1;
+        anHp[i] = 1;
         for (j=0; j<*nSpecies; j++) 
         {
-            anH[i] *= choose(anX[j], anPre[nOffset+j]);            
-        }
-        nOffset += *nSpecies;
+            anHp[i] *= choose(anX[j], anPre[i* *nSpecies+j]);            
+        }    
     }       
 }
 
 /* Calculates the hazard for the next reaction */
-void hazard(int *nSpecies, int *nRxns, int *anX, int *anPre, double *adTheta, double *adH) 
+void hazard(int *nSpecies, int *nRxns, int *anX, int *anPre, double *adTheta, int *anHp, double *adH) 
 {
-    int anHp[*nRxns];
     hazard_part(nSpecies, nRxns, anX, anPre, anHp);
     int i;
     for (i=0; i<*nRxns; i++) adH[i] = adTheta[i]*anHp[i];
@@ -31,7 +29,7 @@ void hazard(int *nSpecies, int *nRxns, int *anX, int *anPre, double *adTheta, do
 
 
 /* Simulates a set of reactions */
-void sim_poisson(int *nSpecies, int *nRxns, int *anX, int *anPre, double *adH, int *anRxns) 
+void sim_poisson(int *nRxns, double *adH, int *anRxns) 
 {
     int i;
     GetRNGstate();
@@ -57,29 +55,104 @@ void update_species(int *nSpecies, int *nRxns, int *anX, int *anStoich, int *anR
         for (j=0; j<*nRxns; j++) 
         {
             anX[i] += anStoich[*nSpecies*j+i]*anRxns[j];
-        }    } 
+        }    
+    } 
 }
 
-/* Moves the system ahead one time-step */
-void sim_one_step(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anStoich, 
-              double *adTheta) 
+/* Forward simulate ahead one time-step */
+void sim_one_step(int *nSpecies, int *nRxns, int *anX, int *anStoich, int *anRxns, double *adH, 
+                  int *nWhileMax) 
 {
-    double adH[*nRxns];
-    hazard(nSpecies, nRxns, anX, anPre, adTheta, adH);
-
-    int i, whileCount=0, anRxns[*nRxns], anNewX[*nSpecies];
+    int i, whileCount=0, anTempX[*nSpecies];
     while (1) 
     {
-        for (i=0; i<*nSpecies; i++) anNewX[i] = anX[i];
-        sim_poisson(nSpecies, nRxns, anX, anPre, adH, anRxns);
-        update_species(nSpecies, nRxns, anNewX, anStoich, anRxns);
-        if (!anyNegative(*nSpecies, anNewX)) 
+        // Copy current state for temporary use
+        for (i=0; i<*nSpecies; i++) anTempX[i] = anX[i];
+
+        // Get number of reactions
+        sim_poisson(nRxns, adH, anRxns);
+
+        // Update species
+        update_species(nSpecies, nRxns, anTempX, anStoich, anRxns);
+
+        // Test if update has any negative species
+        if (!anyNegative(*nSpecies, anTempX)) 
         {
-            for (i=0; i<*nSpecies; i++) anX[i] = anNewX[i];
+            // Copy temporary state into current state
+            for (i=0; i<*nSpecies; i++) anX[i] = anTempX[i];
             break;
         }
+
+        // Limit how long the simulation tries to find a non-negative update
         whileCount++;
-        if (whileCount>1000) error("C:sim_one_step: Too many unsuccessful simulation iterations.");
+        if (whileCount>*nWhileMax) error("C:sim_one_step: Too many unsuccessful simulation iterations.");
     }
 } 
+
+
+/* Sample from the state conditional on the observations */
+void cond_sim_one_step(int *nSpecies, int *nRxns, int *anX, int *anStoich, int *anRxns, 
+                       double *adH, int *anY, double *adP, int *nWhileMax)
+{
+    int i, whileCount=0, anTempX[*nSpecies], anTotalRxns[*nRxns];
+    for (i=0; i<*nRxns; i++) adH[i] *= (1-adP[i]); // update hazard by probability of not observing
+    while (1) 
+    {
+        // Copy current state for temporary use
+        for (i=0; i<*nSpecies; i++) anTempX[i] = anX[i];
+
+        // Get number of reactions
+        sim_poisson(nRxns, adH, anRxns);
+        for (i=0; i<*nRxns; i++) anTotalRxns[i] = anRxns[i]+anY[i];
+
+        // Update species
+        update_species(nSpecies, nRxns, anTempX, anStoich, anTotalRxns);
+
+        // Test if update has any negative species
+        if (!anyNegative(*nSpecies, anTempX)) 
+        {
+            // Copy temporary state into current state
+            for (i=0; i<*nSpecies; i++) anX[i]    = anTempX[i];
+            for (i=0; i<*nRxns   ; i++) anRxns[i] = anTotalRxns[i];
+            break;
+        }
+
+        // Limit how long the simulation tries to find a non-negative update
+        whileCount++;
+        if (whileCount>*nWhileMax) error("C:sim_one_step: Too many unsuccessful simulation iterations.");
+    }
+
+}  
+
+/* Particle learning sufficient statistic update */
+void inf_one_step(int *nRxns, int *anRxns, int *anY, int *anHp, int *anHyper) 
+{
+    int i,j;
+    int o1=*nRxns,o2=2**nRxns,o3=3**nRxns; // offsets
+    for (i=0; i<*nRxns; i++) 
+    {
+        anHyper[i   ] += anY[i];           // Beta (alpha)        - observations
+        anHyper[i+o1] += anRxns[i]-anY[i]; // Beta (beta)         - unobserved
+        anHyper[i+o2] += anRxns[i];        // Gamma shape (alpha) - transitions
+        anHyper[i+o3] += anHp[i];          // Gamma rate (beta)   - expected transitions
+    }
+}
+
+
+
+void one_step(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anStoich, 
+              double *adTheta, int *anY, int *anRxns, int *anHyper, int *nWhileMax)
+{
+    // Calculate reaction hazard 
+    int    anHp[*nRxns];
+    double adH [*nRxns];
+    hazard(nSpecies, nRxns, anX, anPre, adTheta, anHp, adH);
+
+    // Forward simulate system
+    sim_one_step(nSpecies, nRxns, anX, anStoich, anRxns, adH, nWhileMax);
+
+    // Inference for this simulated step
+    inf_one_step(nRxns, anRxns, anY, anHp, anHyper);
+}
+
 
