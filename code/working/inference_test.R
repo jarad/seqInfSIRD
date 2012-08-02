@@ -2,36 +2,11 @@
 
 source("inference.r")
 
-random.system = function(s=rpois(1,5)+1, r=rpois(1,5)+1) {
-  d = s*r
-  Pre  = matrix(rpois(d,.5), r, s)
-  Post = matrix(rpois(d,.5), r, s)
-  stoich = t(Post-Pre)
-  X = rpois(s,5)
-  theta = rgamma(r,1)
-  sys = list(s=s,r=r,Pre=Pre,Post=Post,stoich=stoich,X=X,theta=theta)
-  sys$h = hazard(sys)$h
+n.reps = 100
   
-  return(sys)
-}
 
 
-random.sir = function() {
-  s = 3
-  r = 2
-  Pre  = rbind(c(1,1,0),c(0,1,0))
-  Post = rbind(c(0,2,0),c(0,0,1))
-  stoich = t(Post-Pre)
-  X = c(rpois(1,1000),rpois(1,5),0)
-  theta = rgamma(r,10,10)/c(sum(X),1) # S->I scaled by N
-  sys = list(s=s,r=r,Pre=Pre,Post=Post,stoich=stoich,X=X,theta=theta)
-  sys$h = hazard(sys)$h
-  
-  return(sys)
-}
-
-
-for (i in 1:100) 
+for (i in 1:n.reps) 
 {
   sys = random.system()
 
@@ -49,12 +24,17 @@ for (i in 1:100)
 }
 
 
-for (i in 1:100) 
+for (i in 1:n.reps) 
 {
   sir = random.sir()
 
   a = .Random.seed; r = sim.one.step(sir, engine="R")
   .Random.seed = a; c = sim.one.step(sir, engine="C")
+  stopifnot(all.equal(r,c))
+
+  y = rbinom(sir$r,r$dX,sir$p)
+  a = .Random.seed; r = sim.one.step(sir, y, engine="R")
+  .Random.seed = a; c = sim.one.step(sir, y, engine="C")
   stopifnot(all.equal(r,c))
 }
 
