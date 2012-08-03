@@ -139,9 +139,11 @@ void inf_one_step(int *nRxns, int *anRxns, int *anY, int *anHp, int *anHyper)
 }
 
 
-
-void one_step(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anStoich, 
-              double *adTheta, int *anY, int *anRxns, int *anHyper, int *nWhileMax)
+/* Particle learning update for a single particle */
+void one_step_single_particle(int *nSpecies, int *nRxns, int *anPre, int *anStoich, int *anY,
+                              // Particle specific details
+                              int *anX, double *adTheta, int *anRxns, int *anHyper, 
+                              int *nWhileMax)
 {
     // Calculate reaction hazard 
     int    anHp[*nRxns];
@@ -155,4 +157,22 @@ void one_step(int *nSpecies, int *nRxns, int *anX, int *anPre, int *anStoich,
     inf_one_step(nRxns, anRxns, anY, anHp, anHyper);
 }
 
+
+/* Particle learning update for all particles */
+void one_step(int *nSpecies, int *nRxns, int *anPre, int *anStoich, int *anY,
+              // Particle specific arguments
+              int *anX, double *adTheta, int *anRxns, int *anHyper, 
+              int *nParticles, int *nWhileMax)
+{
+    int i, j, nSO=0, nRO=0, anX0[*nSpecies];
+    for (i=0; i< *nParticles; i++) 
+    { 
+        for (j=0; j< *nSpecies; j++) anX0[j] = anX[nSO+j]; 
+        one_step_single_particle(nSpecies, nRxns, anPre, anStoich, anY,
+                                 &anX[nSO], &adTheta[nRO], &anRxns[nRO], &anHyper[2*nRO],
+                                 nWhileMax);
+        nSO += *nSpecies; // species offset
+        nRO += *nRxns;     // rxn offset
+    }
+}
 

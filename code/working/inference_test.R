@@ -39,6 +39,8 @@ for (i in 1:n.reps)
 
   dX = sim.one.step(sir, y, engine="R")$dX
   stopifnot(all.equal(inf.one.step(sir,y,dX, engine="R"), inf.one.step(sir,y,dX, engine="C")))
+
+  
 }
 
 

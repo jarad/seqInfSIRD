@@ -208,4 +208,33 @@ inf.one.step = function(sys, y, dX, engine="R")
 }
 
 
+one.step = function(sys, y, part, max.while.count=1000, engine="R")
+{
+    ndx = part$n.particles*sys*r
+    if (engine=="R")
+    {
+        for (i in 1:part$n.particles) 
+        {
+            # To be implemented
+        } 
+    } else if (engine=="C")
+    {
+        out = .C("one_step",
+                 as.integer(sys$s), as.integer(sys$r), as.integer(sys$Pre), as.integer(sys$stoich),
+                 X=as.integer(part$X), as.double(part$theta),dX=integer(ndx), hyper=as.integer(part$hyper), 
+                 as.integer(part$n.particles), as.integer(max.while.count))
+        return(list(X     = matrix(out$X, sys$s, part$n.particles), 
+                    hyper = array( out$hyper, dim=c(sys$r, 2, part$n.particles)),
+                    newX  = matrix(out$dX, sys$r, part$n.particles))
+                 
+    } else 
+    {
+        engine.error()
+    }
+}
+
+(int *nSpecies, int *nRxns, int *anPre, int *anStoich, int *anY,
+              // Particle specific arguments
+              int *anX, double *adTheta, int *anRxns, int *anHyper, 
+              int *nParticles, int *nWhileMax)
 
