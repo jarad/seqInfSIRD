@@ -7,9 +7,9 @@
 #include "utility.h"
 
 /* Calculates the part of the hazard other than the fixed parameter */
-void hazard_part(int *nSpecies, int *nRxns, int *anPre, // these should be const
-                 int *anX,                              // and this
-                 int *anHp)                             // return hazard part
+void hazard_part(const int *nSpecies, const int *nRxns, const int *anPre, // system specific arguments 
+                 const int *anX,                                          // current system state
+                 int *anHp)                                               // return: (partial) system hazard
 {
     int i, j;
     for (i=0; i<*nRxns; i++) 
@@ -23,9 +23,10 @@ void hazard_part(int *nSpecies, int *nRxns, int *anPre, // these should be const
 }
 
 /* Calculates the hazard for the next reaction */
-void hazard(int *nSpecies, int *nRxns, int *anPre,    // these should be const
-            int *anX, double *adTheta, double *dTau,  // and these
-            int *anHp, double *adH)                   // return hazard
+void hazard(const int *nSpecies, const int *nRxns, const int *anPre, const double *adTheta,   
+            const int *anX, 
+            const double *dTau,  
+            int *anHp, double *adH)                   // return: hazard
 {
     hazard_part(nSpecies, nRxns, anPre, anX, anHp);
     int i;
@@ -34,9 +35,9 @@ void hazard(int *nSpecies, int *nRxns, int *anPre,    // these should be const
 
 
 /* Simulates a set of reactions */
-void sim_poisson(int *nRxns,                       // this should be const
-                 double *adH,                      // and this
-                 int *anRxns)                      // return number of reactions
+void sim_poisson(const int *nRxns,                      
+                 const double *adH,                     
+                 int *anRxns)                         // return: number of reactions
 {
     int i;
     GetRNGstate();
@@ -46,9 +47,9 @@ void sim_poisson(int *nRxns,                       // this should be const
 
 
 /* Updates the species according to the stoichiometry */
-void update_species(int *nSpecies, int *nRxns,     // these should be const
-                    int *anStoich, int *anRxns,    // and these
-                    int *anX)                      // return updated species
+void update_species(const int *nSpecies, const int *nRxns,     
+                    const int *anStoich, const int *anRxns,    
+                    int *anX)                               // return: updated species
 {
     int i,j;
     for (i=0; i<*nSpecies; i++) 
@@ -61,10 +62,10 @@ void update_species(int *nSpecies, int *nRxns,     // these should be const
 }
 
 /* Forward simulate ahead one time-step */
-void sim_one_step(int *nSpecies, int *nRxns, int *anStoich, // const
-                  int *anRxns, double *adH,                 // const
-                  int *nWhileMax,                           // const
-                  int *anX)                                 // return updated species
+void sim_one_step(const int *nSpecies, const int *nRxns, const int *anStoich, 
+                  const double *adH,                 
+                  const int *nWhileMax,                          
+                  int *anRxns, int *anX)                                 // return: updated species
 {
     int  whileCount=0, anTempX[*nSpecies];
     while (1) 
@@ -93,9 +94,9 @@ void sim_one_step(int *nSpecies, int *nRxns, int *anStoich, // const
 } 
 
 
-void sim(int *nSpecies, int *nRxns, int *anStoich, int *anPre, double *adTheta,
-         double *dTau, int *nSteps, 
-         int *nWhileMax,
+void sim(const int *nSpecies, const int *nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+         const double *dTau, const int *nSteps, 
+         const int *nWhileMax,
          int *anX)
 {
     int i, nSO=0, anRxns[*nRxns], anHp[*nRxns];
@@ -103,10 +104,10 @@ void sim(int *nSpecies, int *nRxns, int *anStoich, int *anPre, double *adTheta,
     for (i=0; i<*nSteps;i++)
     { 
         // Calculate hazard based on current state
-        hazard(nSpecies, nRxns, anPre, &anX[nSO], adTheta, dTau, anHp, adH);
+        hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], dTau, anHp, adH);
 
         // Forward simulate the system
-        sim_one_step(nSpecies, nRxns, anStoich, anRxns, adH, nWhileMax, &anX[nSO]);
+        sim_one_step(nSpecies, nRxns, anStoich, adH, nWhileMax, anRxns, &anX[nSO]);
 
         // Copy state for next step
         copy_int(*nSpecies, &anX[nSO], &anX[nSO+ *nSpecies]);
