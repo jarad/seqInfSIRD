@@ -1,11 +1,10 @@
 /* 
 * Functions for discrete-time compartment models
-* 
-* (almost all are built to allow calling directly from R)
 */
 
 #include <R.h>
 #include <Rmath.h>
+#include "utility.h"
 
 /* Calculates the part of the hazard other than the fixed parameter */
 void hazard_part(int *nSpecies, int *nRxns, int *anPre, // these should be const
@@ -83,7 +82,7 @@ void sim_one_step(int *nSpecies, int *nRxns, int *anStoich, // const
         if (!anyNegative(*nSpecies, anTempX)) 
         {
             // Copy temporary state into current state
-            copy_int(*nSpecies, anRxns, anX);
+            copy_int(*nSpecies, anTempX, anX);
             break;
         }
 
@@ -93,12 +92,26 @@ void sim_one_step(int *nSpecies, int *nRxns, int *anStoich, // const
     }
 } 
 
-/*
-void sim_to_T(int *nSpecies, int *nRxns, int *anStoich, 
-              int *anRxns, double *adH, 
-              int *nWhileMax)
+
+void sim(int *nSpecies, int *nRxns, int *anStoich, int *anPre, double *adTheta,
+         double *dTau, int *nSteps, 
+         int *nWhileMax,
+         int *anX)
 {
-    int 
+    int i, nSO=0, anRxns[*nRxns], anHp[*nRxns];
+    double adH[*nRxns];
+    for (i=0; i<*nSteps;i++)
+    { 
+        // Calculate hazard based on current state
+        hazard(nSpecies, nRxns, anPre, &anX[nSO], adTheta, dTau, anHp, adH);
+
+        // Forward simulate the system
+        sim_one_step(nSpecies, nRxns, anStoich, anRxns, adH, nWhileMax, &anX[nSO]);
+
+        // Copy state for next step
+        copy_int(*nSpecies, &anX[nSO], &anX[nSO+ *nSpecies]);
+        nSO += *nSpecies;
+    }
 }
-*/
+
 
