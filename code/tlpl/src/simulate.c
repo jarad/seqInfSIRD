@@ -18,7 +18,7 @@ void hazard_part(const int *nSpecies, const int *nRxns, const int *anPre, // sys
         for (j=0; j<*nSpecies; j++) 
         {
             anHp[i] *= choose(anX[j], anPre[i* *nSpecies+j]); 
-            Rprintf("%d %d: %d %d %d\n", i, j, anX[j], anPre[i* *nSpecies+j], anHp[i]);           
+//            Rprintf("%d %d: %d %d %d\n", i, j, anX[j], anPre[i* *nSpecies+j], anHp[i]);           
         }    
     }       
 }
@@ -34,9 +34,9 @@ void hazard(const int *nSpecies, const int *nRxns, const int *anPre, const doubl
     for (i=0; i<*nRxns; i++) 
     {
         adH[i] = adTheta[i]*anHp[i]* *dTau;
-        Rprintf("%d: %f %d %f %f\n", i, adTheta[i], anHp[i], *dTau, adH[i]);
+//        Rprintf("%d: %f %d %f %f\n", i, adTheta[i], anHp[i], *dTau, adH[i]);
     }
-    Rprintf("\n");
+//    Rprintf("\n");
 }
 
 
@@ -109,7 +109,7 @@ void sim(const int *nSpecies, const int *nRxns, const int *anStoich, const int *
     double adH[*nRxns];
     for (i=0; i<*nSteps;i++)
     {
-        Rprintf("Step %d:\n", i); 
+//        Rprintf("Step %d:\n", i); 
         // Calculate hazard based on current state
         hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], dTau, anHp, adH);
 
@@ -119,8 +119,9 @@ void sim(const int *nSpecies, const int *nRxns, const int *anStoich, const int *
         // Copy state for next step
         copy_int(*nSpecies, &anX[nSO], &anX[nSO+ *nSpecies]);
         nSO += *nSpecies;
-        Rprintf("\n\n\n");
+//        Rprintf("\n\n\n");
     }
+//    Rprintf("Done with C.\n");
 }
 
 
