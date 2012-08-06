@@ -1,7 +1,17 @@
-/* Functions for discrete-time compartment models */
+#ifndet PL_DISCRETE_H // guard pl-discrete.h
+#define PL_DISCRETE_H
 
 #include <R.h>
 
-void hazard_part(int *, int *, int *, int *, int *);
-void hazard(int *, int *, int *, int *, double *, double *)
+void cond_discrete_sim_step(const int *nSpecies, const int *nRxns, const int *anStoich,  
+                       const double *adHazard, const int *anY, const double *adP, const int *nWhileMax,
+                       int *anRxns, int *anX);
+void discrete_particle_update(const int *nSpecies, const int *nRxns, const int *anPre, const int *anStoich, 
+                              const int *anY, const double *dTau, const *nWhileMax,
+                              int *anX, double *adHyper);
+void discrete_all_particle_update(const int *nSpecies, const int *nRxns, const int *anPre, const int *anStoich, 
+                                  const int *anY, const double *dTau,
+                                  const int *nParticles, const int *nWhileMax,
+                                  int *anX, double *adHyper);
 
+#endif                 // guard pl-discrete.h
