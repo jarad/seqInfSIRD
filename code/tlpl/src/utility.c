@@ -12,7 +12,7 @@ int anyNegative(int n, int *v)                     // both should be const
 
 
 /* Integer vector copy */
-void copy_int(int n, int *from, int *to) 
+void copy(int n, int *from, int *to) 
 {
     int i;
     for (i=0; i<n; i++) to[i]=from[i];

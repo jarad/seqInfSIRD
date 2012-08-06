@@ -1,5 +1,5 @@
 
-SOURCES=simulate.c utility.c
+SOURCES=simulate.c utility.c pl-discrete.c
 OBJECTS=$(SOURCES:.c=.o)
 SHARED_OBJECT=tlpl.so
 

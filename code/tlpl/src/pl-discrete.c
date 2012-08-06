@@ -4,33 +4,38 @@
 
 #include <R.h>
 #include <Rmath.h>
-
+#include "utility.h"
+#include "simulate.h"
 
 /* Sample from the state conditional on the observations */
-void cond_sim_one_step(int *nSpecies, int *nRxns, int *anStoich, int *anRxns, 
-                       double *adHazard, int *anY, double *adP, int *nWhileMax,
-                       int *anX)
+void cond_sim_one_step(const int *nSpecies, const int *nRxns, const int *anStoich,  
+                       const double *adHazard, const int *anY, const double *adP, const int *nWhileMax,
+                       int *anRxns, int *anX)
 {
-    int i, whileCount=0, anTempX[*nSpecies], anTotalRxns[*nRxns];
-    for (i=0; i<*nRxns; i++) adHazard[i] *= (1-adP[i]); // update hazard by probability of not observing
+    // update hazard by probability of not observing
+    int i;
+    double adHazardTemp[*nRxns];
+    for (i=0; i<*nRxns; i++) adHazardTemp[i] = adHazard[i] * (1-adP[i]); 
+
+    int whileCount=0, anTempX[*nSpecies], anTotalRxns[*nRxns];
     while (1) 
     {
         // Copy current state for temporary use
-        for (i=0; i<*nSpecies; i++) anTempX[i] = anX[i];
+        copy(*nSpecies, anX, anTempX);
 
-        // Get number of reactions
-        sim_poisson(nRxns, adHazard, anRxns);
+        // Get unobserved reactions and add to observed reactions
+        rpois_vec(nRxns, adHazardTemp, anRxns);
         for (i=0; i<*nRxns; i++) anTotalRxns[i] = anRxns[i]+anY[i];
 
-        // Update species
+        // Temporarily update species according to temporary reactions
         update_species(nSpecies, nRxns, anTempX, anStoich, anTotalRxns);
 
         // Test if update has any negative species
         if (!anyNegative(*nSpecies, anTempX)) 
         {
-            // Copy temporary state into current state
-            for (i=0; i<*nSpecies; i++) anX[i]    = anTempX[i];
-            for (i=0; i<*nRxns   ; i++) anRxns[i] = anTotalRxns[i];
+            // Copy successful state and number of reactions back for returning from function
+            copy(*nSpecies, anTempX,      anX);
+            copy(*nRxns   , anTotalRxns, anRxns);
             break;
         }
 
@@ -42,7 +47,8 @@ void cond_sim_one_step(int *nSpecies, int *nRxns, int *anStoich, int *anRxns,
 }  
 
 /* Particle learning sufficient statistic update */
-void inf_one_step(int *nRxns, int *anRxns, int *anY, int *anHazardPart, int *anHyper) 
+void inf_one_step(const int *nRxns, const int *anRxns, const int *anY, const int *anHazardPart, 
+                  int *anHyper) 
 {
     int i,j;
     int o1=*nRxns,o2=2**nRxns,o3=3**nRxns; // offsets
@@ -51,24 +57,24 @@ void inf_one_step(int *nRxns, int *anRxns, int *anY, int *anHazardPart, int *anH
         anHyper[i   ] += anY[i];           // Beta (alpha)        - observations
         anHyper[i+o1] += anRxns[i]-anY[i]; // Beta (beta)         - unobserved
         anHyper[i+o2] += anRxns[i];        // Gamma shape (alpha) - transitions
-        anHyper[i+o3] += anHazardPart[i];          // Gamma rate (beta)   - expected transitions
+        anHyper[i+o3] += anHazardPart[i];  // Gamma rate (beta)   - expected transitions
     }
 }
 
 
 /* Particle learning update for a single particle */
-void one_step_single_particle(int *nSpecies, int *nRxns, int *anPre, int *anStoich, int *anY,
-                              // Particle specific details
+void one_step_single_particle(const int *nSpecies, const int *nRxns, const int *anPre, const int *anStoich, 
+                              const int *anY, const double *dTau,
                               int *anX, double *adTheta, int *anRxns, int *anHyper, 
                               int *nWhileMax)
 {
     // Calculate reaction hazard 
     int    anHazardPart[*nRxns];
-    double adHazard [*nRxns];
-    hazard(nSpecies, nRxns, anX, anPre, adTheta, anHazardPart, adHazard);
+    double adHazard[    *nRxns];
+    hazard(nSpecies, nRxns, anPre, adTheta, anX, dTau, anHazardPart, adHazard);
 
     // Forward simulate system
-    sim_one_step(nSpecies, nRxns, anX, anStoich, anRxns, adHazard, nWhileMax);
+    sim_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxns, anX);
 
     // Inference for this simulated step
     inf_one_step(nRxns, anRxns, anY, anHazardPart, anHyper);
@@ -76,20 +82,21 @@ void one_step_single_particle(int *nSpecies, int *nRxns, int *anPre, int *anStoi
 
 
 /* Particle learning update for all particles */
-void one_step(int *nSpecies, int *nRxns, int *anPre, int *anStoich, int *anY,
-              // Particle specific arguments
-              int *anX, double *adTheta, int *anRxns, int *anHyper, 
-              int *nParticles, int *nWhileMax)
+void one_step(const int *nSpecies, const int *nRxns, const int *anPre, const int *anStoich, 
+              const int *anY, const double *dTau,
+              const int *nParticles, const int *nWhileMax,
+              int *anX, double *adTheta, int *anRxns, int *anHyper) 
+              
 {
     int i, j, nSO=0, nRO=0, anX0[*nSpecies];
     for (i=0; i< *nParticles; i++) 
     { 
         for (j=0; j< *nSpecies; j++) anX0[j] = anX[nSO+j]; 
-        one_step_single_particle(nSpecies, nRxns, anPre, anStoich, anY,
+        one_step_single_particle(nSpecies, nRxns, anPre, anStoich, anY, dTau,
                                  &anX[nSO], &adTheta[nRO], &anRxns[nRO], &anHyper[2*nRO],
                                  nWhileMax);
         nSO += *nSpecies; // species offset
-        nRO += *nRxns;     // rxn offset
+        nRO += *nRxns;    // rxn offset
     }
 }
 

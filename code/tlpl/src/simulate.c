@@ -40,13 +40,13 @@ void hazard(const int *nSpecies, const int *nRxns, const int *anPre, const doubl
 
 
 /* Simulates a set of reactions */
-void sim_poisson(const int *nRxns,                      
-                 const double *adHazard,                     
-                 int *anRxns)                         // return: number of reactions
+void rpois_vec(const int *nLength,                      
+                 const double *adMean,                     
+                 int *anPoisson)                         // return: number of reactions
 {
     int i;
     GetRNGstate();
-    for (i=0; i<*nRxns; i++) anRxns[i]=rpois(adHazard[i]);
+    for (i=0; i<*nLength; i++) anPoisson[i]=rpois(adMean[i]);
     PutRNGstate(); 
 }
 
@@ -76,10 +76,10 @@ void sim_one_step(const int *nSpecies, const int *nRxns, const int *anStoich,
     while (1) 
     {
         // Copy current state for temporary use
-        copy_int(*nSpecies, anX, anTempX);
+        copy(*nSpecies, anX, anTempX);
 
         // Get number of reactions
-        sim_poisson(nRxns, adHazard, anRxns);
+        rpois_vec(nRxns, adHazard, anRxns);
 
         // Update species
         update_species(nSpecies, nRxns, anStoich, anRxns, anTempX);
@@ -88,7 +88,7 @@ void sim_one_step(const int *nSpecies, const int *nRxns, const int *anStoich,
         if (!anyNegative(*nSpecies, anTempX)) 
         {
             // Copy temporary state into current state
-            copy_int(*nSpecies, anTempX, anX);
+            copy(*nSpecies, anTempX, anX);
             break;
         }
 
@@ -115,7 +115,7 @@ void sim(const int *nSpecies, const int *nRxns, const int *anStoich, const int *
         sim_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxns, &anX[nSO]);
 
         // Copy state for next step
-        copy_int(*nSpecies, &anX[nSO], &anX[nSO+ *nSpecies]);
+        copy(*nSpecies, &anX[nSO], &anX[nSO+ *nSpecies]);
         nSO += *nSpecies;
     }
 }
