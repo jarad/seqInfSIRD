@@ -9,6 +9,10 @@ sim = function(sys, n, tau, while.max=1000)
     check.system(sys)
     stopifnot(tau>0, n>0, while.max>0)
 
+    # if tau is constant
+    if (length(tau)==1) tau=rep(tau,n)
+
+    # 
     if (!is.wholenumber(n)) 
     {
         warning("Since n is not a whole number, using round(n) instead.")

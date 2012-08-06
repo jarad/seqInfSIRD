@@ -109,7 +109,7 @@ void sim(const int *nSpecies, const int *nRxns, const int *anStoich, const int *
     for (i=0; i<*nSteps;i++)
     {
         // Calculate hazard based on current state
-        hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], dTau, anHazardPart, adHazard);
+        hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], &dTau[i], anHazardPart, adHazard);
 
         // Forward simulate the system
         sim_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxns, &anX[nSO]);
