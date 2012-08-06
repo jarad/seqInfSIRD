@@ -1,7 +1,12 @@
-tlpl.so: simulate.c utility.c
-	R CMD SHLIB simulate.c utility.c --output=tlpl.so
+
+SOURCES=simulate.c utility.c
+OBJECTS=$(SOURCES:.c=.o)
+SHARED_OBJECT=tlpl.so
+
+$(SHARED_OBJECT): $(SOURCES)
+	R CMD SHLIB $(SOURCES) -o $(SHARED_OBJECT)
 
 clean: 
-	rm utility.o simulate.o tlpl.so
+	rm $(OBJECTS) $(SHARED_OBJECT)
 
 
