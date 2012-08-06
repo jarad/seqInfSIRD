@@ -5,6 +5,7 @@
 #include <R.h>
 #include <Rmath.h>
 #include "utility.h"
+#include "simulate.h"
 
 /* Calculates the part of the hazard other than the fixed parameter */
 void hazard_part(const int *nSpecies, const int *nRxns, const int *anPre, // system specific arguments 
