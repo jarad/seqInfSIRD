@@ -10,16 +10,15 @@
 /* Calculates the part of the hazard other than the fixed parameter */
 void hazard_part(const int *nSpecies, const int *nRxns, const int *anPre, // system specific arguments 
                  const int *anX,                                          // current system state
-                 int *anHp)                                               // return: (partial) system hazard
+                 int *anHazardPart)                                       // return: (partial) system hazard
 {
     int i, j;
     for (i=0; i<*nRxns; i++) 
     {
-        anHp[i] = 1;
+        anHazardPart[i] = 1;
         for (j=0; j<*nSpecies; j++) 
         {
-            anHp[i] *= choose(anX[j], anPre[i* *nSpecies+j]); 
-//            Rprintf("%d %d: %d %d %d\n", i, j, anX[j], anPre[i* *nSpecies+j], anHp[i]);           
+            anHazardPart[i] *= choose(anX[j], anPre[i* *nSpecies+j]); 
         }    
     }       
 }
@@ -28,14 +27,13 @@ void hazard_part(const int *nSpecies, const int *nRxns, const int *anPre, // sys
 void hazard(const int *nSpecies, const int *nRxns, const int *anPre, const double *adTheta,   
             const int *anX, 
             const double *dTau,  
-            int *anHp, double *adH)                   // return: hazard
+            int *anHazardPart, double *adHazard)                   // return: hazard
 {
-    hazard_part(nSpecies, nRxns, anPre, anX, anHp);
+    hazard_part(nSpecies, nRxns, anPre, anX, anHazardPart);
     int i;
     for (i=0; i<*nRxns; i++) 
     {
-        adH[i] = adTheta[i]*anHp[i]* *dTau;
-//        Rprintf("%d: %f %d %f %f\n", i, adTheta[i], anHp[i], *dTau, adH[i]);
+        adHazard[i] = adTheta[i]*anHazardPart[i]* *dTau;
     }
 //    Rprintf("\n");
 }
@@ -43,12 +41,12 @@ void hazard(const int *nSpecies, const int *nRxns, const int *anPre, const doubl
 
 /* Simulates a set of reactions */
 void sim_poisson(const int *nRxns,                      
-                 const double *adH,                     
+                 const double *adHazard,                     
                  int *anRxns)                         // return: number of reactions
 {
     int i;
     GetRNGstate();
-    for (i=0; i<*nRxns; i++) anRxns[i]=rpois(adH[i]);
+    for (i=0; i<*nRxns; i++) anRxns[i]=rpois(adHazard[i]);
     PutRNGstate(); 
 }
 
@@ -70,7 +68,7 @@ void update_species(const int *nSpecies, const int *nRxns,
 
 /* Forward simulate ahead one time-step */
 void sim_one_step(const int *nSpecies, const int *nRxns, const int *anStoich, 
-                  const double *adH,                 
+                  const double *adHazard,                 
                   const int *nWhileMax,                          
                   int *anRxns, int *anX)                                 // return: updated species
 {
@@ -81,7 +79,7 @@ void sim_one_step(const int *nSpecies, const int *nRxns, const int *anStoich,
         copy_int(*nSpecies, anX, anTempX);
 
         // Get number of reactions
-        sim_poisson(nRxns, adH, anRxns);
+        sim_poisson(nRxns, adHazard, anRxns);
 
         // Update species
         update_species(nSpecies, nRxns, anStoich, anRxns, anTempX);
@@ -106,23 +104,20 @@ void sim(const int *nSpecies, const int *nRxns, const int *anStoich, const int *
          const int *nWhileMax,
          int *anX)
 {
-    int i, nSO=0, anRxns[*nRxns], anHp[*nRxns];
-    double adH[*nRxns];
+    int i, nSO=0, anRxns[*nRxns], anHazardPart[*nRxns];
+    double adHazard[*nRxns];
     for (i=0; i<*nSteps;i++)
     {
-//        Rprintf("Step %d:\n", i); 
         // Calculate hazard based on current state
-        hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], dTau, anHp, adH);
+        hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], dTau, anHazardPart, adHazard);
 
         // Forward simulate the system
-        sim_one_step(nSpecies, nRxns, anStoich, adH, nWhileMax, anRxns, &anX[nSO]);
+        sim_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxns, &anX[nSO]);
 
         // Copy state for next step
         copy_int(*nSpecies, &anX[nSO], &anX[nSO+ *nSpecies]);
         nSO += *nSpecies;
-//        Rprintf("\n\n\n");
     }
-//    Rprintf("Done with C.\n");
 }
 
 
