@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <R.h>
 #include <Rmath.h>
-
+#include "utility.h"
 
 /*********************** Utility functions - to be moved *******************************/
 
@@ -111,9 +111,23 @@ void multinomial_resample(const int *nWeights, double *adWeights, const int *nIn
 }
 
 
-void stratified_resample(const int *nWeights, const double *adWeights, const int *nIndices, int *anIndices)
+void stratified_resample(const int *nWeights, double *adWeights, const int *nIndices, int *anIndices)
 {
-  
+    int i;
+    double adLowerBound[*nIndices], adUpperBound[*nIndices];
+    for (i=0;i<*nIndices;i++)
+    {
+        adLowerBound[i] = (float)  i    / *nIndices;
+        adUpperBound[i] = (float) (i+1) / *nIndices;
+    }
+    
+    double adUniforms[*nIndices];
+    runif_vec(nIndices, adLowerBound, adUpperBound, adUniforms);
+
+    Rprintf("LowerBound: "); for (i=0;i<*nIndices;i++) Rprintf("%1.6f ", adLowerBound[i]); Rprintf("\n");
+    Rprintf("UpperBound: "); for (i=0;i<*nIndices;i++) Rprintf("%1.6f ", adUpperBound[i]); Rprintf("\n");  
+    Rprintf("Uniforms: "); for (i=0;i<*nIndices;i++) Rprintf("%1.6f ", adUniforms[i]); Rprintf("\n"); 
+    inverse_cdf_weights(nWeights, adWeights, nIndices, adUniforms, anIndices);
 }
 
 
