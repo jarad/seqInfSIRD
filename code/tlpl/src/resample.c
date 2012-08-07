@@ -47,7 +47,10 @@ void cumulative_sum(const int n, double *v)
 
 /************************ Resampling functions *****************************************/
 
-void inverse_cdf_weights(const int *nWeights, double *adWeights, const int *nUniforms, const double *adUniforms,
+void inverse_cdf_weights(const int *nWeights, 
+                         double *adWeights, 
+                         const int *nUniforms, 
+                         const double *adUniforms,
                          int *anIndices)
 {
     if (!is_sorted(*nUniforms, adUniforms))    
@@ -123,11 +126,22 @@ void stratified_resample(const int *nWeights, double *adWeights, const int *nInd
     double adUniforms[*nIndices];
     runif_vec(nIndices, adLowerBound, adUpperBound, adUniforms);
 
-    Rprintf("LowerBound: "); for (i=0;i<*nIndices;i++) Rprintf("%1.6f ", adLowerBound[i]); Rprintf("\n");
-    Rprintf("UpperBound: "); for (i=0;i<*nIndices;i++) Rprintf("%1.6f ", adUpperBound[i]); Rprintf("\n");  
-    Rprintf("Uniforms: "); for (i=0;i<*nIndices;i++) Rprintf("%1.6f ", adUniforms[i]); Rprintf("\n"); 
     inverse_cdf_weights(nWeights, adWeights, nIndices, adUniforms, anIndices);
 }
+
+
+void systematic_resample(const int *nWeights, double *adWeights, const int *nIndices, int *anIndices)
+{
+    double adUniforms[*nIndices];
+    adUniforms[0] = runif(0, (float) 1/ *nIndices);
+    int i;
+    for (i=1; i<*nIndices; i++) adUniforms[i] =  adUniforms[i-1]+ (float) 1 / *nIndices;
+
+    inverse_cdf_weights(nWeights, adWeights, nIndices, adUniforms, anIndices);
+}
+
+
+
 
 
 
