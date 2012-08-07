@@ -96,7 +96,6 @@ void renormalize(const int *nWeights, const int *nLog, double *adWeights)
 }
 
 
-/* Performs multinomial resampling on the adWeights. Returns the anIndices for nIndices samples */
 void multinomial_resample(const int *nWeights, double *adWeights, const int *nIndices, int *anIndices) 
 {
     int i, j;
