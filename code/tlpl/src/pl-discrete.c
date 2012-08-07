@@ -11,7 +11,7 @@
 /* Sample from the state conditional on the observations */
 void cond_discrete_sim_step(const int *nSpecies, const int *nRxns, const int *anStoich,  
                        const double *adHazard, const int *anY, const double *adP, const int *nWhileMax,
-                       int *anRxns, int *anX)
+                       int *anRxnCount, int *anX)
 {
     // update hazard by probability of not observing
     int i;
@@ -25,8 +25,8 @@ void cond_discrete_sim_step(const int *nSpecies, const int *nRxns, const int *an
         copy(*nSpecies, anX, anTempX);
 
         // Get unobserved reactions and add to observed reactions
-        rpois_vec(nRxns, adHazardTemp, anRxns);
-        for (i=0; i<*nRxns; i++) anTotalRxns[i] = anRxns[i]+anY[i];
+        rpois_vec(nRxns, adHazardTemp, anRxnCount);
+        for (i=0; i<*nRxns; i++) anTotalRxns[i] = anRxnCount[i]+anY[i];
 
         // Temporarily update species according to temporary reactions
         update_species(nSpecies, nRxns, anTempX, anStoich, anTotalRxns);
@@ -35,8 +35,8 @@ void cond_discrete_sim_step(const int *nSpecies, const int *nRxns, const int *an
         if (!anyNegative(*nSpecies, anTempX)) 
         {
             // Copy successful state and number of reactions back for returning from function
-            copy(*nSpecies, anTempX,      anX);
-            copy(*nRxns   , anTotalRxns, anRxns);
+            copy(*nSpecies, anTempX,     anX);
+            copy(*nRxns   , anTotalRxns, anRxnCount);
             break;
         }
 
@@ -65,11 +65,11 @@ void discrete_particle_update(const int *nSpecies, const int *nRxns, const int *
     hazard(nSpecies, nRxns, anPre, adTheta, anX, dTau, anHazardPart, adHazard);
 
     // Forward simulate system
-    int anRxns[*nRxns];
-    cond_discrete_sim_step(nSpecies, nRxns, anStoich, adHazard, anY, adP, nWhileMax, anRxns, anX);
+    int anRxnCount[*nRxns];
+    cond_discrete_sim_step(nSpecies, nRxns, anStoich, adHazard, anY, adP, nWhileMax, anRxnCount, anX);
 
     // Inference for this simulated step
-    suff_stat_update(nRxns, anRxns, anY, anHazardPart, adHyper);
+    suff_stat_update(nRxns, anRxnCount, anY, anHazardPart, adHyper);
 }
 
 
@@ -80,14 +80,30 @@ void discrete_all_particle_update(const int *nSpecies, const int *nRxns, const i
                                   int *anX, double *adHyper) 
               
 {
-    int i, j, nSO=0, nRO=0, anX0[*nSpecies];
+    Rprintf("In discrete_all_particle_update.\n");
+    int i, nSO=0, nRO=0;
+
+    for (i=0; i< *nParticles; i++) Rprintf("%d ", anX[i]); Rprintf("\n");
+    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i    ]); nRO += *nParticles; Rprintf("\n");
+    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i+nRO]); nRO += *nParticles; Rprintf("\n");
+    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i+nRO]); nRO += *nParticles; Rprintf("\n");
+    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i+nRO]); nRO += *nParticles; Rprintf("\n");
+    nRO=0;
+     
+
     for (i=0; i< *nParticles; i++) 
     { 
-        for (j=0; j< *nSpecies; j++) anX0[j] = anX[nSO+j]; 
         discrete_particle_update(nSpecies, nRxns, anPre, anStoich, anY, dTau, nWhileMax,
-                                 &anX[nSO], &adHyper[2*nRO]);
+                                 &anX[nSO], &adHyper[nRO]);
         nSO += *nSpecies; // species offset
-        nRO += *nRxns;    // rxn offset
+        nRO += 4* *nRxns; // rxn offset
     }
+
+    nRO=0;
+    for (i=0; i< *nParticles; i++) Rprintf("%d ", anX[i]); Rprintf("\n");
+    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i    ]); nRO += *nParticles; Rprintf("\n");
+    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i+nRO]); nRO += *nParticles; Rprintf("\n");
+    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i+nRO]); nRO += *nParticles; Rprintf("\n");
+    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i+nRO]); nRO += *nParticles; Rprintf("\n");
 }
 
