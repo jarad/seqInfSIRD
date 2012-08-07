@@ -22,6 +22,13 @@ void copy(int n, int *from, int *to)
     for (i=0; i<n; i++) to[i]=from[i];
 }
 
+void runif_vec(const int *nLength, const double *adLowerBound, const double *adUpperBound, double *adUnifs)
+{
+    int i;
+    GetRNGstate();
+    for (i=0; i<*nLength; i++) adUnifs[i] = runif(adLowerBound[i], adUpperBound[i]);
+    PutRNGstate();
+}
 
 void rpois_vec(const int *nLength, const double *adMean, int *anPoisson)         
 {
