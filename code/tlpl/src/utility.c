@@ -44,7 +44,7 @@ void rgamma_vec(const int *nLength, const double *adShape, const double *adRate,
     int i;
     GetRNGstate();
     for (i=0; i<*nLength; i++) adGammas[i] = rgamma(adShape[i], 1.0/adRate[i]); 
-    Rprintf("Gammas: "); for(i=0;i<*nLength; i++); Rprintf("%d %6.8f %6.8f %6.8f ", i, adShape[i], adRate[i], adGammas[i]); Rprintf("\n");
+    Rprintf("Gammas (utility.c): \n"); for(i=0;i<*nLength; i++) Rprintf("%d %6.8f %6.8f %6.14f \n", i, adShape[i], adRate[i], adGammas[i]); Rprintf("\n");
     PutRNGstate();
 
 }
