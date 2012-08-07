@@ -1,39 +1,120 @@
+#include <stdlib.h>
 #include <R.h>
 #include <Rmath.h>
 
-/* Renormalizes the vector adWeights to sum to 1. If *nLog \ne 0, the adWeights are assumed to be log adWeights */
-void renormalize(const int *n, const int *nLog, double *adWeights) 
+
+/*********************** Utility functions - to be moved *******************************/
+
+
+int double_comp(const void *X, const void *Y) 
 {
-  int i;
+    double x = *((double *)X);
+    double y = *((double *)Y);
+    if (x>y) 
+    {
+        return 1;
+    }
+    else 
+    {
+        if (x<y)
+        {
+            return -1;
+        }
+        else
+        {
+            return 0;
+        }
+    }
+}
 
-  if (*nLog) {
-    double max=adWeights[0];
-    for (i=1; i<*n; i++) if (adWeights[i]>max) max = adWeights[i]; 
-    for (i=0; i<*n; i++) adWeights[i] = exp(adWeights[i]-max);
-  }
+int is_sorted(const int n, const double *v) 
+{
+    int i; 
+    for (i=1; i<n; i++)
+    {
+        if (v[i]<v[i-1]) return 0;
+    }
+    return 1;
+}
 
-  double sum=0;
-  for (i=0; i<*n; i++) sum += adWeights[i];
-  for (i=0; i<*n; i++) adWeights[i] /= sum;
+void cumulative_sum(const int n, double *v) 
+{
+    int i;
+    for (i=1; i<n; i++) v[i] += v[i-1];
 }
 
 
-/* Performs multinomial resampling on the adWeights. Returns the anIndices for nSamples samples */
-void multinomial_resample(const int *n, const int *nSamples, const double *adWeights, int *anIndices) 
-{
-  int i, j;
-  double cusum[*n];
 
-  /* Calculate the cumulative sum of the adWeightseight series */
-  cusum[0] = adWeights[0];
-  for (i=1; i<*n; i++) cusum[i] = cusum[i-1]+adWeights[i];
+/************************ Resampling functions *****************************************/
+
+void inverse_cdf_weights(const int *nWeights, double *adWeights, const int *nUniforms, const double *adUniforms,
+                         int *anIndices)
+{
+    if (!is_sorted(*nUniforms, adUniforms))    
+        qsort((void *)adUniforms, *nUniforms, sizeof(double), double_comp);
+
+    cumulative_sum(*nWeights, adWeights);
+
+    int i, j=0, found;
+    for (i=0; i<*nUniforms; i++) 
+    {
+        found=0;
+        while (!found) 
+        {
+            if (adUniforms[i] > adWeights[j])
+            {
+               j++;
+            }
+            else 
+            {
+                found=1;
+            }
+        }
+        anIndices[i] = j;
+    }    
+}
+
+
+
+
+
+
+/* Renormalizes the vector adWeights to sum to 1. If *nLog \ne 0, the weights are assumed to be log weights */
+void renormalize(const int *nWeights, const int *nLog, double *adWeights) 
+{
+    int i;
+
+    if (*nLog) {
+        double max=adWeights[0];
+        for (i=1; i<*nWeights; i++) if (adWeights[i]>max) max = adWeights[i]; 
+        for (i=0; i<*nWeights; i++) adWeights[i] = exp(adWeights[i]-max);
+    }
+
+    double sum=0;
+    for (i=0; i<*nWeights; i++) sum += adWeights[i];
+    for (i=0; i<*nWeights; i++) adWeights[i] /= sum;
+}
+
+
+/* Performs multinomial resampling on the adWeights. Returns the anIndices for nIndices samples */
+void multinomial_resample(const int *nWeights, double *adWeights, const int *nIndices, int *anIndices) 
+{
+    int i, j;
+    double cusum[*nWeights], adUniforms[*nIndices];
+    cumulative_sum(*nWeights, adWeights);
+
+    GetRNGstate();
+    for (i=0; i<*nIndices; i++) adUniforms[i] = runif(0,1);
+    PutRNGstate();
+
+    inverse_cdf_weights(nWeights, adWeights, nIndices, adUniforms, anIndices);
+}
+
+
+void stratified_resample(const int *nWeights, const double *adWeights, const int *nIndices, int *anIndices)
+{
   
-  GetRNGstate();
-  for (i=0; i<*nSamples; i++) {
-    j=0;
-    while (cusum[j]< runif(0,1)) { j++; }
-    anIndices[i] = j;
-  }
-  PutRNGstate();
 }
+
+
 
