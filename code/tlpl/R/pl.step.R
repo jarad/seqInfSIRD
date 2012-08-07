@@ -9,7 +9,7 @@ pl.step = function(y,tau,mod,part,while.max=1000)
              as.integer(mod$s), as.integer(mod$r), as.integer(t(mod$Pre)), as.integer(mod$stoich),
              as.integer(y), as.double(tau), as.integer(part$n), as.integer(while.max),
              X=as.integer(t(part$X)), hyper=as.double(t(part$hyper)))
-    return(list(X    = matrix(out$X, part$n, sys$s, byrow=T), 
-                hyper= matrix(out$hyper, part$n, 4*sys$r, byrow=T)))
+    return(list(X    = matrix(out$X, part$n, mod$s, byrow=T), 
+                hyper= matrix(out$hyper, part$n, 4*mod$r, byrow=T)))
 } 
 

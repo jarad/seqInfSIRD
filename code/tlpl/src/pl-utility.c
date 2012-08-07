@@ -18,26 +18,4 @@ void suff_stat_update(const int *nRxns, const int *anRxnCount, const int *anY, c
 }
 
 
-void sample_p(const int *nLength, const double *adParameter, double *adBetas)
-{
-    int i;
-    for (i=0; i<*nLength; i++) 
-    {
-        GetRNGstate();
-        adBetas[i] = rbeta(adParameter[i], adParameter[i + *nLength]);
-        PutRNGstate();
-    }
-}
-
-void sample_theta(const int *nLength, const double *adParameter, double *adGammas)
-{
-    int i;
-    for (i=0; i<*nLength; i++)
-    {
-        GetRNGstate();
-        adGammas[i] = rgamma(adParameter[i], adParameter[i + *nLength]);
-        PutRNGstate();
-    }
-}
-
 

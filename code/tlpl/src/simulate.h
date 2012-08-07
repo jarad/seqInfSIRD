@@ -4,7 +4,6 @@
 void hazard_part(const int *nSpecies, const int *nRxns, const int *anPre, const int *anX, int *anHp);
 void hazard(const int *nSpecies, const int *nRxns, const int *anPre, const double *adTheta,   
             const int *anX, const double *dTau, int *anHp, double *adH); 
-void rpois_vec(const int *nRxns, const double *adH, int *anRxns);
 void update_species(const int *nSpecies, const int *nRxns, const int *anStoich, const int *anRxns,    
                     int *anX);
 void sim_one_step(const int *nSpecies, const int *nRxns, const int *anStoich, const double *adH,                 

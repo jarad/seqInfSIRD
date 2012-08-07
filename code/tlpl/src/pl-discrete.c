@@ -17,21 +17,19 @@ void cond_discrete_sim_step(const int *nSpecies, const int *nRxns, const int *an
     int i;
     double adHazardTemp[*nRxns];
     for (i=0; i<*nRxns; i++) adHazardTemp[i] = adHazard[i] * (1-adP[i]); 
-
-    int whileCount=0, anTempX[*nSpecies], anTotalRxns[*nRxns];
+    
+    int whileCount=0, anTempX[*nSpecies], anUnobservedRxnCount[*nRxns], anTotalRxns[*nRxns];
     while (1) 
     {
         // Copy current state for temporary use
         copy(*nSpecies, anX, anTempX);
-        for (i=0; i<*nSpecies; i++) Rprintf("%d ", anTempX[i]);
 
         // Get unobserved reactions and add to observed reactions
-        rpois_vec(nRxns, adHazardTemp, anRxnCount);
-        for (i=0; i<*nRxns; i++) anTotalRxns[i] = anRxnCount[i]+anY[i];
+        rpois_vec(nRxns, adHazardTemp, anUnobservedRxnCount);
+        for (i=0; i<*nRxns; i++) anTotalRxns[i] = anUnobservedRxnCount[i]+anY[i];
 
         // Temporarily update species according to temporary reactions
         update_species(nSpecies, nRxns, anStoich, anTotalRxns, anTempX);
-        for (i=0; i<*nSpecies; i++) Rprintf("%d ", anTempX[i]);
 
         // Test if update has any negative species
         if (!anyNegative(*nSpecies, anTempX)) 
@@ -39,16 +37,13 @@ void cond_discrete_sim_step(const int *nSpecies, const int *nRxns, const int *an
             // Copy successful state and number of reactions back for returning from function
             copy(*nSpecies, anTempX,     anX);
             copy(*nRxns   , anTotalRxns, anRxnCount);
-
-            for (i=0; i<*nSpecies; i++) Rprintf("%d ", anTempX[i]);
-
             break;
         }
 
         // Limit how long the simulation tries to find a non-negative update
         whileCount++;
         if (whileCount>*nWhileMax) 
-            error("C:sim_discrete_particle_update: Too many unsuccessful simulation iterations.");
+            error("C:cond_discrete_sim_step: Too many unsuccessful simulation iterations.");
     }
 
 }  
@@ -61,13 +56,20 @@ void discrete_particle_update(const int *nSpecies, const int *nRxns, const int *
 {
     // Sample parameters
     double adP[*nRxns], adTheta[*nRxns];
-    sample_p(    nRxns,  adHyper           , adP);
-    sample_theta(nRxns, &adHyper[2* *nRxns], adTheta);
+    rbeta_vec( nRxns,  adHyper,            &adHyper[   *nRxns], adP);     // sample probabilities
+    rgamma_vec(nRxns, &adHyper[2* *nRxns], &adHyper[3* *nRxns], adTheta); // sample reaction rates
+
+    int i;
+    Rprintf("Hyper: "); for (i=0; i<4* *nRxns;i++) Rprintf("%6.8f ", adHyper[i]); Rprintf("\n");
 
     // Calculate reaction hazard 
     int    anHazardPart[*nRxns];
     double adHazard[    *nRxns];
     hazard(nSpecies, nRxns, anPre, adTheta, anX, dTau, anHazardPart, adHazard);
+
+    Rprintf("Hazard parts: "); for (i=0;i<*nRxns;i++) Rprintf("%d ", anHazardPart[i]); Rprintf("\n");
+    Rprintf("Theta: "); for (i=0;i<*nRxns;i++) Rprintf("%6.8f ", adTheta[i]); Rprintf("\n");
+    Rprintf("Hazard: "); for (i=0;i<*nRxns;i++) Rprintf("%6.2f ", adHazard[i]); Rprintf("\n");
 
     // Forward simulate system
     int anRxnCount[*nRxns];
@@ -83,11 +85,11 @@ void discrete_all_particle_update(const int *nSpecies, const int *nRxns, const i
                                   const int *anY, const double *dTau,
                                   const int *nParticles, const int *nWhileMax,
                                   int *anX, double *adHyper) 
-              
 {
-    int i;
+    int i,j;
     for (i=0; i< *nParticles; i++) 
-    { 
+    {
+        Rprintf("\n\nParticle %d:\n", i);
         discrete_particle_update(nSpecies, nRxns, anPre, anStoich, anY, dTau, nWhileMax,
                                  &anX[i* *nSpecies], 
                                  &adHyper[i* 4* *nRxns]); // 4 hyper parameters per reaction

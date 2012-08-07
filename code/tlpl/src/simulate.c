@@ -39,18 +39,6 @@ void hazard(const int *nSpecies, const int *nRxns, const int *anPre, const doubl
 }
 
 
-/* Simulates a set of reactions */
-void rpois_vec(const int *nLength,                      
-               const double *adMean,                     
-               int *anPoisson)                         // return: number of reactions
-{
-    int i;
-    GetRNGstate();
-    for (i=0; i<*nLength; i++) anPoisson[i]=rpois(adMean[i]);
-    PutRNGstate(); 
-}
-
-
 /* Updates the species according to the stoichiometry */
 void update_species(const int *nSpecies, const int *nRxns,     
                     const int *anStoich, const int *anRxnCount,    
@@ -106,17 +94,18 @@ void sim(const int *nSpecies, const int *nRxns, const int *anStoich, const int *
 {
     int i, nSO=0, anRxnCount[*nRxns], anHazardPart[*nRxns];
     double adHazard[*nRxns];
+    copy(*nSpecies, anX, &anX[nSO]); // retain original state
     for (i=0; i<*nSteps;i++)
     {
+        // Copy state for current step
+        copy(*nSpecies, &anX[nSO], &anX[nSO+ *nSpecies]);
+        nSO += *nSpecies;
+
         // Calculate hazard based on current state
         hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], &dTau[i], anHazardPart, adHazard);
 
         // Forward simulate the system
         sim_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxnCount, &anX[nSO]);
-
-        // Copy state for next step
-        copy(*nSpecies, &anX[nSO], &anX[nSO+ *nSpecies]);
-        nSO += *nSpecies;
     }
 }
 
