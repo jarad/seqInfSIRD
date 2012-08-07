@@ -1,5 +1,5 @@
-#ifndet PL_DISCRETE_H // guard pl-discrete.h
-#define PL_DISCRETE_H
+#ifndef __PL_DISCRETE_H__ // guard pl-discrete.h
+#define __PL_DISCRETE_H__
 
 #include <R.h>
 
@@ -14,4 +14,4 @@ void discrete_all_particle_update(const int *nSpecies, const int *nRxns, const i
                                   const int *nParticles, const int *nWhileMax,
                                   int *anX, double *adHyper);
 
-#endif                 // guard pl-discrete.h
+#endif                   // guard pl-discrete.h

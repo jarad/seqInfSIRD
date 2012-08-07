@@ -1,5 +1,5 @@
-#ifndef SIMULATE_H // guard for simulate.h
-#define SIMULATE_H 
+#ifndef __SIMULATE_H__ // guard for simulate.h
+#define __SIMULATE_H__ 
 
 void hazard_part(const int *nSpecies, const int *nRxns, const int *anPre, const int *anX, int *anHp);
 void hazard(const int *nSpecies, const int *nRxns, const int *anPre, const double *adTheta,   
@@ -13,4 +13,4 @@ void sim(const int *nSpecies, const int *nRxns, const int *anStoich, const int *
          const double *dTau, const int *nSteps, const int *nWhileMax, int *anX); 
 
 
-#endif             // guard for simulate.h
+#endif                 // guard for simulate.h
