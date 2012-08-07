@@ -23,13 +23,15 @@ void cond_discrete_sim_step(const int *nSpecies, const int *nRxns, const int *an
     {
         // Copy current state for temporary use
         copy(*nSpecies, anX, anTempX);
+        for (i=0; i<*nSpecies; i++) Rprintf("%d ", anTempX[i]);
 
         // Get unobserved reactions and add to observed reactions
         rpois_vec(nRxns, adHazardTemp, anRxnCount);
         for (i=0; i<*nRxns; i++) anTotalRxns[i] = anRxnCount[i]+anY[i];
 
         // Temporarily update species according to temporary reactions
-        update_species(nSpecies, nRxns, anTempX, anStoich, anTotalRxns);
+        update_species(nSpecies, nRxns, anStoich, anTotalRxns, anTempX);
+        for (i=0; i<*nSpecies; i++) Rprintf("%d ", anTempX[i]);
 
         // Test if update has any negative species
         if (!anyNegative(*nSpecies, anTempX)) 
@@ -37,6 +39,9 @@ void cond_discrete_sim_step(const int *nSpecies, const int *nRxns, const int *an
             // Copy successful state and number of reactions back for returning from function
             copy(*nSpecies, anTempX,     anX);
             copy(*nRxns   , anTotalRxns, anRxnCount);
+
+            for (i=0; i<*nSpecies; i++) Rprintf("%d ", anTempX[i]);
+
             break;
         }
 
@@ -80,30 +85,12 @@ void discrete_all_particle_update(const int *nSpecies, const int *nRxns, const i
                                   int *anX, double *adHyper) 
               
 {
-    Rprintf("In discrete_all_particle_update.\n");
-    int i, nSO=0, nRO=0;
-
-    for (i=0; i< *nParticles; i++) Rprintf("%d ", anX[i]); Rprintf("\n");
-    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i    ]); nRO += *nParticles; Rprintf("\n");
-    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i+nRO]); nRO += *nParticles; Rprintf("\n");
-    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i+nRO]); nRO += *nParticles; Rprintf("\n");
-    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i+nRO]); nRO += *nParticles; Rprintf("\n");
-    nRO=0;
-     
-
+    int i;
     for (i=0; i< *nParticles; i++) 
     { 
         discrete_particle_update(nSpecies, nRxns, anPre, anStoich, anY, dTau, nWhileMax,
-                                 &anX[nSO], &adHyper[nRO]);
-        nSO += *nSpecies; // species offset
-        nRO += 4* *nRxns; // rxn offset
+                                 &anX[i* *nSpecies], 
+                                 &adHyper[i* 4* *nRxns]); // 4 hyper parameters per reaction
     }
-
-    nRO=0;
-    for (i=0; i< *nParticles; i++) Rprintf("%d ", anX[i]); Rprintf("\n");
-    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i    ]); nRO += *nParticles; Rprintf("\n");
-    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i+nRO]); nRO += *nParticles; Rprintf("\n");
-    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i+nRO]); nRO += *nParticles; Rprintf("\n");
-    for (i=0; i< *nParticles; i++) Rprintf("%6.1f ", adHyper[i+nRO]); nRO += *nParticles; Rprintf("\n");
 }
 

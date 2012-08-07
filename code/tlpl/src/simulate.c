@@ -41,8 +41,8 @@ void hazard(const int *nSpecies, const int *nRxns, const int *anPre, const doubl
 
 /* Simulates a set of reactions */
 void rpois_vec(const int *nLength,                      
-                 const double *adMean,                     
-                 int *anPoisson)                         // return: number of reactions
+               const double *adMean,                     
+               int *anPoisson)                         // return: number of reactions
 {
     int i;
     GetRNGstate();
@@ -53,7 +53,7 @@ void rpois_vec(const int *nLength,
 
 /* Updates the species according to the stoichiometry */
 void update_species(const int *nSpecies, const int *nRxns,     
-                    const int *anStoich, const int *anRxns,    
+                    const int *anStoich, const int *anRxnCount,    
                     int *anX)                               // return: updated species
 {
     int i,j;
@@ -61,7 +61,7 @@ void update_species(const int *nSpecies, const int *nRxns,
     {
         for (j=0; j<*nRxns; j++) 
         {
-            anX[i] += anStoich[*nSpecies*j+i]*anRxns[j];
+            anX[i] += anStoich[*nSpecies*j+i]*anRxnCount[j];
         }    
     } 
 }
@@ -70,7 +70,7 @@ void update_species(const int *nSpecies, const int *nRxns,
 void sim_one_step(const int *nSpecies, const int *nRxns, const int *anStoich, 
                   const double *adHazard,                 
                   const int *nWhileMax,                          
-                  int *anRxns, int *anX)                                 // return: updated species
+                  int *anRxnCount, int *anX)                                 // return: updated species
 {
     int  whileCount=0, anTempX[*nSpecies];
     while (1) 
@@ -79,10 +79,10 @@ void sim_one_step(const int *nSpecies, const int *nRxns, const int *anStoich,
         copy(*nSpecies, anX, anTempX);
 
         // Get number of reactions
-        rpois_vec(nRxns, adHazard, anRxns);
+        rpois_vec(nRxns, adHazard, anRxnCount);
 
         // Update species
-        update_species(nSpecies, nRxns, anStoich, anRxns, anTempX);
+        update_species(nSpecies, nRxns, anStoich, anRxnCount, anTempX);
 
         // Test if update has any negative species
         if (!anyNegative(*nSpecies, anTempX)) 
@@ -104,7 +104,7 @@ void sim(const int *nSpecies, const int *nRxns, const int *anStoich, const int *
          const int *nWhileMax,
          int *anX)
 {
-    int i, nSO=0, anRxns[*nRxns], anHazardPart[*nRxns];
+    int i, nSO=0, anRxnCount[*nRxns], anHazardPart[*nRxns];
     double adHazard[*nRxns];
     for (i=0; i<*nSteps;i++)
     {
@@ -112,7 +112,7 @@ void sim(const int *nSpecies, const int *nRxns, const int *anStoich, const int *
         hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], &dTau[i], anHazardPart, adHazard);
 
         // Forward simulate the system
-        sim_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxns, &anX[nSO]);
+        sim_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxnCount, &anX[nSO]);
 
         // Copy state for next step
         copy(*nSpecies, &anX[nSO], &anX[nSO+ *nSpecies]);
