@@ -3,10 +3,10 @@ if (!is.loaded("sim")) dyn.load("../src/tlpl.so")
 is.wholenumber = function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
 
 
-sim = function(sys, n, tau, while.max=1000) 
+tau.leap = function(sys, n, tau, while.max=1000) 
 {
     # Error checking
-    check.system(sys)
+    check.model(sys)
     stopifnot(tau>0, n>0, while.max>0)
 
     # if tau is constant

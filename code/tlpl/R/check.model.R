@@ -1,4 +1,4 @@
-check.system = function(sys) {
+check.model = function(sys) {
     stopifnot(sys$s == ncol(  sys$Pre),
               sys$s == ncol(  sys$Post),
               sys$s == nrow(  sys$stoich),
