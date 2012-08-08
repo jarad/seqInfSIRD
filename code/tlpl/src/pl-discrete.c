@@ -25,7 +25,7 @@ void cond_discrete_sim_step(const int *nSpecies, const int *nRxns, const int *an
         copy(*nSpecies, anX, anTempX);
 
         // Get unobserved reactions and add to observed reactions
-        rpois_vec(nRxns, adHazardTemp, anUnobservedRxnCount);
+        rpois_vec(*nRxns, adHazardTemp, anUnobservedRxnCount);
         for (i=0; i<*nRxns; i++) anTotalRxns[i] = anUnobservedRxnCount[i]+anY[i];
 
         // Temporarily update species according to temporary reactions
@@ -56,8 +56,8 @@ void discrete_particle_update(const int *nSpecies, const int *nRxns, const int *
 {
     // Sample parameters
     double adP[*nRxns], adTheta[*nRxns];
-    rbeta_vec( nRxns,  adHyper,            &adHyper[   *nRxns], adP);     // sample probabilities
-    rgamma_vec(nRxns, &adHyper[2* *nRxns], &adHyper[3* *nRxns], adTheta); // sample reaction rates
+    rbeta_vec( *nRxns,  adHyper,            &adHyper[   *nRxns], adP);     // sample probabilities
+    rgamma_vec(*nRxns, &adHyper[2* *nRxns], &adHyper[3* *nRxns], adTheta); // sample reaction rates
 
     // Calculate reaction hazard 
     int    anHazardPart[*nRxns];

@@ -147,7 +147,7 @@ void stratified_resample(int nW, double *adWeights, int nI, int *anIndices)
     }
     
     double adUniforms[nI];
-    runif_vec(&nI, adLowerBound, adUpperBound, adUniforms);
+    runif_vec(nI, adLowerBound, adUpperBound, adUniforms);
 
     inverse_cdf_weights(nW, adWeights, nI, adUniforms, anIndices);
 }
