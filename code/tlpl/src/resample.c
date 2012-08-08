@@ -27,7 +27,7 @@ int double_comp(const void *X, const void *Y)
     }
 }
 
-int is_sorted(const int n, const double *v) 
+int is_sorted(int n, const double *v) 
 {
     int i; 
     for (i=1; i<n; i++)
@@ -37,13 +37,13 @@ int is_sorted(const int n, const double *v)
     return 1;
 }
 
-void cumulative_sum(const int n, double *v) 
+void cumulative_sum(int n, double *v) 
 {
     int i;
     for (i=1; i<n; i++) v[i] += v[i-1];
 }
 
-void rep2id(const int *n, int *rep, int *sum, int *id)
+void rep2id(int *n, int *rep, int *sum, int *id)
 {
     int i, j=0;
 
@@ -64,19 +64,19 @@ void rep2id(const int *n, int *rep, int *sum, int *id)
 }
 
 
-void inverse_cdf_weights(const int *nWeights, 
+void inverse_cdf_weights(int nW, 
                          double *adWeights, 
-                         const int *nUniforms, 
+                         int nU, 
                          const double *adUniforms,
                          int *anIndices)
 {
-    if (!is_sorted(*nUniforms, adUniforms))    
-        qsort((void *)adUniforms, *nUniforms, sizeof(double), double_comp);
+    if (!is_sorted(nU, adUniforms))    
+        qsort((void *)adUniforms, nU, sizeof(double), double_comp);
 
-    cumulative_sum(*nWeights, adWeights);
+    cumulative_sum(nW, adWeights);
 
     int i, j=0, found;
-    for (i=0; i<*nUniforms; i++) 
+    for (i=0; i<nU; i++) 
     {
         found=0;
         while (!found) 
@@ -103,102 +103,98 @@ void inverse_cdf_weights(const int *nWeights,
 
 
 
-
-
-
-
-/* Renormalizes the vector adWeights to sum to 1. If *nLog \ne 0, the weights are assumed to be log weights */
-void renormalize(int nWeights, int nLog, double *adWeights) 
+/* Renormalizes the vector w to sum to 1. 
+ * If log \ne 0, the weights are assumed to be log weights */
+void renormalize(int n, int log, double *w) 
 {
     int i;
 
-    if (nLog) {
-        double max=adWeights[0];
-        for (i=1; i<nWeights; i++) if (adWeights[i]>max) max = adWeights[i]; 
-        for (i=0; i<nWeights; i++) adWeights[i] = exp(adWeights[i]-max);
+    if (log) {
+        double max=w[0];
+        for (i=1; i<n; i++) if (w[i]>max) max = w[i]; 
+        for (i=0; i<n; i++) w[i] = exp(w[i]-max);
     }
 
     double sum=0;
-    for (i=0; i<nWeights; i++) sum += adWeights[i];
-    for (i=0; i<nWeights; i++) adWeights[i] /= sum;
+    for (i=0; i<n; i++) sum += w[i];
+    for (i=0; i<n; i++) w[i] /= sum;
 }
 
 
-void multinomial_resample(const int *nWeights, double *adWeights, const int *nIndices, int *anIndices) 
+void multinomial_resample(int nW, double *adWeights, int nI, int *anIndices) 
 {
     int i, j;
-    double cusum[*nWeights], adUniforms[*nIndices];
-    cumulative_sum(*nWeights, adWeights);
+    double cusum[nW], adUniforms[nI];
 
     GetRNGstate();
-    for (i=0; i<*nIndices; i++) adUniforms[i] = runif(0,1);
+    for (i=0; i<nI; i++) adUniforms[i] = runif(0,1);
     PutRNGstate();
 
-    inverse_cdf_weights(nWeights, adWeights, nIndices, adUniforms, anIndices);
+    inverse_cdf_weights(nW, adWeights, nI, adUniforms, anIndices);
 }
 
 
-void stratified_resample(const int *nWeights, double *adWeights, const int *nIndices, int *anIndices)
+void stratified_resample(int nW, double *adWeights, int nI, int *anIndices)
 {
     int i;
-    double adLowerBound[*nIndices], adUpperBound[*nIndices];
-    for (i=0;i<*nIndices;i++)
+    double adLowerBound[nI], adUpperBound[nI];
+    for (i=0;i<nI;i++)
     {
-        adLowerBound[i] = (float)  i    / *nIndices;
-        adUpperBound[i] = (float) (i+1) / *nIndices;
+        adLowerBound[i] = (float)  i    / nI;
+        adUpperBound[i] = (float) (i+1) / nI;
     }
     
-    double adUniforms[*nIndices];
-    runif_vec(nIndices, adLowerBound, adUpperBound, adUniforms);
+    double adUniforms[nI];
+    runif_vec(&nI, adLowerBound, adUpperBound, adUniforms);
 
-    inverse_cdf_weights(nWeights, adWeights, nIndices, adUniforms, anIndices);
+    inverse_cdf_weights(nW, adWeights, nI, adUniforms, anIndices);
 }
 
 
-void systematic_resample(const int *nWeights, double *adWeights, const int *nIndices, int *anIndices)
+void systematic_resample(int nW, double *adWeights, int nI, int *anIndices)
 {
     int i;
-    double adUniforms[*nIndices];
+    double adUniforms[nI];
     GetRNGstate();
-    adUniforms[0] = runif(0, (float) 1/ *nIndices);
+    adUniforms[0] = runif(0, (float) 1/ nI);
     PutRNGstate();
-    for (i=1; i<*nIndices; i++) adUniforms[i] =  adUniforms[i-1]+ (float) 1 / *nIndices;
+    for (i=1; i<nI; i++) adUniforms[i] =  adUniforms[i-1]+ (float) 1 / nI;
 
-    inverse_cdf_weights(nWeights, adWeights, nIndices, adUniforms, anIndices);
+    inverse_cdf_weights(nW, adWeights, nI, adUniforms, anIndices);
 }
 
-void residual_resample(const int *nWeights, double *adWeights, int *nIndices, int *anIndices,
-                       const int *nResidualResampleFunction)
+void residual_resample(int nW, double *adWeights, int nI, int *anIndices,
+                       int *nResidualResampleFunction)
 {
-    int i, anDeterministicReps[*nWeights], nDeterministicReps=0;
-    double adExpectedSamples[*nWeights];
-    for (i=0; i<*nWeights; i++) 
+    int i, anDeterministicReps[nW], nDeterministicReps=0;
+    double adExpectedSamples[nW];
+    for (i=0; i<nW; i++) 
     {
-        adExpectedSamples[i]    = adWeights[i]* *nIndices;
+        adExpectedSamples[i]    = adWeights[i]* nI;
         anDeterministicReps[i]  = adExpectedSamples[i];
         adWeights[i]            = adExpectedSamples[i]-anDeterministicReps[i];
         nDeterministicReps     += anDeterministicReps[i];
     }
-    if (nDeterministicReps > *nIndices) 
+    if (nDeterministicReps > nI) 
         REprintf("C: residual_resample: too many deterministic reps\n");
    
-    rep2id(nWeights, anDeterministicReps, &nDeterministicReps, anIndices);
-    *nIndices -= nDeterministicReps;
+    rep2id(&nW, anDeterministicReps, &nDeterministicReps, anIndices);
+    nI -= nDeterministicReps;
 
-    Rprintf("Remaining samples: %d\n", *nIndices);
+    Rprintf("Remaining samples: %d\n", nI);
     Rprintf("Deterministic reps: %d\n", nDeterministicReps);
 
-    renormalize(*nWeights, 0, adWeights);
+    renormalize(nW, 0, adWeights);
     switch (*nResidualResampleFunction) 
     {
         case 1:
-            stratified_resample( nWeights, adWeights, nIndices, &anIndices[nDeterministicReps]);
+            stratified_resample( nW, adWeights, nI, &anIndices[nDeterministicReps]);
             break;
         case 2:
-            multinomial_resample(nWeights, adWeights, nIndices, &anIndices[nDeterministicReps]);
+            multinomial_resample(nW, adWeights, nI, &anIndices[nDeterministicReps]);
             break;
         case 3:
-            systematic_resample( nWeights, adWeights, nIndices, &anIndices[nDeterministicReps]);
+            systematic_resample( nW, adWeights, nI, &anIndices[nDeterministicReps]);
             break;
         default:
             REprintf("C: residual_resample: no match for residual resampling function\n");
