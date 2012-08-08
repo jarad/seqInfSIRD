@@ -11,7 +11,7 @@ void discrete_particle_update(int nSpecies, int nRxns, const int *anPre, const i
                               int *anX, double *adHyper);
 void discrete_all_particle_update_wrap(int *nSpecies, int *nRxns, const int *anPre, const int *anStoich, 
                                   const int *anY, const double *dTau,
-                                  int nParticles, int *nWhileMax,
+                                  int *nParticles, int *nWhileMax,
                                   int *anX, double *adHyper);
 void discrete_all_particle_update(int nSpecies, int nRxns, const int *anPre, const int *anStoich, 
                                   const int *anY, const double *dTau,
