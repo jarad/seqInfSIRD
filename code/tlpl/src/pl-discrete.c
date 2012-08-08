@@ -69,7 +69,7 @@ void discrete_particle_update(const int *nSpecies, const int *nRxns, const int *
     cond_discrete_sim_step(nSpecies, nRxns, anStoich, adHazard, anY, adP, nWhileMax, anRxnCount, anX);
 
     // Inference for this simulated step
-    suff_stat_update(nRxns, anRxnCount, anY, anHazardPart, adHyper);
+    suff_stat_update(*nRxns, anRxnCount, anY, anHazardPart, adHyper);
 }
 
 
