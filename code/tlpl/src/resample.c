@@ -125,6 +125,7 @@ void renormalize(int n, int log, double *w)
 
 void multinomial_resample(int nW, double *adWeights, int nI, int *anIndices) 
 {
+    REprintf("C: multinomial_resample: currently not working\n");
     int i, j;
     double cusum[nW], adUniforms[nI];
 
