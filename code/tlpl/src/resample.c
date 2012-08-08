@@ -43,12 +43,14 @@ void cumulative_sum(int n, double *v)
     for (i=1; i<n; i++) v[i] += v[i-1];
 }
 
-void rep2id(int *n, int *rep, int *sum, int *id)
+void rep2id(int *rep, int sum, int *id)
 {
+    // This implementation seems poor. 
+    // No error checking to assure we stay within the bounds of rep and id
     int i, j=0;
 
     i=0;
-    while (i<*sum) 
+    while (i<sum) 
     {
         if (rep[j]>0) // If this particle is resampled (again)
         {
@@ -164,28 +166,36 @@ void systematic_resample(int nW, double *adWeights, int nI, int *anIndices)
 }
 
 void residual_resample(int nW, double *adWeights, int nI, int *anIndices,
-                       int *nResidualResampleFunction)
+                       int nResidualResampleFunction)
 {
+
+    // Particles are deterministically resampled floor(weights*nSamples) times
     int i, anDeterministicReps[nW], nDeterministicReps=0;
     double adExpectedSamples[nW];
     for (i=0; i<nW; i++) 
-    {
+    {        
+        // Expected samples 
         adExpectedSamples[i]    = adWeights[i]* nI;
+
+        // Truncate to get deterministically resampled particles
         anDeterministicReps[i]  = adExpectedSamples[i];
-        adWeights[i]            = adExpectedSamples[i]-anDeterministicReps[i];
+     
+        // Increment number of deterministic reps
         nDeterministicReps     += anDeterministicReps[i];
+
+        // Remaining weight for use in random resampling
+        adWeights[i]            = adExpectedSamples[i]-anDeterministicReps[i];
     }
     if (nDeterministicReps > nI) 
         REprintf("C: residual_resample: too many deterministic reps\n");
    
-    rep2id(&nW, anDeterministicReps, &nDeterministicReps, anIndices);
+    rep2id(anDeterministicReps, nDeterministicReps, anIndices);
+
+
+    // Particles are then randomly sampled with remaining weight
     nI -= nDeterministicReps;
-
-    Rprintf("Remaining samples: %d\n", nI);
-    Rprintf("Deterministic reps: %d\n", nDeterministicReps);
-
     renormalize(nW, 0, adWeights);
-    switch (*nResidualResampleFunction) 
+    switch (nResidualResampleFunction) 
     {
         case 1:
             stratified_resample( nW, adWeights, nI, &anIndices[nDeterministicReps]);
