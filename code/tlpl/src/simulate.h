@@ -7,9 +7,9 @@ void hazard(int nSpecies, int nRxns, const int *anPre, const double *adTheta,
 void update_species(int nSpecies, int nRxns, const int *anStoich, const int *anRxns,    
                     int *anX);
 void sim_one_step(int nSpecies, int nRxns, const int *anStoich, const double *adH,                 
-                  const int *nWhileMax, int *anRxns, int *anX);
+                  int nWhileMax, int *anRxns, int *anX);
 void sim(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
-         const double *dTau, const int *nSteps, const int *nWhileMax, int *anX); 
+         const double *adTau, int nSteps, int nWhileMax, int *anX); 
 
 
 #endif                 // guard for simulate.h

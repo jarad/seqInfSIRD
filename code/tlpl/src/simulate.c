@@ -57,7 +57,7 @@ void update_species(int nSpecies, int nRxns,
 /* Forward simulate ahead one time-step */
 void sim_one_step(int nSpecies, int nRxns, const int *anStoich, 
                   const double *adHazard,                 
-                  const int *nWhileMax,                          
+                  int nWhileMax,                          
                   int *anRxnCount, int *anX)                                 // return: updated species
 {
     int  whileCount=0, anTempX[nSpecies];
@@ -82,27 +82,27 @@ void sim_one_step(int nSpecies, int nRxns, const int *anStoich,
 
         // Limit how long the simulation tries to find a non-negative update
         whileCount++;
-        if (whileCount>*nWhileMax) error("C:sim_one_step: Too many unsuccessful simulation iterations.");
+        if (whileCount>nWhileMax) error("C:sim_one_step: Too many unsuccessful simulation iterations.");
     }
 } 
 
 
 void sim(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
-         const double *dTau, const int *nSteps, 
-         const int *nWhileMax,
+         const double *adTau, int nSteps, 
+         int nWhileMax,
          int *anX)
 {
     int i, nSO=0, anRxnCount[nRxns], anHazardPart[nRxns];
     double adHazard[nRxns];
-    copy(nSpecies, anX, &anX[nSO]); // retain original state
-    for (i=0; i<*nSteps;i++)
+    copy(nSpecies, anX, &anX[nSO]); // retain original state (is this needed?)
+    for (i=0; i<nSteps;i++)
     {
         // Copy state for current step
-        copy(nSpecies, &anX[nSO], &anX[nSO+ nSpecies]);
+        copy(nSpecies, &anX[nSO], &anX[nSO+nSpecies]);
         nSO += nSpecies;
 
         // Calculate hazard based on current state
-        hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], &dTau[i], anHazardPart, adHazard);
+        hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], &adTau[i], anHazardPart, adHazard);
 
         // Forward simulate the system
         sim_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxnCount, &anX[nSO]);
