@@ -87,6 +87,15 @@ void sim_one_step(int nSpecies, int nRxns, const int *anStoich,
 } 
 
 
+
+void sim_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+         const double *adTau, int *nSteps, 
+         int *nWhileMax,
+         int *anX)
+{
+    sim(*nSpecies, *nRxns, anStoich, anPre, adTheta, adTau, *nSteps, *nWhileMax, anX);
+}
+
 void sim(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
          const double *adTau, int nSteps, 
          int nWhileMax,
@@ -108,5 +117,6 @@ void sim(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const d
         sim_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxnCount, &anX[nSO]);
     }
 }
+
 
 

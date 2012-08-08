@@ -8,6 +8,10 @@ void update_species(int nSpecies, int nRxns, const int *anStoich, const int *anR
                     int *anX);
 void sim_one_step(int nSpecies, int nRxns, const int *anStoich, const double *adH,                 
                   int nWhileMax, int *anRxns, int *anX);
+void sim_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+         const double *adTau, int *nSteps, 
+         int *nWhileMax,
+         int *anX);
 void sim(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
          const double *adTau, int nSteps, int nWhileMax, int *anX); 
 

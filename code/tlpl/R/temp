@@ -54,12 +54,12 @@ part = list()
 part$n = 10
 part$X = matrix(sir$X, part$n, sir$s, byrow=T)
 part$hyper = matrix(NA,part$n, 4*sir$r)
-mult = 1000
+mult = 10000
 part$hyper[,c(1:4,7:8)] = 1
 part$hyper[,5] = sir$theta[1]*mult
 part$hyper[,6] = sir$theta[2]
 part$hyper[,7] = mult
 tmp = tau.leap(sir,1,tau)
 y   = rbinom(sir$r, c(sir$X[1]-tmp[2,1], tmp[2,3]-sir$X[3]), .5)
-pl.step(y, 1, sir, part, while.max=3)
+pl.step(y, 1, sir, part)
 

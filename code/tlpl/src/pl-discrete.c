@@ -74,14 +74,30 @@ void discrete_particle_update(int nSpecies, int nRxns, const int *anPre, const i
 }
 
 
+
+
+
+
+void discrete_all_particle_update_wrap(int *nSpecies, int *nRxns, const int *anPre, const int *anStoich, 
+                                  const int *anY, const double *dTau,
+                                  int *nParticles, int *nWhileMax,
+                                  int *anX, double *adHyper) 
+{
+    discrete_all_particle_update(*nSpecies, *nRxns, anPre, anStoich, 
+                                  anY,  dTau,
+                                  *nParticles, *nWhileMax,
+                                  anX,  adHyper);
+
+}
+
 /* Particle learning update for all particles */
 void discrete_all_particle_update(int nSpecies, int nRxns, const int *anPre, const int *anStoich, 
                                   const int *anY, const double *dTau,
-                                  const int *nParticles, int nWhileMax,
+                                  int nParticles, int nWhileMax,
                                   int *anX, double *adHyper) 
 {
     int i,j;
-    for (i=0; i< *nParticles; i++) 
+    for (i=0; i< nParticles; i++) 
     {
         discrete_particle_update(nSpecies, nRxns, anPre, anStoich, anY, dTau, nWhileMax,
                                  &anX[i* nSpecies], 
