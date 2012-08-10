@@ -190,7 +190,7 @@ kd.PL <- list(); kd.LW <- list(); kd.LW2 <- list(); kd.SV <- list();
 i.pl <- 1; i.lw <- 1; i.sv <- 1; i.lw2 <- 1;
 ln <- 3*(N.RXNS + N.STATES)
 toSave <- c(1:6,13:18)
-hp <- c(as.vector(cbind(prior$theta$a,prior$theta$b)),as.vector(cbind(prior$p$a,prior$p$b)))
+hp <- c(as.vector(rbind(prior$theta$a,prior$theta$b)),as.vector(rbind(prior$p$a,prior$p$b)))
 
 sims.params <- list(    initP=rep(0,N.RXNS),
     initX=X0, trueTheta = rep(0,N.RXNS)
@@ -207,11 +207,10 @@ for (j in 3:n.sims)
   sims.params$initP <- probs[j,]
   sims.params$trueTheta <- thetas[j,]
   simY <- as.matrix(sims[[j]]$y)
-  simY[,3:4] <- 0
   simX <- as.matrix(sims[[j]]$x)
   sims.params$hyperPrior <- hp[1:(4*N.RXNS)]
   
-  simPL <- plSIR(10000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simPL <- plSIR(10000,n[j],LOOPN=1,Y=simY[,1:N.RXNS],trueX=simX[,1:N.STATES],verbose="C",model.params=sims.params)
   simLW <- particleSampledSIR(aLW=0.99,10000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   simLW2 <- particleSampledSIR(aLW=0.96,10000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
 

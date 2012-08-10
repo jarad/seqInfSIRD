@@ -343,16 +343,18 @@ predictiveLikelihood <- function(X, nextY, prop, weights, Suff)
     h <- array(0,dim=c(dim(X)[1],N.RXNS)) 
     
     for (j in 1:dim(X)[1])
-       h[j,]  <- hazard.R(X[j,], sum(X[j,]))   
+       h[j,]  <- hazard.R(X[j,], sum(X[j,]))  
+    #browser()
+    h[,1] <- h[,1]*sum(X[1,]) 
        
     for (jj in 1:N.RXNS) {
         #   weights <- weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])
         #else {
            #Analytic form for the predictive likelihood using Negative Binomial
-           pr <- Suff[,2*jj]/(prop[,jj]*h[,jj] + Suff[,2*jj])
+           pr <- Suff[,jj+3*N.RXNS]/(prop[,jj]*h[,jj] + Suff[,jj+3*N.RXNS])
         
-           ndx <- which (Suff[,2*jj-1] > 0 & pr > 0)
-           weights[ndx] <- weights[ndx]*dnbinom(nextY[jj],size=Suff[ndx,2*jj-1],prob=pr[ndx])
+           ndx <- which (Suff[,jj+2*N.RXNS] > 0 & pr > 0)
+           weights[ndx] <- weights[ndx]*dnbinom(nextY[jj],size=Suff[ndx,jj+2*N.RXNS],prob=pr[ndx])
         #}
         
         #Use logs to make sure things do not blow up
@@ -414,12 +416,12 @@ build.density <- function(X, theta, Suff,sampP=NULL)
    if (is.null(Suff) == F) {
      h1 <- array(0, length(kd[[3]]$x))
      for (jj in 1:length(kd[[3]]$x))
-        h1[jj] <- sum(dgamma(kd[[3]]$x[jj],Suff[,1],Suff[,2]))
+        h1[jj] <- sum(dgamma(kd[[3]]$x[jj],Suff[,1+2*N.RXNS],Suff[,1+3*N.RXNS]))
      kd[[3]]$y <- h1/N
    
      h1 <- array(0, length(kd[[4]]$x))
      for (jj in 1:length(kd[[4]]$x))
-        h1[jj] <- sum(dgamma(kd[[4]]$x[jj],Suff[,3],Suff[,4]))
+        h1[jj] <- sum(dgamma(kd[[4]]$x[jj],Suff[,1+2*N.RXNS],Suff[,2+3*N.RXNS]))
      kd[[4]]$y <- h1/N
    }
    
@@ -485,8 +487,6 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
                 model.propagate.func=tauLeap,resample.func=branchMinVar)
 {
     initP <- model.params$initP
-    initX <- model.params$model$X
-    hyperPrior <- model.params$hyperPrior
     trueTheta <- model.params$trueTheta
     particles <- list(n=N)
 
@@ -503,25 +503,17 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
     for (loop in 1:LOOPN) {
     
        # Initialize particles
-       X <- t(array(rep(initX, N),dim=c(N.STATES,N)))
-       #X[,2] <- rpois(N, initX[2])  # initial infecteds
-       #X[,1] <- sum(initX) - X[,2]           # S_0 = N - I_0, R_0 =0, D_0 = 0
-       pSamp <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
-       #pSamp[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
-       if (.UNKNOWNP) # both for p and theta
-         Suff <- t(array(rep(hyperPrior,N), dim=c(4*N.RXNS,N))) # sufficient conjugate statistics
-       else  # only for theta
-         Suff <- t(array(rep(hyperPrior,N), dim=c(2*N.RXNS,N)))
-       theta <- array(0,dim=c(N,N.RXNS))
-       for (jj in 1:N.RXNS)
-               theta[,jj] <- rgamma(N,Suff[,jj+2*N.RXNS],Suff[,jj+3*N.RXNS])
-       if (.UNKNOWNP)          
-           for (jj in 1:N.RXNS)
-               pSamp[,jj] <- rbeta(N,Suff[,jj],Suff[,jj+N.RXNS])
-       
        p.weights <- array(1, N)/N
-       particles$X <- X
-       particles$hyper <- Suff
+       particles$X <- matrix(model.params$model$X, N, N.STATES, byrow=T)
+       particles$hyper <- matrix(model.params$hyperPrior,N, 4*N.RXNS,byrow=T)
+       
+       pSamp <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
+       theta <- array(0,dim=c(N,N.RXNS))
+       for (jj in 1:N.RXNS) {
+           theta[,jj] <- rgamma(N,particles$hyper[,jj+2*N.RXNS],particles$hyper[,jj+3*N.RXNS])
+           if (.UNKNOWNP)          
+               pSamp[,jj] <- rbeta(N,particles$hyper[,jj],particles$hyper[,jj+N.RXNS])
+       }
 
        curt <- 0 
        i <- 1
@@ -530,8 +522,6 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
 
        ####### MAIN LOOP OVER OBSERVATIONS
        while (curt < T-dt) {
-           #browser()
-           
            # Sample from the posterior mixtures
            if (.UNKNOWNP)
               for (jj in 1:N.RXNS)
@@ -542,23 +532,17 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
            if (!is.nan(Y[i,1])) # else missing observation for that date
            {  
              p.weights <- predictiveLikelihood(particles$X, Y[i,], pSamp, p.weights,particles$hyper)
-             #p.weights[N] <- 0
              newIndex <- resample.func(p.weights) 
              
-         
              particles$X <- particles$X[newIndex,] 
              particles$hyper <- particles$hyper[newIndex,]
              pSamp <- pSamp[newIndex,]
              p.weights <- rep(1/N, N)
            }
            
-           #particles$X <- X
-           #particles$hyper <- Suff  
-           
-            
            particles <- pl.step(Y[i,], 1, model.params$model, particles)
-           #X <- out$X
-           #Suff <- out$hyper 
+
+           # Should be returned from pl.step 
            for (jj in 1:N.RXNS)
               theta[,jj] <- rgamma(N,particles$hyper[,2*N.RXNS + jj],particles$hyper[,jj+3*N.RXNS])
            
@@ -575,12 +559,12 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
                  gridx <- seq(initP[1]-0.1,initP[1]+0.1,by=0.001)
                  gridy <- array(0, length(gridx))
                  for (jj in 1:length(gridx))
-                    gridy[jj] <- sum(dbeta(gridx[jj],Suff[,1],Suff[,1+N.RXNS]))
+                    gridy[jj] <- sum(dbeta(gridx[jj],particles$hyper[,1],particles$hyper[,1+N.RXNS]))
                } else {
                  gridx <- seq(trueTheta[1]-0.25,trueTheta[1]+0.25,by=0.005)
                  gridy <- array(0, length(gridx))
                  for (jj in 1:length(gridx))
-                  gridy[jj] <- sum(dgamma(gridx[jj],Suff[,1+2*N.RXNS],Suff[,1+3*N.RXNS]))
+                  gridy[jj] <- sum(dgamma(gridx[jj],particles$hyper[,1+2*N.RXNS],particles$hyper[,1+3*N.RXNS]))
                }
                #browser()
 
@@ -598,7 +582,7 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
    }
   
    if (verbose != "NONE")
-     kd <- build.density(particles$X,theta,Suff,pSamp)
+     kd <- build.density(particles$X,theta,particles$hyper,pSamp)
    
    
    #browser()
