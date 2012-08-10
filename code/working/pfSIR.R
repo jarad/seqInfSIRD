@@ -24,7 +24,7 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
     trueTheta <- model.params$trueTheta
 
 
-    saved.stats <- array(0, dim=c(LOOPN,ceil(T/dt)+1,3*(N.STATES + N.RXNS)))  # all the saved summary statistics
+    saved.stats <- array(0, dim=c(LOOPN,ceil(T/dt)+1,3*(N.STATES + N.RXNS + (if (.UNKNOWNP) N.RXNS else 0))))  # all the saved summary statistics
 
     if (is.null(Y)) # generate a scenario on the fly
     {
@@ -39,43 +39,47 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
        X <- t(array(rep(initX,N),dim=c(N.STATES,N)))
        #X[,2] <- rpois(N, initX[2])  # initial infecteds
        #X[,1] <- sum(initX) - X[,2]           # S_0 = N - I_0, R_0 =0, D_0 = 0
-       #pSamp[,1] <- rbeta(N, initP[1]*100/(1-initP[1]), 100)  # beta centered on initP[1]
        if (.UNKNOWNP)
          Suff <- t(array(rep(hyperPrior,N), dim=c(4*N.RXNS,N))) # sufficient conjugate statistics
        else
          Suff <- t(array(rep(hyperPrior,N), dim=c(2*N.RXNS,N)))
        
        fixTheta <- array(0,dim=c(N,N.RXNS))
-       pSamp <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
-
+       fixProp <- array(0, dim=c(N,N.RXNS))
+ 
 
        # fixed theta particles if implementing Liu-West
        for (jj in 1:N.RXNS)
           fixTheta[,jj] <- rgamma(N, hyperPrior[2*jj-1],hyperPrior[2*jj])
        if (.UNKNOWNP)
           for (jj in 1:N.RXNS)
-             pSamp[,jj] <- rbeta(N,hyperPrior[2*(jj+N.RXNS)-1],hyperPrior[2*(jj+N.RXNS)])
+             fixProp[,jj] <- rbeta(N,hyperPrior[2*(jj+N.RXNS)-1],hyperPrior[2*(jj+N.RXNS)])
+       else 
+            fixProp <- t(array(rep(initP, N), dim=c(N.RXNS,N)))
                  
        theta <- fixTheta
+       pSamp <- fixProp
        p.weights <- array(1, N)/N
 
        # start at t=0
        curt <- 0 
        i <- 1
        totalWeight <- 1
-       saved.stats[loop,i,] <- saveStats(X, fixTheta)
+       saved.stats[loop,i,] <- saveStats(X, fixTheta,prop=if (.UNKNOWNP)pSamp else NULL)
 
        ######### MAIN LOOP OVER OBSERVATIONS ##############
        while (curt < T-dt) {
          if (aLW > 1 & is.null(Suff) == 0)  # Storvik filter: sample from the posterior Gamma mixture
             for (jj in 1:N.RXNS)
                theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
-         if (.UNKNOWNP & is.null(Suff) == 0)
+         if (aLW > 1 & .UNKNOWNP & is.null(Suff) == 0)
             for (jj in 1:N.RXNS)
                pSamp[,jj] <- rbeta(N,Suff[,2*(jj+N.RXNS)-1],Suff[,2*(jj+N.RXNS)])  
            
-         else if (aLW < 1) # use the Liu-West thetas
+         if (aLW < 1)  { # use the Liu-West thetas
             theta <- fixTheta
+            pSamp <- fixProp
+         }
         
         # propagate particles 
         out <- model.propagate.func(t(X), t(theta),pSamp,curY=Y[i,],hyper=Suff)
@@ -116,25 +120,33 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
          if (is.null(Suff) == 0)
              Suff <- Suff[newIndex,]
          pSamp <- pSamp[newIndex,]
-         fixTheta <- fixTheta[newIndex,]
          theta <- theta[newIndex,]
+
+         fixTheta <- fixTheta[newIndex,]
+         fixProp <- fixProp[newIndex,]
          
-         #### Liu and West move
-         meanLam <- varLam <- array(0,N.RXNS)
+         #### Liu and West move 
+         meanLam <- varLam <- meanProp <- varProp <- array(0,N.RXNS)
          if (aLW < 1) # & curt > 1
          {
-            for (jj in 1:4) {
+            for (jj in 1:N.RXNS) {
               meanLam[jj] <- mean(fixTheta[,jj])
               varLam[jj] <- var(fixTheta[,jj])
               fixTheta[,jj] <- pmax(0, aLW*fixTheta[,jj] + (1-aLW)*meanLam[jj] +
                   sqrt( (1-aLW^2)*varLam[jj])*rnorm(N))
+            }
+            for (jj in 1:N.RXNS) {
+              meanProp[jj] <- mean(fixProp[,jj])
+              varProp[jj] <- var(fixProp[,jj])
+              fixProp[,jj] <- pmin(1,pmax(0, aLW*fixProp[,jj] + (1-aLW)*meanProp[jj] +
+                  sqrt( (1-aLW^2)*varProp[jj])*rnorm(N)))   
             }
           }
           p.weights <- rep(1/N, N)
        #} 
 
         i <- i+1
-        saved.stats[loop,i,] <- saveStats(X,theta)
+        saved.stats[loop,i,] <- saveStats(X,theta,prop=if (.UNKNOWNP)pSamp else NULL)
         # end of main loop
       }
    }
@@ -144,6 +156,25 @@ particleSampledSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,aLW
     
    if (verbose=='CI')  # plot some CI over time 
       plot.ci(saved.stats,trueX[1:i,],trueTheta,1,col)
+
+   # give names to all outputs   
+   key <- vector(len=(N.STATES+N.RXNS+(if (.UNKNOWNP)N.RXNS else 0))*3)
+   
+   key1 <- c("50", "2.5", "97.5")
+   keyX <- c("S", "I", "R","D")
+   keyT <- c("SI", "IR")
+   for (jj in 1:N.STATES)
+      for (kk in 1:3)
+        key[(jj-1)*3+kk] <- paste(keyX[jj],key1[kk],sep=" ")
+   for (jj in 1:N.RXNS)
+      for (kk in 1:3)
+        key[(jj-1+N.STATES)*3+kk] <- paste(keyT[jj],key1[kk],sep=" ")
+   if (.UNKNOWNP == TRUE)
+     for (jj in 1:N.RXNS)
+        for (kk in 1:3)
+          key[(jj-1+N.STATES+N.RXNS)*3+kk] <- paste(keyT[jj],key1[kk],"Prop", sep=" ")
+   dimnames(saved.stats) <- list( paste("Run ",c(1:LOOPN)), paste("Period", c(1:(T+1))), key)
+
  
    return( list(stat=saved.stats,trueX=trueX,Y=Y,density=kd))
 }
@@ -193,7 +224,8 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL,cond=FALSE)
     h <- t(X)
     hyper2 <- array(1, dim=c(N.RXNS,2,dim(X)[2])) # one.step.C takes in 4x2xN while hyper is Nx8
     for (j in 1:dim(X)[2]) # needed for hyper-parameter updating
-        h[j,]  <- hazard.R(X[,j], sum(X[,j]))   
+        h[j,]  <- hazard.R(X[,j], sum(X[,j])) 
+    h[is.nan(h) ] <- 0  
     
      Y <- curY
 
@@ -231,11 +263,13 @@ tauLeap<- function(X, theta, prop, curY=NULL, hyper=NULL,cond=FALSE)
     # set to zero infecteds (end of outbreak) if still cannot satisfy the constraints
     if (length(ndx) > 0) {
       X2[2,ndx] <- 0
-      browser()
+      print("Cannot satisfy the cond X|Y constraint")
       X2[,ndx] <-pmax(0,X2[,ndx])
     }
 }
     
+    X2[ is.na(X2) | X2 <0 | X2 > MAXN] <- 0
+    newX[ is.na(newX) ] <- 0
     # update the hyperparameters
     if (!is.null(hyper) & !is.nan(Y[1])) 
       for (i in 1:N.RXNS) {
@@ -300,28 +334,26 @@ updateWeights <- function(dX, curY, prop, weights)
 # Predictive likelihood of the next observation using Poisson approximations
 # X is a matrix with N.STATES columns giving the current states
 # nextY is a vector with N.RXNS columns listing the NEXT observation
-# theta is a matrix with N.RXNS columns listing the transition rates
 # prop is a matrix with N.RXNS columns listing the sampling proportions
 # weights is a vector 
 # Suff is a matrix of the hyper-parameters (either 2*N.RXNS or 4*N.RXNS columns)
 
-predictiveLikelihood <- function(X, nextY, theta, prop, weights, Suff)
+predictiveLikelihood <- function(X, nextY, prop, weights, Suff)
 {
-    h <- X  # just to set the size of h correctly
+    h <- array(0,dim=c(dim(X)[1],N.RXNS)) 
     
     for (j in 1:dim(X)[1])
        h[j,]  <- hazard.R(X[j,], sum(X[j,]))   
        
     for (jj in 1:N.RXNS) {
-        if (dim(Suff)[2] == 4*N.RXNS)
-           weights <- weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])
-        else {
+        #   weights <- weights*dpois(nextY[jj],prop[,jj]*theta[,jj]*h[,jj])
+        #else {
            #Analytic form for the predictive likelihood using Negative Binomial
            pr <- Suff[,2*jj]/(prop[,jj]*h[,jj] + Suff[,2*jj])
         
            ndx <- which (Suff[,2*jj-1] > 0 & pr > 0)
            weights[ndx] <- weights[ndx]*dnbinom(nextY[jj],size=Suff[ndx,2*jj-1],prob=pr[ndx])
-        }
+        #}
         
         #Use logs to make sure things do not blow up
         #GamTerm <- log(Suff[,2*jj])*Suff[,2*jj-1]- log(Suff[,2*jj]+prop[,jj]*h[,jj])*(nextY[jj]+Suff[,2*jj-1])
@@ -450,12 +482,13 @@ branchMinVar <- function(p.weights)
 #
 plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
                 col="blue",trueX=NULL,Y=NULL,
-                model.propagate.func=tauLeap,resample.func=multinomial.resample)
+                model.propagate.func=tauLeap,resample.func=branchMinVar)
 {
     initP <- model.params$initP
-    initX <- model.params$initX
+    initX <- model.params$model$X
     hyperPrior <- model.params$hyperPrior
     trueTheta <- model.params$trueTheta
+    particles <- list(n=N)
 
     saved.stats <- array(0, dim=c(LOOPN,ceil(T/dt)+1,3*(N.STATES + N.RXNS + (if (.UNKNOWNP) N.RXNS else 0))))
 
@@ -481,49 +514,57 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
          Suff <- t(array(rep(hyperPrior,N), dim=c(2*N.RXNS,N)))
        theta <- array(0,dim=c(N,N.RXNS))
        for (jj in 1:N.RXNS)
-               theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
+               theta[,jj] <- rgamma(N,Suff[,jj+2*N.RXNS],Suff[,jj+3*N.RXNS])
        if (.UNKNOWNP)          
            for (jj in 1:N.RXNS)
-               pSamp[,jj] <- rbeta(N,Suff[,2*(jj+N.RXNS)-1],Suff[,2*(jj+N.RXNS)])
+               pSamp[,jj] <- rbeta(N,Suff[,jj],Suff[,jj+N.RXNS])
        
        p.weights <- array(1, N)/N
+       particles$X <- X
+       particles$hyper <- Suff
 
        curt <- 0 
        i <- 1
        totalWeight <- 1
-       saved.stats[loop,i,] <- saveStats(X, theta, prop=if (.UNKNOWNP)pSamp else NULL)
+       saved.stats[loop,i,] <- saveStats(particles$X, theta, prop=if (.UNKNOWNP)pSamp else NULL)
 
        ####### MAIN LOOP OVER OBSERVATIONS
        while (curt < T-dt) {
            #browser()
            
            # Sample from the posterior mixtures
-           for (jj in 1:N.RXNS)
-               theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
            if (.UNKNOWNP)
               for (jj in 1:N.RXNS)
-                 pSamp[,jj] <- rbeta(N,Suff[,2*(jj+N.RXNS)-1],Suff[,2*(jj+N.RXNS)])
+                 pSamp[,jj] <- rbeta(N,particles$hyper[,jj],particles$hyper[,jj+N.RXNS])
             
                
            # resample 
            if (!is.nan(Y[i,1])) # else missing observation for that date
            {  
-             p.weights <- predictiveLikelihood(X, Y[i,], theta, pSamp, p.weights,Suff)
+             p.weights <- predictiveLikelihood(particles$X, Y[i,], pSamp, p.weights,particles$hyper)
+             #p.weights[N] <- 0
              newIndex <- resample.func(p.weights) 
              
          
-             X <- X[newIndex,] 
-             Suff <- Suff[newIndex,]
+             particles$X <- particles$X[newIndex,] 
+             particles$hyper <- particles$hyper[newIndex,]
              pSamp <- pSamp[newIndex,]
-             theta <- theta[newIndex,]
              p.weights <- rep(1/N, N)
            }
-           if (.UNKNOWNP == "F")
-              for (jj in 1:N.RXNS)
-                 theta[,jj] <- rgamma(N,Suff[,2*jj-1],Suff[,2*jj])
            
-           out <- model.propagate.func(t(X), t(theta),pSamp,curY=Y[i,],hyper=Suff,cond=T)
-           X <- t(out$X); Suff <- out$hyper
+           #particles$X <- X
+           #particles$hyper <- Suff  
+           
+            
+           particles <- pl.step(Y[i,], 1, model.params$model, particles)
+           #X <- out$X
+           #Suff <- out$hyper 
+           for (jj in 1:N.RXNS)
+              theta[,jj] <- rgamma(N,particles$hyper[,2*N.RXNS + jj],particles$hyper[,jj+3*N.RXNS])
+           
+           
+           #old <- model.propagate.func(t(X), t(theta),pSamp,curY=Y[i,],hyper=Suff,cond=T)
+           #X <- t(out$X); Suff <- out$hyper
 
            curt <- (i-1)*dt
 
@@ -534,12 +575,12 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
                  gridx <- seq(initP[1]-0.1,initP[1]+0.1,by=0.001)
                  gridy <- array(0, length(gridx))
                  for (jj in 1:length(gridx))
-                    gridy[jj] <- sum(dbeta(gridx[jj],Suff[,9],Suff[,10]))
+                    gridy[jj] <- sum(dbeta(gridx[jj],Suff[,1],Suff[,1+N.RXNS]))
                } else {
                  gridx <- seq(trueTheta[1]-0.25,trueTheta[1]+0.25,by=0.005)
                  gridy <- array(0, length(gridx))
                  for (jj in 1:length(gridx))
-                  gridy[jj] <- sum(dgamma(gridx[jj],Suff[,1],Suff[,2]))
+                  gridy[jj] <- sum(dgamma(gridx[jj],Suff[,1+2*N.RXNS],Suff[,1+3*N.RXNS]))
                }
                #browser()
 
@@ -551,13 +592,13 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
            totalWeight <- totalWeight*sum(p.weights)
 
         i <- i+1
-        saved.stats[loop,i,] <- saveStats(X,theta,prop=if (.UNKNOWNP)pSamp else NULL)
+        saved.stats[loop,i,] <- saveStats(particles$X,theta,prop=if (.UNKNOWNP)pSamp else NULL)
         # end of main loop
       }
    }
   
    if (verbose != "NONE")
-     kd <- build.density(X,theta,Suff,pSamp)
+     kd <- build.density(particles$X,theta,Suff,pSamp)
    
    
    #browser()
@@ -565,13 +606,29 @@ plSIR <- function(N, T, dt=1, model.params=base.params, LOOPN=1,verbose="CI",
    # high-quality quantile computation
    offset <- 3*N.STATES
    for (jj in 1:N.RXNS) {
-      theta <- rgamma(max(N,25000),Suff[,2*jj-1],Suff[,2*jj])
+      theta <- rgamma(max(N,25000),particles$hyper[,jj+2*N.RXNS],particles$hyper[,jj+3*N.RXNS])
       saved.stats[loop, i, (offset+(jj-1)*3+1):(offset+(jj-1)*3+3)] <- quantile(theta,c(0.5,0.025,0.975))
    }      
 
    if (verbose=='CI') 
       plot.ci(saved.stats,trueX[1:i,],trueTheta,col)
-      
+   
+   # give names to all outputs   
+   key <- vector(len=(N.STATES+N.RXNS+(if (.UNKNOWNP)N.RXNS else 0))*3)
+   key1 <- c("50", "2.5", "97.5")
+   keyX <- c("S", "I", "R","D")
+   keyT <- c("SI", "IR")
+   for (jj in 1:N.STATES)
+      for (kk in 1:3)
+        key[(jj-1)*3+kk] <- paste(keyX[jj],key1[kk],sep=" ")
+   for (jj in 1:N.RXNS)
+      for (kk in 1:3)
+        key[(jj-1+N.STATES)*3+kk] <- paste(keyT[jj],key1[kk],sep=" ")
+   if (.UNKNOWNP == TRUE)
+     for (jj in 1:N.RXNS)
+        for (kk in 1:3)
+          key[(jj-1+N.STATES+N.RXNS)*3+kk] <- paste(keyT[jj],key1[kk],"Prop", sep=" ")
+   dimnames(saved.stats) <- list( paste("Run ",c(1:LOOPN)), paste("Period", c(1:(T+1))), key)
  
    return( list(stat=saved.stats,trueX=trueX,Y=Y,theta=trueTheta,density=kd))
 }

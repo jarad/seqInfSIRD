@@ -57,6 +57,7 @@ Nweek <- 59
 harare <- read.csv("../../data/harare/harareClean.csv")
 harY <- array(0,dim=c(Nweek,4))
 harY[,1] <- diff(harare$total)
+harare.params <- list()
 
 Nweek <- 30
 harare.den.I <- list(); harare.den.SI <- list(); harare.den.IR <- list(); harare.den.SIprop <- list()
@@ -65,9 +66,10 @@ harare.quants <- array(0, dim=c(6,Nweek+1,24))
 
 .UNKNOWNP <- F
 harare.params$initP <- c(0.1,0,0,0)
+harare.params$initX <- c(2000,5,0,0)
 
 .ndx <-1
-harare.params$hyperPrior <- c(150,100,100,100)
+harare.params$hyperPrior <- c(120,100,100,100)
 hararePL <- plSIR(10000,Nweek,Y=harY,verbose="CI",model.params=harare.params)
 harare.quants[.ndx,,1:(3*(N.STATES+N.RXNS))] <- hararePL$stat
 harare.den.I[[.ndx]] <- hararePL$density[[2]]
@@ -95,7 +97,7 @@ harare.den.IR[[.ndx]] <- hararePL$density[[4]]
 .UNKNOWNP <- T
 
 .ndx <- 4
-harare.params$hyperPrior <- c(150,100,100,100,1,1,1,1)   # tight theta, vague prop
+harare.params$hyperPrior <- c(120,120,100,100,1,1,1,1)   # tight theta, vague prop
 hararePL <- plSIR(10000,Nweek,LOOPN=1,Y=harY,verbose="CI",model.params=harare.params)
 harare.quants[.ndx,,] <- hararePL$stat
 harare.den.I[[.ndx]] <- hararePL$density[[2]]
@@ -177,17 +179,18 @@ STOICH_MATRIX[1:3,] <- stoich
 sim.PL <- array(0, dim=c(2*n.sims,N.week,24))
 sim.LW <- array(0, dim=c(2*n.sims,N.week,24))
 sim.LW2 <- array(0, dim=c(2*n.sims,N.week,24))
-
 sim.SV <- array(0, dim=c(2*n.sims,N.week,24))
-smc.PL <- array(0, dim=c(2*n.sims,12))
-smc.LW <- array(0, dim=c(2*n.sims,12))
-smc.LW2 <- array(0, dim=c(2*n.sims,12))
 
-smc.SV <- array(0, dim=c(2*n.sims,12))
+smc.PL <- array(0, dim=c(2*n.sims,18))
+smc.LW <- array(0, dim=c(2*n.sims,18))
+smc.LW2 <- array(0, dim=c(2*n.sims,18))
+smc.SV <- array(0, dim=c(2*n.sims,18))
+
 kd.PL <- list(); kd.LW <- list(); kd.LW2 <- list(); kd.SV <- list();
 i.pl <- 1; i.lw <- 1; i.sv <- 1; i.lw2 <- 1;
-hp <- c(as.vector(rbind(prior$theta$a,prior$theta$b)),as.vector(rbind(prior$p$a,prior$p$b)))
-hp[1:2] <- c(40,20)
+ln <- 3*(N.RXNS + N.STATES)
+toSave <- c(1:6,13:18)
+hp <- c(as.vector(cbind(prior$theta$a,prior$theta$b)),as.vector(cbind(prior$p$a,prior$p$b)))
 
 sims.params <- list(    initP=rep(0,N.RXNS),
     initX=X0, trueTheta = rep(0,N.RXNS)
@@ -195,8 +198,11 @@ sims.params <- list(    initP=rep(0,N.RXNS),
 
 offset <- n.sims
 i.pl = i.lw = i.sv = i.lw2 = n.sims*4 + 1;
+ln <- 3*(2*N.RXNS + N.STATES)
+toSave <- c(1:6,13:24)
+.UNKNOWNP <- T
 
-for (j in 1:n.sims)
+for (j in 3:n.sims)
 {
   sims.params$initP <- probs[j,]
   sims.params$trueTheta <- thetas[j,]
@@ -205,25 +211,25 @@ for (j in 1:n.sims)
   simX <- as.matrix(sims[[j]]$x)
   sims.params$hyperPrior <- hp[1:(4*N.RXNS)]
   
-  simPL <- plSIR(15000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
-  simLW <- particleSampledSIR(aLW=0.99,5000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
-  simLW2 <- particleSampledSIR(aLW=0.96,5000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simPL <- plSIR(10000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simLW <- particleSampledSIR(aLW=0.99,10000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simLW2 <- particleSampledSIR(aLW=0.96,10000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
 
-  simSV <- particleSampledSIR(aLW=2,5000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
+  simSV <- particleSampledSIR(aLW=2,10000,n[j],LOOPN=1,Y=simY,trueX=simX,verbose="C",model.params=sims.params)
   
   # store all the quantiles; the final quantiles of interest
-  sim.PL[j+offset,1:(n[j]+1),] <- simPL$stat[1,,]
-  sim.LW[j+offset,1:(n[j]+1),] <- simLW$stat[1,,]
-  sim.LW2[j+offset,1:(n[j]+1),] <- simLW2$stat[1,,]
-  sim.SV[j+offset,1:(n[j]+1),] <- simSV$stat[1,,]
+  sim.PL[j+offset,1:(n[j]+1),1:ln] <- simPL$stat[1,,]
+  sim.LW[j+offset,1:(n[j]+1),1:ln] <- simLW$stat[1,,]
+  sim.LW2[j+offset,1:(n[j]+1),1:ln] <- simLW2$stat[1,,]
+  sim.SV[j+offset,1:(n[j]+1),1:ln] <- simSV$stat[1,,]
   
-  smc.PL[j+offset,] <- as.vector(simPL$stat[1,n[j]+1,1:12])
-  smc.LW[j+offset,] <- as.vector(simLW$stat[1,n[j]+1,1:12])
-  smc.LW2[j+offset,] <- as.vector(simLW2$stat[1,n[j]+1,1:12])
-  smc.SV[j+offset,] <- as.vector(simSV$stat[1,n[j]+1,1:12])
+  smc.PL[j+offset,1:length(toSave)] <- as.vector(simPL$stat[1,n[j]+1,toSave])
+  smc.LW[j+offset,1:length(toSave)] <- as.vector(simLW$stat[1,n[j]+1,toSave])
+  smc.LW2[j+offset,1:length(toSave)] <- as.vector(simLW2$stat[1,n[j]+1,toSave])
+  smc.SV[j+offset,1:length(toSave)] <- as.vector(simSV$stat[1,n[j]+1,toSave])
   
   # and the final density estimates
-  for (k in 1:4) {
+  for (k in 1:6) {
      kd.PL[[i.pl]] <- simPL$density[[k]]
      i.pl <- i.pl + 1
      kd.LW[[i.lw]] <- simLW$density[[k]]
