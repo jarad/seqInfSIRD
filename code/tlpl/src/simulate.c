@@ -54,6 +54,14 @@ void update_species(int nSpecies, int nRxns,
     } 
 }
 
+
+
+
+// --------------------------------------------------------------------------------------
+// Discrete time
+// --------------------------------------------------------------------------------------
+
+
 /* Forward simulate ahead one time-step */
 void tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich, 
                   const double *adHazard,                 
@@ -126,13 +134,75 @@ void tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, co
 // --------------------------------------------------------------------------------------
 
 
-void gillespie_one_step(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
-               const double *adT, int nSteps, int *anX)
-{
+int next_to_fire(int nRxns, double *adCuSum) {
+    int i, next=0;
+    double dUniform=runif(0,1), dSum=adCuSum[nRxns-1]; 
+    for (i=0; i<nRxns; i++) {
+        adCuSum[i] /= dSum;
+        if (dUniform < adCuSum[i]) return next;
+        next++;
+    }   
+    // print error if this fails
 }
 
-void gillespie(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
-               const double *adT, int nSteps, int *anX)
+
+void gillespie_one_step_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+                             double *dT,  int *anRxnCount, int *anX)
 {
+    gillespie_one_step(*nSpecies, *nRxns, anStoich, anPre, adTheta, *dT, anRxnCount, anX);
 }
+
+
+int gillespie_one_step(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+               double dT, int *anRxnCount, int *anX)
+{
+    int i, nRxnID, anX0[nSpecies], anHazardPart[nRxns];
+    double dCurrentTime=0, adHazard[nRxns], adCuSum;
+    while (1) {
+        copy(nSpecies, anX, anX0);
+        hazard(nSpecies, nRxns, anPre, adTheta, anX, 1, anHazardPart, adHazard);
+        
+        // Calculate cumulative hazard
+        for (i=1; i<nRxns; i++) adHazard[i] += adHazard[i-1];
+        if (adHazard[nRxns-1] < 0.0001) return 0;                 // make this a function of dT?
+
+        dCurrentTime += rexp(1/adHazard[nRxns-1]);
+        if (dCurrentTime > dT) return 0;                          // stopping condition
+       
+        nRxnID = next_to_fire(nRxns, adHazard);
+        anRxnCount[nRxnID]++;
+
+        for (i=0; i<nSpecies; i++) anX[i] += anStoich[nSpecies * nRxnID + i]; 
+    }
+    return 0;               
+}
+
+
+
+void gillespie_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+               double *adT, int *nSteps, int *anX)
+{
+    gillespie(*nSpecies, *nRxns, anStoich, anPre, adTheta, adT, *nSteps, anX);
+}
+
+
+
+
+int gillespie(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+               double *adT, int nSteps, int *anX)
+{
+    int i, nSO=0, anRxnCount[nRxns], anHazardPart[nRxns];
+    double adHazard[nRxns];
+    for (i=0; i<nSteps;i++)
+    {
+        // Copy state for current step
+        copy(nSpecies, &anX[nSO], &anX[nSO+nSpecies]);
+        nSO += nSpecies;
+
+        // Forward simulate the system
+        gillespie_one_step(nSpecies, nRxns, anStoich, anPre, adTheta, adT[i], anRxnCount,  &anX[nSO]);
+    }
+    return 0;
+}
+
 

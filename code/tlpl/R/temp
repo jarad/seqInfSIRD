@@ -15,11 +15,18 @@ sys$theta=1
 tau=1
 n=10
 
+par(mfrow=c(1,2))
 cat("\n  Simulations:")
 plot(0,0,type="n", xlim=c(0,tau*n), ylim=c(0,tau*n+5))
 for (i in 1:10) lines((0:n)*tau,tau.leap(sys,n,tau), col=i)
+plot(0,0,type="n", xlim=c(0,tau*n), ylim=c(0,tau*n+5))
+for (i in 1:10) lines((0:n)*tau,gillespie(sys,n,tau), col=i)
 
-#readline("")
+
+
+
+
+readline("")
 
 part = list()
 part$n = 10
@@ -45,8 +52,12 @@ sir$theta=c(.8/sum(sir$X),.4)
 tau=1
 n=52
 
+par(mfrow=c(1,2))
 plot(0,0,type="n", xlim=c(0,tau*n), ylim=c(0,sum(sir$X)))
 for (i in 1:10) lines((0:n)*tau,tau.leap(sir,n,tau)[,2], col=i)
+plot(0,0,type="n", xlim=c(0,tau*n), ylim=c(0,sum(sir$X)))
+for (i in 1:10) lines((0:n)*tau,gillespie(sir,n,tau)[,2], col=i)
+
 
 cat("\n")
 
