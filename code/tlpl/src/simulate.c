@@ -111,7 +111,6 @@ void tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, co
 {
     int i, nSO=0, anRxnCount[nRxns], anHazardPart[nRxns];
     double adHazard[nRxns];
-    copy(nSpecies, anX, &anX[nSO]); // retain original state (is this needed?)
     for (i=0; i<nSteps;i++)
     {
         // Copy state for current step
