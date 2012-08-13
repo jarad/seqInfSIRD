@@ -7,7 +7,7 @@ int cond_discrete_sim_step(int nSpecies, int nRxns, const int *anStoich,
                        const double *adHazard, const int *anY, const double *adP, int nWhileMax,
                        int *anRxns, int *anX);
 void discrete_particle_update(int nSpecies, int nRxns, const int *anPre, const int *anStoich, 
-                              const int *anY, const double *dTau, int nWhileMax,
+                              const int *anY, double dTau, int nWhileMax,
                               int *anX, double *adHyper, int *);
 
 void discrete_all_particle_update_wrap(int *nSpecies, int *nRxns, const int *anPre, const int *anStoich, 
@@ -15,7 +15,7 @@ void discrete_all_particle_update_wrap(int *nSpecies, int *nRxns, const int *anP
                                   int *nParticles, int *nWhileMax,
                                   int *anX, double *adHyper, int *);
 void discrete_all_particle_update(int nSpecies, int nRxns, const int *anPre, const int *anStoich, 
-                                  const int *anY, const double *dTau,
+                                  const int *anY, double dTau,
                                   int nParticles, int nWhileMax,
                                   int *anX, double *adHyper, int *);
 

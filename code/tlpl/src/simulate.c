@@ -26,14 +26,14 @@ void hazard_part(int nSpecies, int nRxns, const int *anPre, // system specific a
 /* Calculates the hazard for the next reaction */
 void hazard(int nSpecies, int nRxns, const int *anPre, const double *adTheta,   
             const int *anX, 
-            const double *dTau,  
+            double dTau,  
             int *anHazardPart, double *adHazard)                   // return: hazard
 {
     hazard_part(nSpecies, nRxns, anPre, anX, anHazardPart);
     int i;
     for (i=0; i<nRxns; i++) 
     {
-        adHazard[i] = adTheta[i]*anHazardPart[i]* *dTau;
+        adHazard[i] = adTheta[i]*anHazardPart[i]*dTau;
     }
 //    Rprintf("\n");
 }
@@ -93,11 +93,11 @@ void tau_leap_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *an
          int *nWhileMax,
          int *anX)
 {
-    tau_leap(*nSpecies, *nRxns, anStoich, anPre, adTheta, adTau, *nSteps, *nWhileMax, anX);
+    tau_leap(*nSpecies, *nRxns, anStoich, anPre, adTheta, *adTau, *nSteps, *nWhileMax, anX);
 }
 
 void tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
-         const double *adTau, int nSteps, 
+         double adTau, int nSteps, 
          int nWhileMax,
          int *anX)
 {
@@ -111,7 +111,7 @@ void tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, co
         nSO += nSpecies;
 
         // Calculate hazard based on current state
-        hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], &adTau[i], anHazardPart, adHazard);
+        hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], adTau, anHazardPart, adHazard);
 
         // Forward simulate the system
         tau_leap_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxnCount, &anX[nSO]);
@@ -120,4 +120,19 @@ void tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, co
 
 
 
+
+// --------------------------------------------------------------------------------------
+// Continuous time
+// --------------------------------------------------------------------------------------
+
+
+void gillespie_one_step(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+               const double *adT, int nSteps, int *anX)
+{
+}
+
+void gillespie(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+               const double *adT, int nSteps, int *anX)
+{
+}
 

@@ -53,7 +53,7 @@ int cond_discrete_sim_step(int nSpecies, int nRxns, const int *anStoich,
 
 /* Particle learning update for a single particle */
 void discrete_particle_update(int nSpecies, int nRxns, const int *anPre, const int *anStoich, 
-                              const int *anY, const double *dTau, int nWhileMax,
+                              const int *anY, double dTau, int nWhileMax,
                               int *anX, double *adHyper, int *nSuccess)
 {
     // Sample parameters
@@ -93,7 +93,7 @@ void discrete_all_particle_update_wrap(int *nSpecies, int *nRxns, const int *anP
                                   int *anX, double *adHyper, int *anSuccess) 
 {
     discrete_all_particle_update(*nSpecies, *nRxns, anPre, anStoich, 
-                                  anY,  dTau,
+                                  anY,  *dTau,
                                   *nParticles, *nWhileMax,
                                   anX,  adHyper, anSuccess);
 
@@ -101,7 +101,7 @@ void discrete_all_particle_update_wrap(int *nSpecies, int *nRxns, const int *anP
 
 /* Particle learning update for all particles */
 void discrete_all_particle_update(int nSpecies, int nRxns, const int *anPre, const int *anStoich, 
-                                  const int *anY, const double *dTau,
+                                  const int *anY, double dTau,
                                   int nParticles, int nWhileMax,
                                   int *anX, double *adHyper, int *anSuccess) 
 {
