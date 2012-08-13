@@ -60,6 +60,14 @@ void discrete_particle_update(int nSpecies, int nRxns, const int *anPre, const i
     rbeta_vec( nRxns,  adHyper,          &adHyper[  nRxns], adP);     // sample probabilities
     rgamma_vec(nRxns, &adHyper[2*nRxns], &adHyper[3*nRxns], adTheta); // sample reaction rates
 
+    int i;
+    Rprintf("  Sampled parameters: \n");
+    Rprintf("    P: ");
+    for (i=0; i<nRxns; i++) Rprintf("%2.8f ", adP[i]);
+    Rprintf("\n    Theta: ");
+    for (i=0; i<nRxns; i++) Rprintf("%2.8f ", adTheta[i]);
+    Rprintf("\n");    
+
     // Calculate reaction hazard 
     int    anHazardPart[nRxns];
     double adHazard[    nRxns];
@@ -96,9 +104,10 @@ void discrete_all_particle_update(int nSpecies, int nRxns, const int *anPre, con
                                   int nParticles, int nWhileMax,
                                   int *anX, double *adHyper) 
 {
-    int i,j;
+    int i;
     for (i=0; i< nParticles; i++) 
     {
+        Rprintf("Particle %d:\n", i);
         discrete_particle_update(nSpecies, nRxns, anPre, anStoich, anY, dTau, nWhileMax,
                                  &anX[i* nSpecies], 
                                  &adHyper[i* 4*nRxns]); // 4 hyper parameters per reaction
