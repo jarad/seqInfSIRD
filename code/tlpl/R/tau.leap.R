@@ -25,7 +25,7 @@ tau.leap = function(sys, n, tau, while.max=1000)
     }
 
 
-    out = .C("sim_wrap",
+    out = .C("tau_leap_wrap",
              as.integer(sys$s), as.integer(sys$r), as.integer(sys$stoich), as.integer(t(sys$Pre)), 
              as.double(sys$theta), as.double(tau), as.integer(n), as.integer(while.max),
              X=as.integer(rep(sys$X,n+1)))

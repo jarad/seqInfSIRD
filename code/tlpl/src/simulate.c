@@ -55,7 +55,7 @@ void update_species(int nSpecies, int nRxns,
 }
 
 /* Forward simulate ahead one time-step */
-void sim_one_step(int nSpecies, int nRxns, const int *anStoich, 
+void tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich, 
                   const double *adHazard,                 
                   int nWhileMax,                          
                   int *anRxnCount, int *anX)                                 // return: updated species
@@ -82,21 +82,21 @@ void sim_one_step(int nSpecies, int nRxns, const int *anStoich,
 
         // Limit how long the simulation tries to find a non-negative update
         whileCount++;
-        if (whileCount>nWhileMax) error("C:sim_one_step: Too many unsuccessful simulation iterations.");
+        if (whileCount>nWhileMax) error("C:tau_leap_one_step: Too many unsuccessful simulation iterations.");
     }
 } 
 
 
 
-void sim_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+void tau_leap_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *anPre, const double *adTheta,
          const double *adTau, int *nSteps, 
          int *nWhileMax,
          int *anX)
 {
-    sim(*nSpecies, *nRxns, anStoich, anPre, adTheta, adTau, *nSteps, *nWhileMax, anX);
+    tau_leap(*nSpecies, *nRxns, anStoich, anPre, adTheta, adTau, *nSteps, *nWhileMax, anX);
 }
 
-void sim(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+void tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
          const double *adTau, int nSteps, 
          int nWhileMax,
          int *anX)
@@ -114,9 +114,10 @@ void sim(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const d
         hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], &adTau[i], anHazardPart, adHazard);
 
         // Forward simulate the system
-        sim_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxnCount, &anX[nSO]);
+        tau_leap_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxnCount, &anX[nSO]);
     }
 }
+
 
 
 

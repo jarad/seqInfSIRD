@@ -6,13 +6,13 @@ void hazard(int nSpecies, int nRxns, const int *anPre, const double *adTheta,
             const int *anX, const double *dTau, int *anHp, double *adH); 
 void update_species(int nSpecies, int nRxns, const int *anStoich, const int *anRxns,    
                     int *anX);
-void sim_one_step(int nSpecies, int nRxns, const int *anStoich, const double *adH,                 
-                  int nWhileMax, int *anRxns, int *anX);
-void sim_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+void tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich, const double *adH,                 
+                       int nWhileMax, int *anRxns, int *anX);
+void tau_leap_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *anPre, const double *adTheta,
          const double *adTau, int *nSteps, 
          int *nWhileMax,
          int *anX);
-void sim(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+void tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
          const double *adTau, int nSteps, int nWhileMax, int *anX); 
 
 
