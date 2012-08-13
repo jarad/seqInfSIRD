@@ -69,7 +69,7 @@ void rep2id(int *rep, int sum, int *id)
 void inverse_cdf_weights(int nW, 
                          double *adWeights, 
                          int nU, 
-                         const double *adUniforms,
+                         double *adUniforms,
                          int *anIndices)
 {
     if (!is_sorted(nU, adUniforms))    
@@ -117,7 +117,7 @@ double coefficient_of_variation(int n, double *weights)
     return var/R_pow_di(mean,2); // why this as opposed to the sqrt of this?
 }
 
-double entropy(int n double *weights)
+double entropy(int n, double *weights)
 {
     int i;
     double sum;
@@ -146,7 +146,6 @@ void renormalize(int n, int log, double *w)
     for (i=0; i<n; i++) sum += w[i];
     for (i=0; i<n; i++) w[i] /= sum;
 }
-
 
 void multinomial_resample(int nW, double *adWeights, int nI, int *anIndices) 
 {
