@@ -10,7 +10,7 @@
 #include "pl-discrete.h"
 
 /* Sample from the state conditional on the observations */
-void cond_discrete_sim_step(int nSpecies, int nRxns, const int *anStoich,  
+int cond_discrete_sim_step(int nSpecies, int nRxns, const int *anStoich,  
                        const double *adHazard, const int *anY, const double *adP, int nWhileMax,
                        int *anRxnCount, int *anX)
 {
@@ -38,13 +38,14 @@ void cond_discrete_sim_step(int nSpecies, int nRxns, const int *anStoich,
             // Copy successful state and number of reactions back for returning from function
             copy(nSpecies, anTempX,     anX);
             copy(nRxns   , anTotalRxns, anRxnCount);
-            break;
+            return 1;
         }
 
         // Limit how long the simulation tries to find a non-negative update
         whileCount++;
         if (whileCount>nWhileMax) 
-            error("C:cond_discrete_sim_step: Too many unsuccessful simulation iterations.");
+            return 0;
+            // error("C:cond_discrete_sim_step: Too many unsuccessful simulation iterations.");
     }
 
 }  
@@ -53,7 +54,7 @@ void cond_discrete_sim_step(int nSpecies, int nRxns, const int *anStoich,
 /* Particle learning update for a single particle */
 void discrete_particle_update(int nSpecies, int nRxns, const int *anPre, const int *anStoich, 
                               const int *anY, const double *dTau, int nWhileMax,
-                              int *anX, double *adHyper)
+                              int *anX, double *adHyper, int *nSuccess)
 {
     // Sample parameters
     double adP[nRxns], adTheta[nRxns];
@@ -75,7 +76,7 @@ void discrete_particle_update(int nSpecies, int nRxns, const int *anPre, const i
 
     // Forward simulate system
     int anRxnCount[nRxns];
-    cond_discrete_sim_step(nSpecies, nRxns, anStoich, adHazard, anY, adP, nWhileMax, anRxnCount, anX);
+    *nSuccess = cond_discrete_sim_step(nSpecies, nRxns, anStoich, adHazard, anY, adP, nWhileMax, anRxnCount, anX);
 
     // Inference for this simulated step
     suff_stat_update(nRxns, anRxnCount, anY, anHazardPart, adHyper);
@@ -89,12 +90,12 @@ void discrete_particle_update(int nSpecies, int nRxns, const int *anPre, const i
 void discrete_all_particle_update_wrap(int *nSpecies, int *nRxns, const int *anPre, const int *anStoich, 
                                   const int *anY, const double *dTau,
                                   int *nParticles, int *nWhileMax,
-                                  int *anX, double *adHyper) 
+                                  int *anX, double *adHyper, int *anSuccess) 
 {
     discrete_all_particle_update(*nSpecies, *nRxns, anPre, anStoich, 
                                   anY,  dTau,
                                   *nParticles, *nWhileMax,
-                                  anX,  adHyper);
+                                  anX,  adHyper, anSuccess);
 
 }
 
@@ -102,7 +103,7 @@ void discrete_all_particle_update_wrap(int *nSpecies, int *nRxns, const int *anP
 void discrete_all_particle_update(int nSpecies, int nRxns, const int *anPre, const int *anStoich, 
                                   const int *anY, const double *dTau,
                                   int nParticles, int nWhileMax,
-                                  int *anX, double *adHyper) 
+                                  int *anX, double *adHyper, int *anSuccess) 
 {
     int i;
     for (i=0; i< nParticles; i++) 
@@ -110,7 +111,7 @@ void discrete_all_particle_update(int nSpecies, int nRxns, const int *anPre, con
         Rprintf("Particle %d:\n", i);
         discrete_particle_update(nSpecies, nRxns, anPre, anStoich, anY, dTau, nWhileMax,
                                  &anX[i* nSpecies], 
-                                 &adHyper[i* 4*nRxns]); // 4 hyper parameters per reaction
+                                 &adHyper[i* 4*nRxns], &anSuccess[i]); // 4 hyper parameters per reaction
     }
 }
 
