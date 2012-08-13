@@ -97,8 +97,33 @@ void inverse_cdf_weights(int nW,
 }
 
 
+/************************ Effective sample size functions ******************************/
 
+double effective_sample_size(int n, double *weights)
+{
+    int i;
+    double sum=0;
+    for (i=0; i<n; i++) sum += weights[i]*weights[i];
+    return 1/sum;
+}
 
+double coefficient_of_variation(int n, double *weights) 
+{
+    int i;
+    double mean=0, var=0;
+    for (i=0; i<n; i++) mean += weights[i];
+    mean /= n;
+    for (i=0; i<n; i++) var += R_pow_di(weights[i]-mean,2);
+    return var/R_pow_di(mean,2); // why this as opposed to the sqrt of this?
+}
+
+double entropy(int n double *weights)
+{
+    int i;
+    double sum;
+    for (i=0; i<n; i++) sum += weights[i]*log2(weights[i]); // should add smallest constant within log2()
+    return -sum;
+}
 
 /************************ Resampling functions *****************************************/
 
