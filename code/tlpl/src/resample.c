@@ -4,7 +4,11 @@
 #include "utility.h"
 #include "resample.h"
 
-/*********************** Utility functions - to be moved *******************************/
+
+
+/***********************************************************************/
+/* Utility functions                                                   */
+/***********************************************************************/
 
 
 // used in qsort and stolen from http://en.allexperts.com/q/C-1587/Qsort-function.htm
@@ -129,7 +133,37 @@ int inverse_cdf_weights(int nW,
 }
 
 
-/************************ Effective sample size functions ******************************/
+/* Renormalizes the vector w to sum to 1. 
+ * If log \ne 0, the weights are assumed to be log weights */
+
+void renormalize_wrap(int *n, int *log, double *w)
+{
+    renormalize(*n, *log, w);
+}
+
+int renormalize(int n, int log, double *w) 
+{
+    int i;
+
+    if (log) {
+        double max=w[0];
+        for (i=1; i<n; i++) if (w[i]>max) max = w[i]; 
+        for (i=0; i<n; i++) w[i] = exp(w[i]-max);
+    }
+
+    double sum=0;
+    for (i=0; i<n; i++) sum += w[i];
+    for (i=0; i<n; i++) w[i] /= sum;
+
+    return 0;
+}
+
+
+
+
+/***********************************************************************/
+/* Effective sample size functions                                     */
+/***********************************************************************/
 
 
 // Effective sample size
@@ -192,32 +226,9 @@ double entropy(int n, double *weights)
 /************************ Resampling functions *****************************************/
 
 
-
-
-/* Renormalizes the vector w to sum to 1. 
- * If log \ne 0, the weights are assumed to be log weights */
-
-void renormalize_wrap(int *n, int *log, double *w)
-{
-    renormalize(*n, *log, w);
-}
-
-int renormalize(int n, int log, double *w) 
-{
-    int i;
-
-    if (log) {
-        double max=w[0];
-        for (i=1; i<n; i++) if (w[i]>max) max = w[i]; 
-        for (i=0; i<n; i++) w[i] = exp(w[i]-max);
-    }
-
-    double sum=0;
-    for (i=0; i<n; i++) sum += w[i];
-    for (i=0; i<n; i++) w[i] /= sum;
-
-    return 0;
-}
+/***********************************************************************/
+/* Resampling functions                                                */
+/***********************************************************************/
 
 
 void multinomial_resample_wrap( int *nW, double *adWeights, int *nI, int *anIndices)
@@ -227,9 +238,9 @@ void multinomial_resample_wrap( int *nW, double *adWeights, int *nI, int *anIndi
 
 int multinomial_resample(int nW, double *adWeights, int nI, int *anIndices) 
 {
-    REprintf("C: multinomial_resample: currently not working\n");
-    int i, j;
-    double cusum[nW], adUniforms[nI];
+    //REprintf("C: multinomial_resample: currently not working\n");
+    int i;
+    double adUniforms[nI];
 
     GetRNGstate();
     for (i=0; i<nI; i++) adUniforms[i] = runif(0,1);

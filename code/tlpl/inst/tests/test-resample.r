@@ -136,6 +136,9 @@ test_that("renormalize works properly", {
 
 
 
+###############################################################
+# Effective sample size functions
+###############################################################
 
 context("Sample size functions")
 
@@ -224,4 +227,29 @@ test_that("cov2 works properly", {
     }
 
 })
+
+
+###############################################################
+# Resampling functions
+###############################################################
+
+
+context("Resampling functions")
+
+test_that("multinomial resampling works properly", {
+    set.seed(1)
+    w = runif(4); w=w/sum(w)
+    n = 5
+    id = c(1,1,3,3,3)
+    set.seed(2); expect_equal(multinomial.resample(w,n,   ),   id)
+    set.seed(2); expect_equal(multinomial.resample(w,n,"R")-1, id)
+    set.seed(2); expect_equal(multinomial.resample(w,n,"C"),   id)
+
+    w = runif(rpois(1,10)+2); w=w/sum(w)
+    n = rpois(1,10)+1
+    seed = proc.time()
+    set.seed(seed)
+    
+})
+
 

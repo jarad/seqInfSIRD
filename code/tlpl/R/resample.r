@@ -1,4 +1,8 @@
 
+###############################################################
+# Utility functions
+###############################################################
+
 
 is.increasing = function(v, engine="C") 
 {
@@ -139,7 +143,11 @@ renormalize = function(weights, log=F, engine="C")
     })   
 }
 
-########### Effective sample size functions ################
+
+
+###############################################################
+# Effective sample size functions
+###############################################################
 
 
 ess = function(weights, engine="C") 
@@ -207,9 +215,46 @@ entropy = function(weights, engine="C")
 
 
 
-residual.resample = function(weights, n.samples, residual.resampling.function=c("stratified","multinomial","systematic"))
+
+###############################################################
+# Resampling functions
+###############################################################
+
+multinomial.resample = function(weights, n.samples, engine="C")
 {
-    rrf = pmatch(residual.resampling.function, c("stratified","multinomial","systematic"))
+    check.weights(weights, log=F, normalized=T)
+    engine=pmatch(engine, c("R","C"))
+    n = length(weights)
+
+    switch(engine,#
+    {
+        # R implementation
+        # sample does not perform the same as inverse.cdf method
+        # so to be consistent with C, use inverse.cdf
+        #return(sort(sample(n, n.samples, replace = TRUE, 
+        #                   prob = weights)))
+        u = runif(n.samples)
+        return(inverse.cdf.weights(weights,u,engine="R"))
+    },
+    {
+        # C implementation
+        out = .C("multinomial_resample_wrap", 
+                 as.integer(n),
+                 as.double(weights),
+                 as.integer(n.samples),
+                 id = integer(n.samples))
+        return(out$id)
+    })
+
+}
+
+
+residual.resample = function(weights, n.samples, 
+   rrf=c("stratified","multinomial","systematic"), 
+   engine="C")
+{
+    rrf = pmatch(rrf, 
+                 c("stratified","multinomial","systematic"))
     if (is.na(rrf)) stop("No matching residual resampling function.")
 
     out = .C("residual_resample_wrap",
