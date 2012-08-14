@@ -72,7 +72,8 @@ rep2id = function(rep, engine="C")
 
 inverse.cdf.weights = function(weights, uniforms, engine="C")
 {
-    stopifnot(length(weights)>0, length(uniforms)>0)
+    stopifnot(length(weights)>0, length(uniforms)>0,
+              all(weights>0), all(uniforms>0))
     engine=pmatch(engine, c("R","C"))
     if (is.unsorted(uniforms)) uniforms = sort(uniforms)
     n.samples = length(uniforms)

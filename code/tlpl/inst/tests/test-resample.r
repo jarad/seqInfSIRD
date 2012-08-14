@@ -57,7 +57,7 @@ test_that("rep2id works properly", {
 
 
 test_that("inverse.cdf.weights works properly", {
-    w = rep(.25,4)
+    w = rep(1/4,4)
     u = c(.1,.3,.6,.8)
     id = 0:3
     expect_equal(inverse.cdf.weights(w,u    )  ,id) 
@@ -78,5 +78,19 @@ test_that("inverse.cdf.weights works properly", {
         expect_equal(inverse.cdf.weights(w,u,"R")-1,
                      inverse.cdf.weights(w,u,"C"))
     }
+
+    u = numeric(0) 
+    expect_error(inverse.cdf.weights(w,u,"R"))
+    expect_error(inverse.cdf.weights(w,u,"C"))
+    u = runif(4); u[2] = -u[2]
+    expect_error(inverse.cdf.weights(w,u,"R"))
+    expect_error(inverse.cdf.weights(w,u,"C"))
+    u = runif(4)
+    w = numeric(0)
+    expect_error(inverse.cdf.weights(w,u,"R"))
+    expect_error(inverse.cdf.weights(w,u,"C"))
+    w = rep(1/4,4); w[3] = -w[3]
+    expect_error(inverse.cdf.weights(w,u,"R"))
+    expect_error(inverse.cdf.weights(w,u,"C"))
 })
 
