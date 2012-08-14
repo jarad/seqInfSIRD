@@ -21,8 +21,8 @@ int renormalize(int, int, double *);
 void ess_wrap(int *, double *, double *);
 double ess(int , double *);
 
-void coefficient_of_variation_wrap(int *, double *, double *);
-double coefficient_of_variation(int , double *);
+void cov2_wrap(int *, double *, double *);
+double cov2(int , double *);
 
 void entropy_wrap(int *, double *, double *);
 double entropy(int , double *);

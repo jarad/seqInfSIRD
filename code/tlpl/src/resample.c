@@ -132,6 +132,7 @@ int inverse_cdf_weights(int nW,
 /************************ Effective sample size functions ******************************/
 
 
+// Effective sample size
 void ess_wrap(int *n, double *weights, double *returned)
 {
     *returned = ess(*n, weights);
@@ -146,13 +147,13 @@ double ess(int n, double *weights)
 }
 
 
-
-void coefficient_of_variation_wrap(int *n, double *weights, double *returned)
+// Coefficient of variation squared
+void cov2_wrap(int *n, double *weights, double *returned)
 {
-    *returned = coefficient_of_variation(*n, weights);
+    *returned = cov2(*n, weights);
 }
 
-double coefficient_of_variation(int n, double *weights) 
+double cov2(int n, double *weights) 
 {
     int i;
     double mean=0, var=0;
