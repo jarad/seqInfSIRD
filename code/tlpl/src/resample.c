@@ -41,9 +41,9 @@ int is_increasing(int n, const double *v)
     int i; 
     for (i=1; i<n; i++)
     {
-        if (v[i]<v[i-1]) return 1;
+        if (v[i]<v[i-1]) return 0;
     }
-    return 0;
+    return 1;
 }
 
 
