@@ -220,6 +220,33 @@ entropy = function(weights, engine="C")
 # Resampling functions
 ###############################################################
 
+stratified.resample = function(weights, n.samples=length(weights), engine="C")
+{
+    check.weights(weights, log=F, normalized=T)
+    stopifnot(n.samples>0)
+
+    engine=pmatch(engine, c("R","C"))
+    n = length(weights)
+
+    switch(engine,
+    {
+        lbs = seq(0, by=1/n.samples, length=n.samples)
+        ubs = lbs+1/n.samples
+        u = runif(n.samples, lbs, ubs)
+        return(inverse.cdf.weights(weights,u,engine="R"))
+    },
+    {
+        # C implementation
+        out = .C("stratified_resample_wrap", 
+                 as.integer(n),
+                 as.double(weights),
+                 as.integer(n.samples),
+                 id = integer(n.samples))
+        return(out$id)
+    })
+}
+
+
 multinomial.resample = function(weights, n.samples=length(weights), engine="C")
 {
     check.weights(weights, log=F, normalized=T)
@@ -247,8 +274,10 @@ multinomial.resample = function(weights, n.samples=length(weights), engine="C")
                  id = integer(n.samples))
         return(out$id)
     })
-
 }
+
+
+
 
 
 residual.resample = function(weights, n.samples, 

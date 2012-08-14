@@ -237,6 +237,35 @@ test_that("cov2 works properly", {
 context("Resampling functions")
 
 
+test_that("stratified resampling throws errors", {
+    w = runif(4); lw = log(w)
+    expect_error(stratified.resample(lw))
+    expect_error(stratified.resample( w,-1))
+})
+
+test_that("stratified resampling works properly", {
+    set.seed(1)
+    w = runif(4); w=w/sum(w)
+    n = 5
+    id = c(0,2,2,3,3)
+    set.seed(2); expect_equal(stratified.resample(w,n,   ),   id)
+    set.seed(2); expect_equal(stratified.resample(w,n,"R")-1, id)
+    set.seed(2); expect_equal(stratified.resample(w,n,"C"),   id)
+
+    for (i in 1:n.reps) 
+    {
+        w = runif(rpois(1,10)+2); w=w/sum(w)
+        n = rpois(1,10)+1
+        seed = proc.time()
+        set.seed(seed); mR = stratified.resample(w,n,"R")
+        set.seed(seed); mC = stratified.resample(w,n,"C")
+        expect_equal(mR-1,mC)
+    }
+})
+
+
+
+
 test_that("multinomial resampling throws errors", {
     w = runif(4); lw = log(w)
     expect_error(multinomial.resample(lw))
