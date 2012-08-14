@@ -54,6 +54,25 @@ test_that("rep2id works properly", {
     }
 })
 
+test_that("inverse.cdf.weights throws proper errors", {
+    u = numeric(0) 
+    expect_error(inverse.cdf.weights(w,u,"R"))
+    expect_error(inverse.cdf.weights(w,u,"C"))
+
+    u = runif(4); u[2] = -u[2]
+    expect_error(inverse.cdf.weights(w,u,"R"))
+    expect_error(inverse.cdf.weights(w,u,"C"))
+
+    u = runif(4)
+    w = numeric(0)
+    expect_error(inverse.cdf.weights(w,u,"R"))
+    expect_error(inverse.cdf.weights(w,u,"C"))
+
+    w = rep(1/4,4); w[3] = -w[3]
+    expect_error(inverse.cdf.weights(w,u,"R"))
+    expect_error(inverse.cdf.weights(w,u,"C"))
+})
+
 
 
 test_that("inverse.cdf.weights works properly", {
@@ -78,19 +97,66 @@ test_that("inverse.cdf.weights works properly", {
         expect_equal(inverse.cdf.weights(w,u,"R")-1,
                      inverse.cdf.weights(w,u,"C"))
     }
+})
 
-    u = numeric(0) 
-    expect_error(inverse.cdf.weights(w,u,"R"))
-    expect_error(inverse.cdf.weights(w,u,"C"))
-    u = runif(4); u[2] = -u[2]
-    expect_error(inverse.cdf.weights(w,u,"R"))
-    expect_error(inverse.cdf.weights(w,u,"C"))
-    u = runif(4)
+
+
+
+test_that("renormalize throws errors", {
+    w = runif(4); w[2]=-w[2]
+    expect_error(renormalize(w))
+})
+
+test_that("renormalize works properly", {
+    w = rep(1/4,4)
+    expect_equal(renormalize(w,   ),w)   
+    expect_equal(renormalize(w,engine="R"),w)   
+    expect_equal(renormalize(w,engine="C"),w)   
+
+    w = runif(4)
+    lw = log(w) 
+    w = w/sum(w)
+    expect_equal(renormalize(lw,T,   ),w)   
+    expect_equal(renormalize(lw,T,"R"),w)   
+    expect_equal(renormalize(lw,T,"C"),w)   
+
+    for (i in 1:10) {
+        w = runif(rpois(1,10)+1)
+        expect_equal(renormalize(w,engine="R"),
+                     renormalize(w,engine="C"))
+
+        lw = log(w)
+        expect_equal(renormalize(w,T,"R"),
+                     renormalize(w,T,"C"))
+        
+    }
+})
+
+
+
+
+
+
+context("Sample size functions")
+
+
+test_that("ess throws proper errors", {
     w = numeric(0)
-    expect_error(inverse.cdf.weights(w,u,"R"))
-    expect_error(inverse.cdf.weights(w,u,"C"))
-    w = rep(1/4,4); w[3] = -w[3]
-    expect_error(inverse.cdf.weights(w,u,"R"))
-    expect_error(inverse.cdf.weights(w,u,"C"))
+    expect_error(ess(w    ))
+    expect_error(ess(w,"R"))
+    expect_error(ess(w,"C"))
+
+    w = runif(4); w[2] = -w[2]
+    expect_error(ess(w    ))
+    expect_error(ess(w,"R"))
+    expect_error(ess(w,"C"))
+})
+
+test_that("ess works properly", {
+    n = 4
+    w = rep(1/n, n)
+    expect_equal(ess(w,   ), n) 
+    expect_equal(ess(w,"R"), n) 
+    expect_equal(ess(w,"C"), n) 
 })
 

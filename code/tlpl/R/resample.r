@@ -72,8 +72,9 @@ rep2id = function(rep, engine="C")
 
 inverse.cdf.weights = function(weights, uniforms, engine="C")
 {
-    stopifnot(length(weights)>0, length(uniforms)>0,
-              all(weights>0), all(uniforms>0))
+    check.weights(weights)
+    check.weights(uniforms)
+    
     engine=pmatch(engine, c("R","C"))
     if (is.unsorted(uniforms)) uniforms = sort(uniforms)
     n.samples = length(uniforms)
@@ -113,6 +114,56 @@ inverse.cdf.weights = function(weights, uniforms, engine="C")
         return(out$id)
     })  
 }
+
+
+renormalize = function(weights, log=F, engine="C")
+{   
+    if (!log && any(weights<0)) stop("log=F but negative weights exist.")
+
+    engine=pmatch(engine, c("R","C"))
+
+    switch(engine,
+    {
+        # R implementation
+        if (log) weights = exp(weights - max(weights))
+        return(weights/sum(weights))
+    },
+    {
+        # C implementation
+        n = length(weights)
+        out = .C("renormalize_wrap", 
+                 as.integer(n),
+                 as.integer(log),  
+                 weights=as.double(weights))
+        return(out$weights)
+    })   
+}
+
+########### Effective sample size functions ################
+
+
+ess = function(weights, engine="C") 
+{
+    check.weights(weights, normalized=T)
+    engine=pmatch(engine, c("R","C"))
+
+    switch(engine,
+    {
+        # R implementation
+        return(1/sum(weights^2))
+    },
+    {
+        # C implementation
+        out = .C("effective_sample_size_wrap", 
+                 as.integer(length(weights)),
+                 as.double(weights), 
+                 ess = double(1))
+        return(out$ess)
+    })
+}
+
+
+
 
 
 residual.resample = function(weights, n.samples, residual.resampling.function=c("stratified","multinomial","systematic"))
