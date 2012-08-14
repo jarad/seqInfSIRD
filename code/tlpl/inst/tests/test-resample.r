@@ -128,7 +128,6 @@ test_that("renormalize works properly", {
         lw = log(w)
         expect_equal(renormalize(w,T,"R"),
                      renormalize(w,T,"C"))
-        
     }
 })
 
@@ -158,5 +157,41 @@ test_that("ess works properly", {
     expect_equal(ess(w,   ), n) 
     expect_equal(ess(w,"R"), n) 
     expect_equal(ess(w,"C"), n) 
+
+    for (i in 1:10) {
+        w = runif(rpois(1,10)+1); w=w/sum(w)
+        expect_equal(ess(w,engine="R"),
+                     ess(w,engine="C"))
+    }
+
+})
+
+
+test_that("entropy throws proper errors", {
+    w = numeric(0)
+    expect_error(entropy(w    ))
+    expect_error(entropy(w,"R"))
+    expect_error(entropy(w,"C"))
+
+    w = runif(4); w[2] = -w[2]
+    expect_error(entropy(w    ))
+    expect_error(entropy(w,"R"))
+    expect_error(entropy(w,"C"))
+})
+
+test_that("entropy works properly", {
+    n = 4
+    w = rep(1/n, n)
+    ent = -log2(1/n)
+    expect_equal(entropy(w    ), ent) 
+    expect_equal(entropy(w,"R"), ent) 
+    expect_equal(entropy(w,"C"), ent) 
+
+    for (i in 1:10) {
+        w = runif(rpois(1,10)+1); w=w/sum(w)
+        expect_equal(entropy(w,engine="R"),
+                     entropy(w,engine="C"))
+    }
+
 })
 

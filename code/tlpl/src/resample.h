@@ -13,9 +13,13 @@ int rep2id(int *, int , int *);
 void inverse_cdf_weights_wrap(int *, double *, int *, double *, int *);
 int inverse_cdf_weights(int , double *, int , double *, int *);
 
+void renormalize_wrap(int *, int *, double *);
+int renormalize(int, int, double *);
 
-void effective_sample_size_wrap(int *, double *, double *);
-double effective_sample_size(int , double *);
+
+
+void ess_wrap(int *, double *, double *);
+double ess(int , double *);
 
 void coefficient_of_variation_wrap(int *, double *, double *);
 double coefficient_of_variation(int , double *);
@@ -23,8 +27,7 @@ double coefficient_of_variation(int , double *);
 void entropy_wrap(int *, double *, double *);
 double entropy(int , double *);
 
-void renormalize_wrap(int *, int *, double *);
-int renormalize(int, int, double *);
+
 
 void multinomial_resample_wrap(int *, double *, int *, int *);
 int multinomial_resample(int, double *, int, int *);

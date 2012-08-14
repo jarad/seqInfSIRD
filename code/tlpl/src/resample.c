@@ -132,12 +132,12 @@ int inverse_cdf_weights(int nW,
 /************************ Effective sample size functions ******************************/
 
 
-void effective_sample_size_wrap(int *n, double *weights, double *returned)
+void ess_wrap(int *n, double *weights, double *returned)
 {
-    *returned = effective_sample_size(*n, weights);
+    *returned = ess(*n, weights);
 }
 
-double effective_sample_size(int n, double *weights)
+double ess(int n, double *weights)
 {
     int i;
     double sum=0;

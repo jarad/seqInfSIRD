@@ -144,7 +144,7 @@ renormalize = function(weights, log=F, engine="C")
 
 ess = function(weights, engine="C") 
 {
-    check.weights(weights, normalized=T)
+    check.weights(weights, log=F, normalized=T)
     engine=pmatch(engine, c("R","C"))
 
     switch(engine,
@@ -154,7 +154,7 @@ ess = function(weights, engine="C")
     },
     {
         # C implementation
-        out = .C("effective_sample_size_wrap", 
+        out = .C("ess_wrap", 
                  as.integer(length(weights)),
                  as.double(weights), 
                  ess = double(1))
@@ -163,6 +163,25 @@ ess = function(weights, engine="C")
 }
 
 
+entropy = function(weights, engine="C") 
+{
+    check.weights(weights, log=F, normalized=T)
+    engine=pmatch(engine, c("R","C"))
+
+    switch(engine,
+    {
+        # R implementation
+        return(-sum(weights * log2(weights + .Machine$double.eps)))
+    },
+    {
+        # C implementation
+        out = .C("entropy_wrap", 
+                 as.integer(length(weights)),
+                 as.double(weights), 
+                 entropy = double(1))
+        return(out$entropy)
+    })
+}
 
 
 
