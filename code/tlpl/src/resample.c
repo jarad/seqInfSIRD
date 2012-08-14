@@ -31,12 +31,12 @@ int compare_doubles (const void *X, const void *Y)
 }
 
 
-void is_unsorted_wrap(int *n, const double *v, int *returned) 
+void is_increasing_wrap(int *n, const double *v, int *returned) 
 {
-    *returned = is_sorted(*n, v); 
+    *returned = is_increasing(*n, v); 
 }
 
-int is_unsorted(int n, const double *v) 
+int is_increasing(int n, const double *v) 
 {
     int i; 
     for (i=1; i<n; i++)
@@ -102,7 +102,7 @@ int inverse_cdf_weights(int nW,
                          double *adUniforms,
                          int *anIndices)
 {
-    if (is_unsorted(nU, adUniforms))    
+    if (!is_increasing(nU, adUniforms))    
         qsort(adUniforms, nU, sizeof(double), compare_doubles);
 
     cumulative_sum(nW, adWeights);

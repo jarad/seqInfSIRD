@@ -1,8 +1,8 @@
 
 int compare_doubles(const void *, const void *);
 
-void is_unsorted_wrap(int *, const double *, int*);
-int is_unsorted(int , const double *);
+void is_increasing_wrap(int *, const double *, int*);
+int is_increasing(int , const double *);
 
 void cumulative_sum_wrap(int *, double *);
 int cumulative_sum(int , double *);
