@@ -1,6 +1,6 @@
 
 
-is.increasing = function(v, engine="R") 
+is.increasing = function(v, engine="C") 
 {
     engine=pmatch(engine, c("R","C"))
 
@@ -20,7 +20,7 @@ is.increasing = function(v, engine="R")
 }
 
 
-cusum = function(v, engine="R")
+cusum = function(v, engine="C")
 {
     engine=pmatch(engine, c("R","C"))
 
@@ -36,7 +36,35 @@ cusum = function(v, engine="R")
                  cusum=as.double(v))
         return(out$cusum)
     })
+}
 
+
+rep2id = function(rep, engine="C") 
+{
+    engine=pmatch(engine, c("R","C"))
+    sum = sum(rep)
+
+    switch(engine,
+    {
+        # R implementation
+        id = integer(sum)
+        current.index = integer(1)
+        for (i in 1:length(rep)) {
+            if (rep[i] != 0) {
+                id[current.index + 1:rep[i]] = i
+                current.index = current.index + rep[i]
+            }
+        }
+        return(id)
+    },
+    {
+        # C implementation
+        out = .C("rep2id_wrap", 
+                 as.integer(rep),
+                 as.integer(sum), 
+                 id=integer(sum))
+        return(out$id)
+    })  
 }
 
 
