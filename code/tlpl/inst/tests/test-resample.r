@@ -41,10 +41,10 @@ test_that("cusum works properly", {
 
 test_that("rep2id works properly", {
     rep = c(3,2,1)
-    id = c(1,1,1,2,2,3)
-    expect_equal(rep2id(rep,   ),id-1) # Default is C
-    expect_equal(rep2id(rep,"R"),id)
-    expect_equal(rep2id(rep,"C"),id-1)
+    id = c(0,0,0,1,1,2)
+    expect_equal(rep2id(rep    ),id)
+    expect_equal(rep2id(rep,"R")-1,id)
+    expect_equal(rep2id(rep,"C"),id)
 
     for (i in 1:10) 
     {
@@ -54,4 +54,29 @@ test_that("rep2id works properly", {
     }
 })
 
+
+
+test_that("inverse.cdf.weights works properly", {
+    w = rep(.25,4)
+    u = c(.1,.3,.6,.8)
+    id = 0:3
+    expect_equal(inverse.cdf.weights(w,u    )  ,id) 
+    expect_equal(inverse.cdf.weights(w,u,"R")-1,id)
+    expect_equal(inverse.cdf.weights(w,u,"C")  ,id)
+
+    u = c(.3,.1,.8,.6)
+    expect_equal(inverse.cdf.weights(w,u    )  ,id)
+    expect_equal(inverse.cdf.weights(w,u,"R")-1,id)
+    expect_equal(inverse.cdf.weights(w,u,"C")  ,id)
+
+
+    for (i in 1:10) 
+    {
+        w = runif(rpois(1,10)+1)
+        w = w/sum(w)
+        u = runif(rpois(1,10)+1)
+        expect_equal(inverse.cdf.weights(w,u,"R")-1,
+                     inverse.cdf.weights(w,u,"C"))
+    }
+})
 
