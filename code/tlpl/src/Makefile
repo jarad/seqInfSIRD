@@ -1,9 +1,10 @@
 
 SOURCES=simulate.c utility.c pl-utility.c pl-discrete.c resample.c
 OBJECTS=$(SOURCES:.c=.o)
+HEADERS=$(SOURCES:.c=.h)
 SHARED_OBJECT=tlpl.so
 
-$(SHARED_OBJECT): $(SOURCES)
+$(SHARED_OBJECT): $(SOURCES) $(HEADERS)
 	R CMD SHLIB $(SOURCES) -o $(SHARED_OBJECT)
 
 clean: 
