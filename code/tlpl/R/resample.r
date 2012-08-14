@@ -17,7 +17,26 @@ is.increasing = function(v, engine="R")
                  increasing=integer(1))
         return(as.logical(out$increasing))
     })
-    
+}
+
+
+cusum = function(v, engine="R")
+{
+    engine=pmatch(engine, c("R","C"))
+
+    switch(engine,
+    {
+        # R implementation
+        return(cumsum(v))
+    },
+    {
+        # C implementation
+        out = .C("cumulative_sum_wrap", 
+                 as.integer(length(v)), 
+                 cusum=as.double(v))
+        return(out$cusum)
+    })
+
 }
 
 
