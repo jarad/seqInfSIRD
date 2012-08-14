@@ -2,29 +2,38 @@
 #include <R.h>
 #include <Rmath.h>
 #include "utility.h"
+#include "resample.h"
 
 /*********************** Utility functions - to be moved *******************************/
 
 
-int double_comp(const void *X, const void *Y) 
+// used in qsort and stolen from http://en.allexperts.com/q/C-1587/Qsort-function.htm
+int compare_doubles (const void *X, const void *Y)
 {
-    double x = *((double *)X);
-    double y = *((double *)Y);
-    if (x>y) 
-    {
-        return 1;
-    }
-    else 
-    {
-        if (x<y)
-        {
-            return -1;
-        }
-        else
-        {
-            return 0;
-        }
-    }
+       double x = *((double *)X);
+       double y = *((double *)Y);
+
+       if (x > y)
+       {
+               return 1;
+       }
+       else
+       {
+               if (x < y)
+               {
+                       return -1;
+               }
+               else
+               {
+                       return 0;
+               }
+       }
+}
+
+
+void is_sorted_wrap(int *n, const double *v, int *returned) 
+{
+    *returned = is_sorted(*n, v); 
 }
 
 int is_sorted(int n, const double *v) 
@@ -37,13 +46,26 @@ int is_sorted(int n, const double *v)
     return 1;
 }
 
-void cumulative_sum(int n, double *v) 
+
+void cumulative_sum_wrap(int *n, double *v) 
+{
+    cumulative_sum(*n, v);
+}
+
+int cumulative_sum(int n, double *v) 
 {
     int i;
     for (i=1; i<n; i++) v[i] += v[i-1];
+    return 0;
 }
 
-void rep2id(int *rep, int sum, int *id)
+
+void rep2id_wrap(int *rep, int *sum, int *id) 
+{
+    rep2id(rep, *sum, id);
+}
+
+int rep2id(int *rep, int sum, int *id)
 {
     // This implementation seems poor. 
     // No error checking to assure we stay within the bounds of rep and id
@@ -63,17 +85,25 @@ void rep2id(int *rep, int sum, int *id)
             j++;
         }
     }
+
+    return 0;
 }
 
 
-void inverse_cdf_weights(int nW, 
+void inverse_cdf_weights_wrap(int *nW, double *adWeights, int *nU, double *adUniforms, int *anIndices)
+{
+    inverse_cdf_weights(*nW, adWeights, *nU, adUniforms, anIndices);
+}
+
+
+int inverse_cdf_weights(int nW, 
                          double *adWeights, 
                          int nU, 
                          double *adUniforms,
                          int *anIndices)
 {
     if (!is_sorted(nU, adUniforms))    
-        qsort((void *)adUniforms, nU, sizeof(double), double_comp);
+        qsort(adUniforms, nU, sizeof(double), compare_doubles);
 
     cumulative_sum(nW, adWeights);
 
@@ -93,11 +123,19 @@ void inverse_cdf_weights(int nW,
             }
         }
         anIndices[i] = j;
-    }    
+    } 
+
+    return 0;   
 }
 
 
 /************************ Effective sample size functions ******************************/
+
+
+void effective_sample_size_wrap(int *n, double *weights, double *returned)
+{
+    *returned = effective_sample_size(*n, weights);
+}
 
 double effective_sample_size(int n, double *weights)
 {
@@ -105,6 +143,13 @@ double effective_sample_size(int n, double *weights)
     double sum=0;
     for (i=0; i<n; i++) sum += weights[i]*weights[i];
     return 1/sum;
+}
+
+
+
+void coefficient_of_variation_wrap(int *n, double *weights, double *returned)
+{
+    *returned = coefficient_of_variation(*n, weights);
 }
 
 double coefficient_of_variation(int n, double *weights) 
@@ -115,6 +160,13 @@ double coefficient_of_variation(int n, double *weights)
     mean /= n;
     for (i=0; i<n; i++) var += R_pow_di(weights[i]-mean,2);
     return var/R_pow_di(mean,2); // why this as opposed to the sqrt of this?
+}
+
+
+
+
+void entropy_wrap(int *n, double *weights, double *returned) {
+    *returned = entropy(*n, weights);
 }
 
 double entropy(int n, double *weights)
@@ -132,7 +184,13 @@ double entropy(int n, double *weights)
 
 /* Renormalizes the vector w to sum to 1. 
  * If log \ne 0, the weights are assumed to be log weights */
-void renormalize(int n, int log, double *w) 
+
+void renormalize_wrap(int *n, int *log, double *w)
+{
+    renormalize(*n, *log, w);
+}
+
+int renormalize(int n, int log, double *w) 
 {
     int i;
 
@@ -145,9 +203,17 @@ void renormalize(int n, int log, double *w)
     double sum=0;
     for (i=0; i<n; i++) sum += w[i];
     for (i=0; i<n; i++) w[i] /= sum;
+
+    return 0;
 }
 
-void multinomial_resample(int nW, double *adWeights, int nI, int *anIndices) 
+
+void multinomial_resample_wrap( int *nW, double *adWeights, int *nI, int *anIndices)
+{
+    multinomial_resample(*nW, adWeights, *nI, anIndices);
+}
+
+int multinomial_resample(int nW, double *adWeights, int nI, int *anIndices) 
 {
     REprintf("C: multinomial_resample: currently not working\n");
     int i, j;
@@ -158,10 +224,21 @@ void multinomial_resample(int nW, double *adWeights, int nI, int *anIndices)
     PutRNGstate();
 
     inverse_cdf_weights(nW, adWeights, nI, adUniforms, anIndices);
+
+    return 0;
 }
 
 
-void stratified_resample(int nW, double *adWeights, int nI, int *anIndices)
+
+
+void stratified_resample_wrap(int *nW, double *adWeights, int *nI, int *anIndices)
+{
+    stratified_resample(*nW, adWeights, *nI, anIndices);
+}
+
+
+
+int stratified_resample(int nW, double *adWeights, int nI, int *anIndices)
 {
     int i;
     double adLowerBound[nI], adUpperBound[nI];
@@ -175,10 +252,20 @@ void stratified_resample(int nW, double *adWeights, int nI, int *anIndices)
     runif_vec(nI, adLowerBound, adUpperBound, adUniforms);
 
     inverse_cdf_weights(nW, adWeights, nI, adUniforms, anIndices);
+
+    return 0;
 }
 
 
-void systematic_resample(int nW, double *adWeights, int nI, int *anIndices)
+
+
+void systematic_resample_wrap(int *nW, double *adWeights, int *nI, int *anIndices)
+{
+    systematic_resample(*nW, adWeights, *nI, anIndices);
+}
+
+
+int systematic_resample(int nW, double *adWeights, int nI, int *anIndices)
 {
     int i;
     double adUniforms[nI];
@@ -188,9 +275,21 @@ void systematic_resample(int nW, double *adWeights, int nI, int *anIndices)
     for (i=1; i<nI; i++) adUniforms[i] =  adUniforms[i-1]+ (float) 1 / nI;
 
     inverse_cdf_weights(nW, adWeights, nI, adUniforms, anIndices);
+
+    return 0;
 }
 
-void residual_resample(int nW, double *adWeights, int nI, int *anIndices,
+
+
+
+
+void residual_resample_wrap(int *nW, double *adWeights, int *nI, int *anIndices, 
+                            int *nResidualResampleFunction)
+{
+    residual_resample(*nW, adWeights, *nI, anIndices, *nResidualResampleFunction);
+}
+
+int residual_resample(int nW, double *adWeights, int nI, int *anIndices,
                        int nResidualResampleFunction)
 {
 
@@ -235,6 +334,7 @@ void residual_resample(int nW, double *adWeights, int nI, int *anIndices,
             REprintf("C: residual_resample: no match for residual resampling function\n");
     }
        
+    return 0;
 }
 
 
