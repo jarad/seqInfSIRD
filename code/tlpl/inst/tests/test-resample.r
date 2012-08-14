@@ -236,6 +236,13 @@ test_that("cov2 works properly", {
 
 context("Resampling functions")
 
+
+test_that("multinomial resampling throws errors", {
+    w = runif(4); lw = log(w)
+    expect_error(multinomial.resample(lw))
+    expect_error(multinomial.resample( w,-1))
+})
+
 test_that("multinomial resampling works properly", {
     set.seed(1)
     w = runif(4); w=w/sum(w)
@@ -245,11 +252,18 @@ test_that("multinomial resampling works properly", {
     set.seed(2); expect_equal(multinomial.resample(w,n,"R")-1, id)
     set.seed(2); expect_equal(multinomial.resample(w,n,"C"),   id)
 
-    w = runif(rpois(1,10)+2); w=w/sum(w)
-    n = rpois(1,10)+1
-    seed = proc.time()
-    set.seed(seed)
-    
+    for (i in 1:n.reps) 
+    {
+        w = runif(rpois(1,10)+2); w=w/sum(w)
+        n = rpois(1,10)+1
+        seed = proc.time()
+        set.seed(seed); mR = multinomial.resample(w,n,"R")
+        set.seed(seed); mC = multinomial.resample(w,n,"C")
+        expect_equal(mR-1,mC)
+    }
 })
+
+
+
 
 

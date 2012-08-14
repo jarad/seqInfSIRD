@@ -238,7 +238,6 @@ void multinomial_resample_wrap( int *nW, double *adWeights, int *nI, int *anIndi
 
 int multinomial_resample(int nW, double *adWeights, int nI, int *anIndices) 
 {
-    //REprintf("C: multinomial_resample: currently not working\n");
     int i;
     double adUniforms[nI];
 

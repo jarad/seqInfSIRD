@@ -220,13 +220,15 @@ entropy = function(weights, engine="C")
 # Resampling functions
 ###############################################################
 
-multinomial.resample = function(weights, n.samples, engine="C")
+multinomial.resample = function(weights, n.samples=length(weights), engine="C")
 {
     check.weights(weights, log=F, normalized=T)
+    stopifnot(n.samples>0)
+
     engine=pmatch(engine, c("R","C"))
     n = length(weights)
 
-    switch(engine,#
+    switch(engine,
     {
         # R implementation
         # sample does not perform the same as inverse.cdf method
