@@ -278,6 +278,30 @@ multinomial.resample = function(weights, n.samples=length(weights), engine="C")
 
 
 
+systematic.resample = function(weights, n.samples=length(weights), engine="C")
+{
+    check.weights(weights, log=F, normalized=T)
+    stopifnot(n.samples>0)
+
+    engine=pmatch(engine, c("R","C"))
+    n = length(weights)
+
+    switch(engine,
+    {
+        u = runif(1,0,1/n.samples)+seq(0,by=1/n.samples,length=n.samples)
+        return(inverse.cdf.weights(weights,u,engine="R"))
+    },
+    {
+        # C implementation
+        out = .C("systematic_resample_wrap", 
+                 as.integer(n),
+                 as.double(weights),
+                 as.integer(n.samples),
+                 id = integer(n.samples))
+        return(out$id)
+    })
+}
+
 
 
 residual.resample = function(weights, n.samples, 

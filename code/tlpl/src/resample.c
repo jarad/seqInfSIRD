@@ -231,27 +231,6 @@ double entropy(int n, double *weights)
 /***********************************************************************/
 
 
-void multinomial_resample_wrap( int *nW, double *adWeights, int *nI, int *anIndices)
-{
-    multinomial_resample(*nW, adWeights, *nI, anIndices);
-}
-
-int multinomial_resample(int nW, double *adWeights, int nI, int *anIndices) 
-{
-    int i;
-    double adUniforms[nI];
-
-    GetRNGstate();
-    for (i=0; i<nI; i++) adUniforms[i] = runif(0,1);
-    PutRNGstate();
-
-    inverse_cdf_weights(nW, adWeights, nI, adUniforms, anIndices);
-
-    return 0;
-}
-
-
-
 
 void stratified_resample_wrap(int *nW, double *adWeights, int *nI, int *anIndices)
 {
@@ -277,6 +256,29 @@ int stratified_resample(int nW, double *adWeights, int nI, int *anIndices)
 
     return 0;
 }
+
+
+
+void multinomial_resample_wrap( int *nW, double *adWeights, int *nI, int *anIndices)
+{
+    multinomial_resample(*nW, adWeights, *nI, anIndices);
+}
+
+int multinomial_resample(int nW, double *adWeights, int nI, int *anIndices) 
+{
+    int i;
+    double adUniforms[nI];
+
+    GetRNGstate();
+    for (i=0; i<nI; i++) adUniforms[i] = runif(0,1);
+    PutRNGstate();
+
+    inverse_cdf_weights(nW, adWeights, nI, adUniforms, anIndices);
+
+    return 0;
+}
+
+
 
 
 
