@@ -1,3 +1,4 @@
+n.reps = 9
 
 context("Resampling utility functions")
 
@@ -12,7 +13,7 @@ test_that("is.increasing works properly", {
     expect_false(is.increasing(not,"R"))
     expect_false(is.increasing(not,"C"))
     
-    for (i in 1:10) 
+    for (i in 1:n.reps) 
     {
         v <- rnorm(rpois(1,1)+3)
         expect_identical(is.increasing(v,"R"), 
@@ -29,7 +30,7 @@ test_that("cusum works properly", {
     expect_equal(cusum(v,"R"),cs)
     expect_equal(cusum(v,"C"),cs)
 
-    for (i in 1:10) 
+    for (i in 1:n.reps) 
     {
         v = rnorm(rpois(1,10)+1)
         expect_equal(cusum(v,"R"),
@@ -46,7 +47,7 @@ test_that("rep2id works properly", {
     expect_equal(rep2id(rep,"R")-1,id)
     expect_equal(rep2id(rep,"C"),id)
 
-    for (i in 1:10) 
+    for (i in 1:n.reps) 
     {
         rep = rpois(100,1)
         expect_equal(rep2id(rep,"R")-1,
@@ -89,7 +90,7 @@ test_that("inverse.cdf.weights works properly", {
     expect_equal(inverse.cdf.weights(w,u,"C")  ,id)
 
 
-    for (i in 1:10) 
+    for (i in 1:n.reps) 
     {
         w = runif(rpois(1,10)+1)
         w = w/sum(w)
@@ -120,7 +121,7 @@ test_that("renormalize works properly", {
     expect_equal(renormalize(lw,T,"R"),w)   
     expect_equal(renormalize(lw,T,"C"),w)   
 
-    for (i in 1:10) {
+    for (i in 1:n.reps) {
         w = runif(rpois(1,10)+1)
         expect_equal(renormalize(w,engine="R"),
                      renormalize(w,engine="C"))
@@ -158,7 +159,7 @@ test_that("ess works properly", {
     expect_equal(ess(w,"R"), n) 
     expect_equal(ess(w,"C"), n) 
 
-    for (i in 1:10) {
+    for (i in 1:n.reps) {
         w = runif(rpois(1,10)+1); w=w/sum(w)
         expect_equal(ess(w,engine="R"),
                      ess(w,engine="C"))
@@ -187,10 +188,39 @@ test_that("entropy works properly", {
     expect_equal(entropy(w,"R"), ent) 
     expect_equal(entropy(w,"C"), ent) 
 
-    for (i in 1:10) {
+    for (i in 1:n.reps) {
         w = runif(rpois(1,10)+1); w=w/sum(w)
         expect_equal(entropy(w,engine="R"),
                      entropy(w,engine="C"))
+    }
+
+})
+
+
+test_that("cov2 throws proper errors", {
+    w = numeric(0)
+    expect_error(cov2(w    ))
+    expect_error(cov2(w,"R"))
+    expect_error(cov2(w,"C"))
+
+    w = runif(4); w[2] = -w[2]
+    expect_error(cov2(w    ))
+    expect_error(cov2(w,"R"))
+    expect_error(cov2(w,"C"))
+})
+
+test_that("cov2 works properly", {
+    n = 4
+    w = rep(1/n, n)
+    cov2 = 0
+    expect_equal(cov2(w    ), cov2) 
+    expect_equal(cov2(w,"R"), cov2) 
+    expect_equal(cov2(w,"C"), cov2) 
+
+    for (i in 1:n.reps) {
+        w = runif(rpois(1,10)+1); w=w/sum(w)
+        expect_equal(cov2(w,engine="R"),
+                     cov2(w,engine="C"))
     }
 
 })

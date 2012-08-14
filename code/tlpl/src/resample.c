@@ -156,11 +156,22 @@ void cov2_wrap(int *n, double *weights, double *returned)
 double cov2(int n, double *weights) 
 {
     int i;
-    double mean=0, var=0;
+    double mean=0, var=0, tmp;
+
+    // Calculate mean
     for (i=0; i<n; i++) mean += weights[i];
     mean /= n;
-    for (i=0; i<n; i++) var += R_pow_di(weights[i]-mean,2);
-    return var/R_pow_di(mean,2); // why this as opposed to the sqrt of this?
+
+    // Calculate variance
+    for (i=0; i<n; i++) 
+    {
+        tmp = weights[i]-mean;
+        var += tmp*tmp;
+    }
+    var /= (n-1);
+   
+    // Return cov^2
+    return var/(mean*mean);
 }
 
 

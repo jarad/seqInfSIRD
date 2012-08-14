@@ -163,6 +163,28 @@ ess = function(weights, engine="C")
 }
 
 
+cov2 = function(weights, engine="C") 
+{
+    check.weights(weights, log=F, normalized=T)
+    engine=pmatch(engine, c("R","C"))
+
+    switch(engine,
+    {
+        # R implementation
+        return(var(weights)/mean(weights)^2)
+    },
+    {
+        # C implementation
+        out = .C("cov2_wrap", 
+                 as.integer(length(weights)),
+                 as.double(weights), 
+                 cov2 = double(1))
+        return(out$cov2) 
+    })  
+}
+
+
+
 entropy = function(weights, engine="C") 
 {
     check.weights(weights, log=F, normalized=T)
