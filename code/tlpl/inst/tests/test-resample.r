@@ -243,7 +243,7 @@ test_that("stratified resampling throws errors", {
     expect_error(stratified.resample( w,-1))
 })
 
-test_that("stratified resampling works properly", {
+test_that("stratified resampling gets base case correct", {
     set.seed(1)
     w = runif(4); w=w/sum(w)
     n = 5
@@ -251,7 +251,10 @@ test_that("stratified resampling works properly", {
     set.seed(2); expect_equal(stratified.resample(w,n,   ),   id)
     set.seed(2); expect_equal(stratified.resample(w,n,"R")-1, id)
     set.seed(2); expect_equal(stratified.resample(w,n,"C"),   id)
+})
 
+
+test_that("stratified resampling: R matches C", {
     for (i in 1:n.reps) 
     {
         w = runif(rpois(1,10)+2); w=w/sum(w)
@@ -265,14 +268,14 @@ test_that("stratified resampling works properly", {
 
 
 
-
+########################## Multinomial ###############################
 test_that("multinomial resampling throws errors", {
     w = runif(4); lw = log(w)
     expect_error(multinomial.resample(lw))
     expect_error(multinomial.resample( w,-1))
 })
 
-test_that("multinomial resampling works properly", {
+test_that("multinomial resampling gets base case correct", {
     set.seed(1)
     w = runif(4); w=w/sum(w)
     n = 5
@@ -280,7 +283,10 @@ test_that("multinomial resampling works properly", {
     set.seed(2); expect_equal(multinomial.resample(w,n,   ),   id)
     set.seed(2); expect_equal(multinomial.resample(w,n,"R")-1, id)
     set.seed(2); expect_equal(multinomial.resample(w,n,"C"),   id)
+})
 
+
+test_that("multinomial resampling: R matches C", {
     for (i in 1:n.reps) 
     {
         w = runif(rpois(1,10)+2); w=w/sum(w)
@@ -300,7 +306,8 @@ test_that("systematic resampling throws errors", {
     expect_error(systematic.resample( w,-1))
 })
 
-test_that("systematic resampling works properly", {
+
+test_that("systematic resampling gets base case correct", {
     set.seed(1)
     w = runif(4); w=w/sum(w)
     n = 5
@@ -308,7 +315,10 @@ test_that("systematic resampling works properly", {
     set.seed(2); expect_equal(systematic.resample(w,n,   ),   id)
     set.seed(2); expect_equal(systematic.resample(w,n,"R")-1, id)
     set.seed(2); expect_equal(systematic.resample(w,n,"C"),   id)
+})
 
+
+test_that("systematic resampling: R matches C", {
     for (i in 1:n.reps) 
     {
         w = runif(rpois(1,10)+2); w=w/sum(w)
@@ -316,6 +326,36 @@ test_that("systematic resampling works properly", {
         seed = proc.time()
         set.seed(seed); mR = systematic.resample(w,n,"R")
         set.seed(seed); mC = systematic.resample(w,n,"C")
+        expect_equal(mR-1,mC)
+    }
+})
+
+
+
+test_that("residual resampling throws errors", {
+    w = runif(4); lw = log(w)
+    expect_error(residual.resample(lw))
+    expect_error(residual.resample( w,-1))
+})
+
+test_that("residual resampling gets base case correct", {
+    set.seed(1)
+    w = runif(4); w=w/sum(w)
+    n = 5
+    id = c(2,3,3,0,2)
+    set.seed(2); expect_equal(residual.resample(w,n   ),   id)
+    set.seed(2); expect_equal(residual.resample(w,n,engine="R")-1, id)
+    set.seed(2); expect_equal(residual.resample(w,n,engine="C"),   id)
+})
+
+test_that("residual resampling: R matches C", {
+    for (i in 1:n.reps) 
+    {
+        w = runif(rpois(1,10)+2); w=w/sum(w)
+        n = rpois(1,10)+1
+        seed = proc.time()
+        set.seed(seed); mR = residual.resample(w,n,engine="R")
+        set.seed(seed); mC = residual.resample(w,n,engine="C")
         expect_equal(mR-1,mC)
     }
 })

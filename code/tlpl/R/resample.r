@@ -304,18 +304,40 @@ systematic.resample = function(weights, n.samples=length(weights), engine="C")
 
 
 
-residual.resample = function(weights, n.samples, 
-   rrf=c("stratified","multinomial","systematic"), 
-   engine="C")
+residual.resample = function(weights, n.samples, rrf="stratified", engine="C")
 {
-    rrf = pmatch(rrf, 
-                 c("stratified","multinomial","systematic"))
+    rrf = pmatch(rrf,c("stratified","multinomial","systematic"))
     if (is.na(rrf)) stop("No matching residual resampling function.")
 
-    out = .C("residual_resample_wrap",
-             as.integer(length(weights)), as.double(weights), 
-             as.integer(n.samples), id=integer(n.samples), as.integer(rrf))
+    check.weights(weights, log=F, normalized=T)
+    stopifnot(n.samples>0)
 
-    return(out$id)
+    engine=pmatch(engine, c("R","C"))
+    n = length(weights)
+
+    switch(engine,
+    {
+        # R implementation
+        n.exp.samps = n.samples * weights
+        det.reps    = floor(n.exp.samps)
+        n.samples   = n.samples - sum(det.reps)
+        det.ids     = rep2id(det.reps, engine="R") 
+        weights     = renormalize(n.exp.samps-det.reps, engine="R")
+        switch(rrf,
+            { ran.ids = stratified.resample( weights, n.samples, engine="R") },
+            { ran.ids = multinomial.resample(weights, n.samples, engine="R") },
+            { ran.ids = systematic.resample( weights, n.samples, engine="R") })
+        return(c(det.ids, ran.ids))
+    },
+    {
+        # C implementation
+        out = .C("residual_resample_wrap", 
+                 as.integer(n),
+                 as.double(weights),
+                 as.integer(n.samples),
+                 id = integer(n.samples),
+                 as.integer(rrf))
+        return(out$id)
+    })
 }
 
