@@ -1,4 +1,4 @@
-Rfunctions = system("ls *.R", T)
+Rfunctions = system("ls *.r", T)
 for (i in 1:length(Rfunctions)) source(Rfunctions[i])
 
 
