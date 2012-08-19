@@ -11,22 +11,22 @@
 
 
 /* Calculate the predictive likelihood */
-int calculate_log_predictive_likelihood(int nSpecies, int nRxns, const int *anPre,
+double calculate_log_predictive_likelihood(int nSpecies, int nRxns, const int *anPre,
                                     const int *anY, // Y_{t+1}
                                     const int *anX, // X_t
                                     const double *adP, 
-                                    const double *adHyper,       // Hyperparameters for rates 
-                                    double *adLogPredLike)       // Return
+                                    const double *adHyper)       
                                 
 {
     int i, anHazardPart[nRxns];
     hazard_part(nSpecies, nRxns, anPre, anX, anHazardPart);
 
-    double adP2[nRxns];
+    double adP2[nRxns], dLogPredLik=0;
     for (i=0; i<nRxns; i++) {
         adP2[i] = 1/(1+adHyper[i]/(adP[i]*anHazardPart[i]));
-        adLogPredLike[i] = dnbinom(adHyper[i+nRxns], anY[i], adP2[i], 1);
+        dLogPredLik += dnbinom(adHyper[i+nRxns], anY[i], adP2[i], 1);
     }
+    return dLogPredLik;
 }
 
 
