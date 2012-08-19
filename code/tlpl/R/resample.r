@@ -220,6 +220,41 @@ entropy = function(weights, engine="C")
 # Resampling functions
 ###############################################################
 
+
+
+resample = function(weights, n.samples=length(weights), 
+                    resampling.function="stratified", residual.resampling.function=NULL, 
+                    engine="R")
+{
+    # Check whether resampling should be done
+
+    # Check resampling function
+    rf = pmatch(resampling.function, c("stratified","multinomial","systematic","residual"))
+    if (is.na(rf)) stop("No matching resample function")
+
+    # Check residual resampling function
+    if (rf==4) 
+    {
+        if (is.null(residual.resampling.function)) rrf="stratified"
+    }
+    else
+    {
+        if (!is.null(residual.resampling.function)) 
+            warning("residual.resampling.function not used when resampling.function != residual")
+    }
+
+    # Do resampling
+    switch(rf,
+        return(stratified.resample( weights, n.samples,      engine)),
+        return(multinomial.resample(weights, n.samples,      engine)),
+        return(systematic.resample( weights, n.samples,      engine)),
+        return(residual.resample(   weights, n.samples, rrf, engine)),
+        stop("No matching resample function"))
+}
+
+
+
+
 stratified.resample = function(weights, n.samples=length(weights), engine="C")
 {
     check.weights(weights, log=F, normalized=T)
@@ -304,7 +339,7 @@ systematic.resample = function(weights, n.samples=length(weights), engine="C")
 
 
 
-residual.resample = function(weights, n.samples, rrf="stratified", engine="C")
+residual.resample = function(weights, n.samples=length(weights), rrf="stratified", engine="C")
 {
     rrf = pmatch(rrf,c("stratified","multinomial","systematic"))
     if (is.na(rrf)) stop("No matching residual resampling function.")

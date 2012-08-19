@@ -360,3 +360,36 @@ test_that("residual resampling: R matches C", {
     }
 })
 
+
+
+test_that("resample chooses stratified resamping", {
+    w = runif(4); w=w/sum(w)
+    seed = proc.time()
+    set.seed(seed); m1 = resample(w, resampling.function="stratified")
+    set.seed(seed); m2 = stratified.resample(w,engine="R")
+    expect_equal(m1,m2)
+})
+
+test_that("resample chooses multinomial resamping", {
+    w = runif(4); w=w/sum(w)
+    seed = proc.time()
+    set.seed(seed); m1 = resample(w, resampling.function="multinomial")
+    set.seed(seed); m2 = multinomial.resample(w,engine="R")
+    expect_equal(m1,m2)
+})
+
+test_that("resample chooses systematic resamping", {
+    w = runif(4); w=w/sum(w)
+    seed = proc.time()
+    set.seed(seed); m1 = resample(w, resampling.function="systematic")
+    set.seed(seed); m2 = systematic.resample(w,engine="R")
+    expect_equal(m1,m2)
+})
+
+test_that("resample chooses residual resamping", {
+    w = runif(4); w=w/sum(w)
+    seed = proc.time()
+    set.seed(seed); m1 = resample(w, resampling.function="residual")
+    set.seed(seed); m2 = residual.resample(w,engine="R")
+    expect_equal(m1,m2)
+})
