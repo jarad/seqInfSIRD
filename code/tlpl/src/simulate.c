@@ -8,6 +8,11 @@
 #include "simulate.h"
 
 /* Calculates the part of the hazard other than the fixed parameter */
+void hazard_part_wrap(int *nSpecies, int *nRxns, const int *anPre, const int *anX, int *anHazardPart)
+{
+    hazard_part_wrap(*nSpecies, *nRxns, anPre, anX, anHazardPart);
+}
+
 void hazard_part(int nSpecies, int nRxns, const int *anPre, // system specific arguments 
                  const int *anX,                                          // current system state
                  int *anHazardPart)                                       // return: (partial) system hazard
