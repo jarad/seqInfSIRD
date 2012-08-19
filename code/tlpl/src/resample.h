@@ -28,6 +28,8 @@ void entropy_wrap(int *, double *, double *);
 double entropy(int , double *);
 
 
+void resample_wrap(int *, double *, int *, int *, int *);
+int resample(int , double *, int , int *, int );
 
 void multinomial_resample_wrap(int *, double *, int *, int *);
 int multinomial_resample(int, double *, int, int *);

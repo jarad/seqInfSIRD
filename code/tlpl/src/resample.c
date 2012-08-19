@@ -223,13 +223,44 @@ double entropy(int n, double *weights)
     return -sum;
 }
 
-/************************ Resampling functions *****************************************/
 
 
 /***********************************************************************/
 /* Resampling functions                                                */
 /***********************************************************************/
 
+void resample_wrap(int *nW, double *adWeights, int *nI, int *anIndices,
+                   int *nResamplingFunction)
+{
+    resample(*nW, adWeights, *nI, anIndices, *nResamplingFunction);
+}
+
+int resample(int nW, double *adWeights, int nI, int *anIndices, 
+             int nResamplingFunction)
+{
+    switch(nResamplingFunction)
+    {
+        case 1:
+            stratified_resample(nW, adWeights, nI, anIndices);
+            break;
+        case 2:
+            multinomial_resample(nW, adWeights, nI, anIndices);
+            break;
+        case 3:
+            systematic_resample(nW, adWeights, nI, anIndices);
+            break;
+        case 4: // stratified on residual
+            residual_resample(nW, adWeights, nI, anIndices, 1);
+            break;
+        case 5: // multinomial on residual
+            residual_resample(nW, adWeights, nI, anIndices, 2);
+            break;
+        case 6: // systematic on residual
+            residual_resample(nW, adWeights, nI, anIndices, 3);
+            break;
+    }
+    return 0;
+}
 
 
 void stratified_resample_wrap(int *nW, double *adWeights, int *nI, int *anIndices)
