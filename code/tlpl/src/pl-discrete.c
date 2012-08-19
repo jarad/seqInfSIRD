@@ -5,7 +5,7 @@
 #include <R.h>
 #include <Rmath.h>
 #include "utility.h"
-#include "simulate.h"
+#include "gillespie.h"
 #include "pl-utility.h"
 #include "pl-discrete.h"
 
@@ -14,9 +14,9 @@
 
 void calculate_log_predictive_likelihood_wrap(int *nSpecies, int *nRxns, const int *anPre,
                                               const int *anY, const int *anX, const double *adP, const double *adHyper,
-                                              double *return)
+                                              double *logPredLike)
 {
-    *return = calculate_log_predictive_likelihood(*nSpecies, *nRxns, anPre, anY, anX, adP, adHyper);
+    *logPredLike = calculate_log_predictive_likelihood(*nSpecies, *nRxns, anPre, anY, anX, adP, adHyper);
 }
 
 double calculate_log_predictive_likelihood(int nSpecies, int nRxns, const int *anPre,

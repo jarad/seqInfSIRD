@@ -3,6 +3,11 @@
 
 #include <R.h>
 
+void calculate_log_predictive_likelihood_wrap(int *, int *, const int *, const int *, const int *, const double *,
+                                              const double *, double *);
+double calculate_log_predictive_likelihood(int , int, const int *, const int *, const int *,
+                                           const double *, const double *);
+
 int cond_discrete_sim_step(int nSpecies, int nRxns, const int *anStoich,  
                        const double *adHazard, const int *anY, const double *adP, int nWhileMax,
                        int *anRxns, int *anX);

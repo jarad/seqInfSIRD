@@ -5,12 +5,12 @@
 #include <R.h>
 #include <Rmath.h>
 #include "utility.h"
-#include "simulate.h"
+#include "gillespie.h"
 
 /* Calculates the part of the hazard other than the fixed parameter */
 void hazard_part_wrap(int *nSpecies, int *nRxns, const int *anPre, const int *anX, int *anHazardPart)
 {
-    hazard_part_wrap(*nSpecies, *nRxns, anPre, anX, anHazardPart);
+    hazard_part(*nSpecies, *nRxns, anPre, anX, anHazardPart);
 }
 
 void hazard_part(int nSpecies, int nRxns, const int *anPre, // system specific arguments 

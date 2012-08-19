@@ -1,7 +1,9 @@
-#ifndef __SIMULATE_H__ // guard for simulate.h
-#define __SIMULATE_H__ 
+#ifndef __GILLESPIE_H__ // guard for simulate.h
+#define __GILLESPIE_H__ 
 
+void hazard_part_wrap(int *, int *, const int *, const int *, int *);
 void hazard_part(int nSpecies, int nRxns, const int *anPre, const int *anX, int *anHp);
+
 void hazard(int nSpecies, int nRxns, const int *anPre, const double *adTheta,   
             const int *anX, double dTau, int *anHp, double *adH); 
 void update_species(int nSpecies, int nRxns, const int *anStoich, const int *anRxns,    
