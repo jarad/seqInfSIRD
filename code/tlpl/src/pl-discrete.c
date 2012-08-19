@@ -9,6 +9,27 @@
 #include "pl-utility.h"
 #include "pl-discrete.h"
 
+
+/* Calculate the predictive likelihood */
+int calculate_log_predictive_likelihood(int nSpecies, int nRxns, const int *anPre,
+                                    const int *anY, // Y_{t+1}
+                                    const int *anX, // X_t
+                                    const double *adP, 
+                                    const double *adHyper,       // Hyperparameters for rates 
+                                    double *adLogPredLike)       // Return
+                                
+{
+    int i, anHazardPart[nRxns];
+    hazard_part(nSpecies, nRxns, anPre, anX, anHazardPart);
+
+    double adP2[nRxns];
+    for (i=0; i<nRxns; i++) {
+        adP2[i] = 1/(1+adHyper[i]/(adP[i]*anHazardPart[i]));
+        adLogPredLike[i] = dnbinom(adHyper[i+nRxns], anY[i], adP2[i], 1);
+    }
+}
+
+
 /* Sample from the state conditional on the observations */
 int cond_discrete_sim_step(int nSpecies, int nRxns, const int *anStoich,  
                        const double *adHazard, const int *anY, const double *adP, int nWhileMax,
@@ -114,4 +135,8 @@ void discrete_all_particle_update(int nSpecies, int nRxns, const int *anPre, con
                                  &adHyper[i* 4*nRxns], &anSuccess[i]); // 4 hyper parameters per reaction
     }
 }
+
+
+
+
 
