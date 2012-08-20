@@ -1,6 +1,27 @@
-if (!is.loaded("sim")) dyn.load("../src/tlpl.so")
 
 is.wholenumber = function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
+
+
+hazard.part = function(sys, engine="R")
+{
+    engine = pmatch(engine, c("R","C"))
+
+    check.model(sys)
+
+    switch(engine,
+    {
+        # R implementation
+        hp = numeric(sys$r)
+        for (i in 1:sys$r) hp[i] = sum(lchoose(sys$X, sys$Pre[i,]))
+        return(exp(hp))
+    },
+    {
+        # C implementation
+        out = .C("hazard_part_wrap",
+                 as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(sys$X), hp=integer(sys$r))
+        return(out$hp)
+    })
+}
 
 
 gillespie = function(sys, n, tau) 
