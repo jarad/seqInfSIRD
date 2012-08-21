@@ -105,7 +105,10 @@ void tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich,
         //copy(nSpecies, anX, anTempX);
 
         // Get number of reactions
-        rpois_vec(nRxns, adHazard, anRxnCount);
+        int i;
+        GetRNGstate();
+        for (i=0; i<nRxns; i++) anRxnCount[i] = rpois(adHazard[i]);
+        PutRNGstate();
 
         // Update species
         update_species(nSpecies, nRxns, anStoich, anRxnCount, anTempX);

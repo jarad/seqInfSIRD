@@ -55,9 +55,12 @@ int cond_discrete_sim_step(int nSpecies, int nRxns, const int *anStoich,
         memcpy(anTempX, anX, nSpecies*sizeof(int));
         //copy(nSpecies, anX, anTempX);
 
-        // Get unobserved reactions and add to observed reactions
-        rpois_vec(nRxns, adHazardTemp, anUnobservedRxnCount);
-        for (i=0; i<nRxns; i++) anTotalRxns[i] = anUnobservedRxnCount[i]+anY[i];
+        // Sample unobserved reactions and add to observed reactions
+        for (i=0; i<nRxns; i++) 
+        {
+            anUnobservedRxnCount[i] = rpois(adHazardTemp[i]);
+            anTotalRxns[i] = anUnobservedRxnCount[i]+anY[i];
+        }
 
         // Temporarily update species according to temporary reactions
         update_species(nSpecies, nRxns, anStoich, anTotalRxns, anTempX);
@@ -89,17 +92,15 @@ void discrete_particle_update(int nSpecies, int nRxns, const int *anPre, const i
                               int *anX, double *adHyper, int *nSuccess)
 {
     // Sample parameters
-    double adP[nRxns], adTheta[nRxns];
-    rbeta_vec( nRxns,  adHyper,          &adHyper[  nRxns], adP);     // sample probabilities
-    rgamma_vec(nRxns, &adHyper[2*nRxns], &adHyper[3*nRxns], adTheta); // sample reaction rates
-
     int i;
-    Rprintf("  Sampled parameters: \n");
-    Rprintf("    P: ");
-    for (i=0; i<nRxns; i++) Rprintf("%2.8f ", adP[i]);
-    Rprintf("\n    Theta: ");
-    for (i=0; i<nRxns; i++) Rprintf("%2.8f ", adTheta[i]);
-    Rprintf("\n");    
+    double adP[nRxns], adTheta[nRxns];
+    GetRNGstate();
+    for (i=0;i<nRxns;i++) 
+    {
+        adP[i] = rbeta(adHyper[i], adHyper[i+nRxns]);
+        adTheta[i] = rgamma(adHyper[i+2*nRxns], adHyper[i+3*nRxns]);
+    }
+    PutRNGstate();
 
     // Calculate reaction hazard 
     int    anHazardPart[nRxns];
@@ -140,7 +141,6 @@ void discrete_all_particle_update(int nSpecies, int nRxns, const int *anPre, con
     int i;
     for (i=0; i< nParticles; i++) 
     {
-        Rprintf("Particle %d:\n", i);
         discrete_particle_update(nSpecies, nRxns, anPre, anStoich, anY, dTau, nWhileMax,
                                  &anX[i* nSpecies], 
                                  &adHyper[i* 4*nRxns], &anSuccess[i]); // 4 hyper parameters per reaction

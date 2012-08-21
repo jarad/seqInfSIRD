@@ -15,38 +15,6 @@ int anyNegative(int n, const int *v)                     // both should be const
 }
 
 
-void runif_vec(int nLength, const double *adLowerBound, const double *adUpperBound, double *adUnifs)
-{
-    int i;
-    GetRNGstate();
-    for (i=0; i<nLength; i++) adUnifs[i] = runif(adLowerBound[i], adUpperBound[i]);
-    PutRNGstate();
-}
-
-void rpois_vec(int nLength, const double *adMean, int *anPoisson)         
-{
-    int i;
-    GetRNGstate();
-    for (i=0; i<nLength; i++) anPoisson[i]=rpois(adMean[i]);
-    PutRNGstate(); 
-}
-
-void rbeta_vec(int nLength, const double *adParamA, const double *adParamB, double *adBetas)
-{
-    int i;
-    GetRNGstate();
-    for (i=0; i<nLength; i++) adBetas[i] = rbeta(adParamA[i], adParamB[i]);
-    PutRNGstate();
-}
-
-void rgamma_vec(int nLength, const double *adShape, const double *adRate, double *adGammas)
-{
-    int i;
-    GetRNGstate();
-    for (i=0; i<nLength; i++) adGammas[i] = rgamma(adShape[i], 1.0/adRate[i]); 
-    PutRNGstate();
-
-}
 
 
 
