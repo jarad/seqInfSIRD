@@ -85,6 +85,8 @@ tau.leap.one.step = function(sys, tau=1, while.max=1000, engine="R")
     engine = pmatch(engine, c("R","C"))
     
     check.system(sys)
+    stopifnot(tau>0, while.max>0)
+
     h = hazard(sys,tau,engine="R")$h
 
     switch(engine,
@@ -109,8 +111,44 @@ tau.leap.one.step = function(sys, tau=1, while.max=1000, engine="R")
                  as.double(h), as.integer(while.max), 
                  nr=integer(sys$r), X=as.integer(sys$X))
         return(list(X=out$X, nr=out$nr))
+    },
+    {
+        stop(paste("No 'engine' matching: ",engine,".\n")) 
     })
 
+}
+
+tau.leap = function(sys, n=1, tau=1, while.max=1000, engine="R")
+{
+    engine = pmatch(engine, c("R","C"))
+    
+    check.system(sys)
+    stopifnot(tau>0, while.max>0, n>0)
+    if (length(tau)==1) tau=rep(tau,n)
+    stopifnot(length(tau)==n)
+
+    switch(engine,
+    {
+        # R implementation
+        X = matrix(sys$X,n+1,sys$s,byrow=T)
+        for (i in 1:n) {
+            sys$X = X[i,]
+            X[i+1,] = tau.leap.one.step(sys,tau[i],while.max,engine="R")$X
+        }
+        return(X)
+    },
+    {
+        # C implementation
+        out = .C("tau_leap_wrap",
+                 as.integer(sys$s), as.integer(sys$r), as.integer(sys$stoich), 
+                 as.integer(t(sys$Pre)), as.double(sys$theta), as.double(tau), 
+                 as.integer(n), as.integer(while.max),
+                 X=as.integer(rep(sys$X,n+1)))
+        return(matrix(out$X, n+1, sys$s, byrow=T))    
+    },
+    {
+        stop(paste("No 'engine' matching: ",engine,".\n")) 
+    })
 }
 
 
