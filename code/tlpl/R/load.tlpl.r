@@ -1,2 +1,2 @@
-dyn.load("tlpl.so")
+dyn.load("../src/tlpl.so")
 
