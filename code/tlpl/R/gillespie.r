@@ -58,6 +58,28 @@ hazard = function(sys, tau=1, engine="R")
     })
 }
 
+update.species = function(sys, nr, engine="R")
+{
+    engine = pmatch(engine, c("R","C"))
+    
+    check.system(sys)
+
+    switch(engine,
+    {
+        # R implementation
+        return(as.numeric(sys$X + sys$stoich %*% nr))
+    },
+    {
+        # C implementation
+        out = .C("update_species_wrap",
+                 as.integer(sys$s), as.integer(sys$r), as.integer(sys$stoich),
+                 as.integer(nr), X=as.integer(sys$X))
+        return(out$X)
+    })
+
+}
+
+
 gillespie = function(sys, n, tau) 
 {
     # Error checking

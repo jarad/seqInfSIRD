@@ -54,6 +54,13 @@ void hazard(int nSpecies, int nRxns, const int *anPre, const double *adTheta,
 
 
 /* Updates the species according to the stoichiometry */
+void update_species_wrap(int *nSpecies, int *nRxns,     
+                    const int *anStoich, const int *anRxnCount,    
+                    int *anX)
+{
+    update_species(*nSpecies, *nRxns, anStoich, anRxnCount, anX);
+}
+
 void update_species(int nSpecies, int nRxns,     
                     const int *anStoich, const int *anRxnCount,    
                     int *anX)                               // return: updated species
