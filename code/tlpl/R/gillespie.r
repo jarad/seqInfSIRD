@@ -130,7 +130,7 @@ tau.leap = function(sys, n=1, tau=1, while.max=1000, engine="R")
     switch(engine,
     {
         # R implementation
-        X = matrix(sys$X,n+1,sys$s,byrow=T)
+        X = matrix(sys$X, n+1, sys$s, byrow=T)
         for (i in 1:n) {
             sys$X = X[i,]
             X[i+1,] = tau.leap.one.step(sys,tau[i],while.max,engine="R")$X

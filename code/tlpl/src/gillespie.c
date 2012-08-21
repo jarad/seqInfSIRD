@@ -49,7 +49,6 @@ void hazard(int nSpecies, int nRxns, const int *anPre, const double *adTheta,
     {
         adHazard[i] = adTheta[i]*anHazardPart[i]*dTau;
     }
-//    Rprintf("\n");
 }
 
 
@@ -100,9 +99,7 @@ void tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich,
     int  whileCount=0, anTempX[nSpecies];
     while (1) 
     {
-        // Copy current state for temporary use
         memcpy(anTempX, anX, nSpecies*sizeof(int));
-        //copy(nSpecies, anX, anTempX);
 
         // Get number of reactions
         int i;
@@ -110,15 +107,11 @@ void tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich,
         for (i=0; i<nRxns; i++) anRxnCount[i] = rpois(adHazard[i]);
         PutRNGstate();
 
-        // Update species
         update_species(nSpecies, nRxns, anStoich, anRxnCount, anTempX);
 
-        // Test if update has any negative species
         if (!anyNegative(nSpecies, anTempX)) 
         {
-            // Copy temporary state into current state
             memcpy(anX, anTempX, nSpecies*sizeof(int));
-            //copy(nSpecies, anTempX, anX);
             break;
         }
 
@@ -147,15 +140,11 @@ void tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, co
     double adHazard[nRxns];
     for (i=0; i<nSteps;i++)
     {
-        // Copy state for current step
         memcpy(&anX[nSO+nSpecies], &anX[nSO], nSpecies*sizeof(int));
-        //copy(nSpecies, &anX[nSO], &anX[nSO+nSpecies]);
         nSO += nSpecies;
 
-        // Calculate hazard based on current state
         hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], adTau, anHazardPart, adHazard);
 
-        // Forward simulate the system
         tau_leap_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxnCount, &anX[nSO]);
     }
 }
@@ -170,7 +159,12 @@ void tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, co
 
 int next_to_fire(int nRxns, double *adCuSum) {
     int i, next=0;
-    double dUniform=runif(0,1), dSum=adCuSum[nRxns-1]; 
+    double dUniform, dSum=adCuSum[nRxns-1]; 
+    
+    GetRNGstate();
+    dUniform = runif(0,1);
+    PutRNGstate();
+
     for (i=0; i<nRxns; i++) {
         adCuSum[i] /= dSum;
         if (dUniform < adCuSum[i]) return next;
@@ -194,7 +188,6 @@ int gillespie_one_step(int nSpecies, int nRxns, const int *anStoich, const int *
     double dCurrentTime=0, adHazard[nRxns], adCuSum;
     while (1) {
         memcpy(anX0, anX, nSpecies*sizeof(int));
-        //copy(nSpecies, anX, anX0);
         hazard(nSpecies, nRxns, anPre, adTheta, anX, 1, anHazardPart, adHazard);
         
         // Calculate cumulative hazard
@@ -230,12 +223,9 @@ int gillespie(int nSpecies, int nRxns, const int *anStoich, const int *anPre, co
     double adHazard[nRxns];
     for (i=0; i<nSteps;i++)
     {
-        // Copy state for current step
         memcpy(&anX[nSO+nSpecies], &anX[nSO], nSpecies*sizeof(int));
-        //copy(nSpecies, &anX[nSO], &anX[nSO+nSpecies]);
         nSO += nSpecies;
 
-        // Forward simulate the system
         gillespie_one_step(nSpecies, nRxns, anStoich, anPre, adTheta, adT[i], anRxnCount,  &anX[nSO]);
     }
     return 0;
