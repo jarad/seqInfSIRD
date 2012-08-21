@@ -15,13 +15,6 @@ int anyNegative(int n, const int *v)                     // both should be const
 }
 
 
-/* Integer vector copy */
-void copy(int n, const int *from, int *to) 
-{
-    int i;
-    for (i=0; i<n; i++) to[i]=from[i];
-}
-
 void runif_vec(int nLength, const double *adLowerBound, const double *adUpperBound, double *adUnifs)
 {
     int i;

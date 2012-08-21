@@ -52,7 +52,8 @@ int cond_discrete_sim_step(int nSpecies, int nRxns, const int *anStoich,
     while (1) 
     {
         // Copy current state for temporary use
-        copy(nSpecies, anX, anTempX);
+        memcpy(anTempX, anX, nSpecies*sizeof(int));
+        //copy(nSpecies, anX, anTempX);
 
         // Get unobserved reactions and add to observed reactions
         rpois_vec(nRxns, adHazardTemp, anUnobservedRxnCount);
@@ -65,8 +66,10 @@ int cond_discrete_sim_step(int nSpecies, int nRxns, const int *anStoich,
         if (!anyNegative(nSpecies, anTempX)) 
         {
             // Copy successful state and number of reactions back for returning from function
-            copy(nSpecies, anTempX,     anX);
-            copy(nRxns   , anTotalRxns, anRxnCount);
+            memcpy(anX, anTempX, nSpecies*sizeof(int));
+            memcpy(anRxnCount, anTotalRxns, nRxns*sizeof(int));
+            //copy(nSpecies, anTempX,     anX);
+            //copy(nRxns   , anTotalRxns, anRxnCount);
             return 1;
         }
 

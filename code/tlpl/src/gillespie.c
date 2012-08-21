@@ -101,7 +101,8 @@ void tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich,
     while (1) 
     {
         // Copy current state for temporary use
-        copy(nSpecies, anX, anTempX);
+        memcpy(anTempX, anX, nSpecies*sizeof(int));
+        //copy(nSpecies, anX, anTempX);
 
         // Get number of reactions
         rpois_vec(nRxns, adHazard, anRxnCount);
@@ -113,7 +114,8 @@ void tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich,
         if (!anyNegative(nSpecies, anTempX)) 
         {
             // Copy temporary state into current state
-            copy(nSpecies, anTempX, anX);
+            memcpy(anX, anTempX, nSpecies*sizeof(int));
+            //copy(nSpecies, anTempX, anX);
             break;
         }
 
@@ -143,7 +145,8 @@ void tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, co
     for (i=0; i<nSteps;i++)
     {
         // Copy state for current step
-        copy(nSpecies, &anX[nSO], &anX[nSO+nSpecies]);
+        memcpy(&anX[nSO+nSpecies], &anX[nSO], nSpecies*sizeof(int));
+        //copy(nSpecies, &anX[nSO], &anX[nSO+nSpecies]);
         nSO += nSpecies;
 
         // Calculate hazard based on current state
@@ -187,7 +190,8 @@ int gillespie_one_step(int nSpecies, int nRxns, const int *anStoich, const int *
     int i, nRxnID, anX0[nSpecies], anHazardPart[nRxns];
     double dCurrentTime=0, adHazard[nRxns], adCuSum;
     while (1) {
-        copy(nSpecies, anX, anX0);
+        memcpy(anX0, anX, nSpecies*sizeof(int));
+        //copy(nSpecies, anX, anX0);
         hazard(nSpecies, nRxns, anPre, adTheta, anX, 1, anHazardPart, adHazard);
         
         // Calculate cumulative hazard
@@ -224,7 +228,8 @@ int gillespie(int nSpecies, int nRxns, const int *anStoich, const int *anPre, co
     for (i=0; i<nSteps;i++)
     {
         // Copy state for current step
-        copy(nSpecies, &anX[nSO], &anX[nSO+nSpecies]);
+        memcpy(&anX[nSO+nSpecies], &anX[nSO], nSpecies*sizeof(int));
+        //copy(nSpecies, &anX[nSO], &anX[nSO+nSpecies]);
         nSO += nSpecies;
 
         // Forward simulate the system
