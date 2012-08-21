@@ -6,7 +6,7 @@ is.wholenumber = function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) <
 tau.leap = function(sys, n, tau, while.max=1000) 
 {
     # Error checking
-    check.model(sys)
+    check.system(sys)
     stopifnot(tau>0, n>0, while.max>0)
 
     # if tau is constant

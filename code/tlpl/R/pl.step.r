@@ -3,7 +3,7 @@
 
 pl.step = function(y,tau,mod,part,while.max=1000) 
 {
-    check.model(mod)
+    check.system(mod)
     #check.particles(part)
 
     out = .C("discrete_all_particle_update_wrap",
