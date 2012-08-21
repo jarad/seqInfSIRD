@@ -2,11 +2,11 @@
 is.wholenumber = function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
 
 
-random.system = function(r=1,s=1)
+random.system = function(r=2,s=3)
 {
-    Pre  = matrix(rpois(s*r, 1),r,s)
-    Post = matrix(rpois(s*r, 1),r,s)
-    stoich = t(sys$Post-sys$Pre)
+    Pre  = matrix(rpois(r*s, 1),r,s)
+    Post = matrix(rpois(r*s, 1),r,s)
+    stoich = t(Post-Pre)
     theta = rgamma(r,100,100)
     X = rpois(s,10)+1    
 
@@ -35,6 +35,22 @@ hazard.part = function(sys, engine="R")
     })
 }
 
+hazard = function(sys, engine="R")
+{
+    engine = pmatch(engine, c("R","C"))
+    
+    check.system(sys)
+
+    switch(engine,
+    {
+        # R implementation
+        return(hazard.part(sys)*sys$theta)
+    },
+    {
+        # C implementation
+        #out = .C("hazard_wrap"
+    })
+}
 
 gillespie = function(sys, n, tau) 
 {

@@ -4,13 +4,13 @@ n.reps = 9
 context("Gillespie")
 
 
-test_that("random.system passes check.system")
+test_that("random.system passes check.system",
 {
     for (i in 1:n.reps) 
     {
-        check.system(random.system(), info=paste("i=",i))
+        expect_true({check.system(random.system());TRUE}, info=paste("i=",i))
     }
-}
+})
 
 
 sys = list()
