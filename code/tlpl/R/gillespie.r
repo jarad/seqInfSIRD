@@ -30,12 +30,13 @@ hazard.part = function(sys, engine="R")
     {
         # C implementation
         out = .C("hazard_part_wrap",
-                 as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(sys$X), hp=integer(sys$r))
+                 as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), 
+                 as.integer(sys$X), hp=integer(sys$r))
         return(out$hp)
     })
 }
 
-hazard = function(sys, engine="R")
+hazard = function(sys, tau=1, engine="R")
 {
     engine = pmatch(engine, c("R","C"))
     
@@ -44,11 +45,16 @@ hazard = function(sys, engine="R")
     switch(engine,
     {
         # R implementation
-        return(hazard.part(sys)*sys$theta)
+        hp = hazard.part(sys)
+        return(list(h=hp*sys$theta,hp=hp))
     },
     {
         # C implementation
-        #out = .C("hazard_wrap"
+        out = .C("hazard_wrap",
+                 as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)),
+                 as.double(sys$theta), as.integer(sys$X), as.double(tau),
+                 hp=integer(sys$r), h=double(sys$r))
+        return(list(h=out$h,hp=out$hp))
     })
 }
 

@@ -29,6 +29,15 @@ void hazard_part(int nSpecies, int nRxns, const int *anPre, // system specific a
 }
 
 /* Calculates the hazard for the next reaction */
+void hazard_wrap(int *nSpecies, int *nRxns, const int *anPre, const double *adTheta,   
+            const int *anX, 
+            double *dTau,  
+            int *anHazardPart, double *adHazard) 
+{
+    hazard(*nSpecies, *nRxns, anPre, adTheta, anX, *dTau, anHazardPart, adHazard);
+}
+
+
 void hazard(int nSpecies, int nRxns, const int *anPre, const double *adTheta,   
             const int *anX, 
             double dTau,  
