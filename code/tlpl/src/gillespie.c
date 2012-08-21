@@ -13,7 +13,7 @@ void hazard_part_wrap(int *nSpecies, int *nRxns, const int *anPre, const int *an
     hazard_part(*nSpecies, *nRxns, anPre, anX, anHazardPart);
 }
 
-void hazard_part(int nSpecies, int nRxns, const int *anPre, // system specific arguments 
+int hazard_part(int nSpecies, int nRxns, const int *anPre, // system specific arguments 
                  const int *anX,                                          // current system state
                  int *anHazardPart)                                       // return: (partial) system hazard
 {
@@ -25,7 +25,8 @@ void hazard_part(int nSpecies, int nRxns, const int *anPre, // system specific a
         {
             anHazardPart[i] *= choose(anX[j], anPre[i* nSpecies+j]); 
         }    
-    }       
+    }  
+    return 0;     
 }
 
 /* Calculates the hazard for the next reaction */
@@ -38,7 +39,7 @@ void hazard_wrap(int *nSpecies, int *nRxns, const int *anPre, const double *adTh
 }
 
 
-void hazard(int nSpecies, int nRxns, const int *anPre, const double *adTheta,   
+int hazard(int nSpecies, int nRxns, const int *anPre, const double *adTheta,   
             const int *anX, 
             double dTau,  
             int *anHazardPart, double *adHazard)                   // return: hazard
@@ -49,6 +50,7 @@ void hazard(int nSpecies, int nRxns, const int *anPre, const double *adTheta,
     {
         adHazard[i] = adTheta[i]*anHazardPart[i]*dTau;
     }
+    return 0;
 }
 
 
@@ -60,7 +62,7 @@ void update_species_wrap(int *nSpecies, int *nRxns,
     update_species(*nSpecies, *nRxns, anStoich, anRxnCount, anX);
 }
 
-void update_species(int nSpecies, int nRxns,     
+int update_species(int nSpecies, int nRxns,     
                     const int *anStoich, const int *anRxnCount,    
                     int *anX)                               // return: updated species
 {
@@ -72,6 +74,7 @@ void update_species(int nSpecies, int nRxns,
             anX[i] += anStoich[nSpecies*j+i]*anRxnCount[j];
         }    
     } 
+    return 0;
 }
 
 
@@ -91,7 +94,7 @@ void tau_leap_one_step_wrap(int *nSpecies, int *nRxns, const int *anStoich,
     tau_leap_one_step(*nSpecies,*nRxns, anStoich, adHazard, *nWhileMax, anRxnCount, anX);
 }
 
-void tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich, 
+int tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich, 
                   const double *adHazard,                 
                   int nWhileMax,                          
                   int *anRxnCount, int *anX)                                 // return: updated species
@@ -112,12 +115,16 @@ void tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich,
         if (!anyNegative(nSpecies, anTempX)) 
         {
             memcpy(anX, anTempX, nSpecies*sizeof(int));
-            break;
+            return 0;
         }
 
         // Limit how long the simulation tries to find a non-negative update
         whileCount++;
-        if (whileCount>nWhileMax) error("C:tau_leap_one_step: Too many unsuccessful simulation iterations.");
+        if (whileCount>nWhileMax)  
+        {
+            error("C:tau_leap_one_step: Too many unsuccessful simulation iterations.");
+            return 1;
+        }
     }
 } 
 
@@ -131,7 +138,7 @@ void tau_leap_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *an
     tau_leap(*nSpecies, *nRxns, anStoich, anPre, adTheta, *adTau, *nSteps, *nWhileMax, anX);
 }
 
-void tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+int tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
          double adTau, int nSteps, 
          int nWhileMax,
          int *anX)
@@ -147,6 +154,7 @@ void tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, co
 
         tau_leap_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxnCount, &anX[nSO]);
     }
+    return 0;
 }
 
 

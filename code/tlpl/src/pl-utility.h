@@ -2,7 +2,7 @@
 #define __PL_UTILITY_H__
 
 
-void suff_stat_update(int, const int *, const int *, const int *, double *);
+int suff_stat_update(int, const int *, const int *, const int *, double *);
 
 
 #endif                   // pl-utility.h guard

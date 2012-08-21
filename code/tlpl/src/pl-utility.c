@@ -3,7 +3,7 @@
 #include "pl-utility.h"
 
 /* Particle learning sufficient statistic update */
-void suff_stat_update(int nRxns, const int *anRxnCount, const int *anY, const int *anHazardPart, 
+int suff_stat_update(int nRxns, const int *anRxnCount, const int *anY, const int *anHazardPart, 
                       double *adHyper) 
 {
     int i,j;
@@ -15,6 +15,7 @@ void suff_stat_update(int nRxns, const int *anRxnCount, const int *anY, const in
         adHyper[i+o2] += anRxnCount[i];        // Gamma shape (alpha) - transitions
         adHyper[i+o3] += anHazardPart[i];      // Gamma rate (beta)   - expected transitions
     }
+    return 0;
 }
 
 
