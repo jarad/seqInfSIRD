@@ -84,6 +84,14 @@ void update_species(int nSpecies, int nRxns,
 
 
 /* Forward simulate ahead one time-step */
+void tau_leap_one_step_wrap(int *nSpecies, int *nRxns, const int *anStoich, 
+                  const double *adHazard,                 
+                  int *nWhileMax,                          
+                  int *anRxnCount, int *anX)
+{
+    tau_leap_one_step(*nSpecies,*nRxns, anStoich, adHazard, *nWhileMax, anRxnCount, anX);
+}
+
 void tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich, 
                   const double *adHazard,                 
                   int nWhileMax,                          

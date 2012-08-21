@@ -80,6 +80,42 @@ update.species = function(sys, nr, engine="R")
 }
 
 
+tau.leap.one.step = function(sys, tau=1, while.max=1000, engine="R")
+{
+    engine = pmatch(engine, c("R","C"))
+    
+    check.system(sys)
+    h = hazard(sys,tau,engine="R")$h
+
+    switch(engine,
+    {
+        # R implementation
+        count = 0
+        X = rep(-1,sys$s)
+        while (any(X<0))
+        {
+            nr = rpois(sys$r,h)
+            X  = update.species(sys,nr,engine="R")
+            count = count + 1
+            if (count > while.max) 
+                stop("R:tau_leap_one_step: Too many unsuccessful simulation iterations.")
+        }
+        return(list(X=X,nr=nr))
+    },
+    {
+        # C implementation
+        out = .C("tau_leap_one_step_wrap",
+                 as.integer(sys$s), as.integer(sys$r), as.integer(sys$stoich),
+                 as.double(h), as.integer(while.max), 
+                 nr=integer(sys$r), X=as.integer(sys$X))
+        return(list(X=out$X, nr=out$nr))
+    })
+
+}
+
+
+
+
 gillespie = function(sys, n, tau) 
 {
     # Error checking

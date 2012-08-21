@@ -12,7 +12,7 @@ test_that("random.system passes check.system",
     }
 })
 
-
+set.seed(1)
 sys = list()
 sys$X = c(0,1,2)
 sys$Pre = rbind(c(0,0,0),c(1,0,0),c(0,1,0),c(0,0,1),c(1,1,0),c(1,0,1),c(0,1,1),c(1,1,1))
@@ -43,9 +43,10 @@ test_that("hazard R and C match", {
     }
 })
 
+########### update.species ##########
 nr = 0:7
 xn = c(11,10,9)
-test_that("updates.species passes test cases", {
+test_that("update.species passes test cases", {
     expect_equal(update.species(sys,nr,engine="R"),xn)
     expect_equal(update.species(sys,nr,engine="C"),xn)
 })
@@ -56,6 +57,24 @@ test_that("update.species R and C match", {
         nr = rpois(sys$r,1)
         expect_equal(update.species(sys,nr,engine="R"), 
                      update.species(sys,nr,engine="C"))
+    }
+})
+
+
+########### tau.leap.one.step ###########
+nr = c(0,0,1,2,0,0,4,0)
+X = c(7,3,3)
+
+test_that("tau.leap.one.step passes test cases", {
+    expect_equal({set.seed(1); tau.leap.one.step(sys,engine="R")}, list(X=X,nr=nr))
+    expect_equal({set.seed(1); tau.leap.one.step(sys,engine="C")}, list(X=X,nr=nr))
+})
+
+test_that("tau.leap.one.step R and C match", {
+    for (i in 1:n.reps) {
+        seed = sample(1e6,1)
+        expect_equal({set.seed(seed); tlR = tau.leap.one.step(sys, engine="R")},
+                     {set.seed(seed); tlC = tau.leap.one.step(sys, engine="C")})
     }
 })
 

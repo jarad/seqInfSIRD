@@ -12,6 +12,7 @@ void update_species_wrap(int *, int *, const int *, const int *, int *);
 void update_species(int nSpecies, int nRxns, const int *anStoich, const int *anRxns,    
                     int *anX);
 
+void tau_leap_one_step_wrap(int *, int *, const int *, const double *, int *, int *, int *);
 void tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich, const double *adH,                 
                        int nWhileMax, int *anRxns, int *anX);
 void tau_leap_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *anPre, const double *adTheta,
