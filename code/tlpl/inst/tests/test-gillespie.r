@@ -87,6 +87,7 @@ test_that("tau.leap.one.step passes test cases", {
     expect_equal({set.seed(1); tau.leap.one.step(sys,engine="C")}, list(X=X,nr=nr))
 })
 
+
 test_that("tau.leap R and C match", { 
     for (i in 1:n.reps) {
         seed = sample(1e6,1)
@@ -97,6 +98,5 @@ test_that("tau.leap R and C match", {
                      info=paste("seed= ",seed, ", n=", n, ", tau= ", tau))
     }
 })
-
 
 

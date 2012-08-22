@@ -135,14 +135,19 @@ void tau_leap_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *an
          int *nWhileMax,
          int *anX)
 {
-    tau_leap(*nSpecies, *nRxns, anStoich, anPre, adTheta, *adTau, *nSteps, *nWhileMax, anX);
+    tau_leap(*nSpecies, *nRxns, anStoich, anPre, adTheta, adTau, *nSteps, *nWhileMax, anX);
 }
 
 int tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
-         double adTau, int nSteps, 
+         const double *adTau, int nSteps, 
          int nWhileMax,
          int *anX)
 {
+/*
+    int i, *ipLast, *ipCurrent, anRxnCount[nRxns], anHazardPart[nRxns];
+    ipLast     = anX;
+    ipCurrent  = ipLast+nSpecies;
+*/
     int i, nSO=0, anRxnCount[nRxns], anHazardPart[nRxns];
     double adHazard[nRxns];
     for (i=0; i<nSteps;i++)
@@ -150,9 +155,15 @@ int tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, con
         memcpy(&anX[nSO+nSpecies], &anX[nSO], nSpecies*sizeof(int));
         nSO += nSpecies;
 
-        hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], adTau, anHazardPart, adHazard);
+        hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], adTau[i], anHazardPart, adHazard);
 
         tau_leap_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxnCount, &anX[nSO]);
+/*
+          memcpy(ipCurrent, ipLast, nSpecies*sizeof(int));
+          hazard(nSpecies, nRxns, anPre, adTheta, ipCurrent, adTau[i], anHazardPart, adHazard);
+          tau_leap_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxnCount, ipCurrent);
+          ipLast += nSpecies; ipCurrent += nSpecies;
+*/
     }
     return 0;
 }

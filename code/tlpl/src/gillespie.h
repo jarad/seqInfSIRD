@@ -15,12 +15,13 @@ int update_species(int nSpecies, int nRxns, const int *anStoich, const int *anRx
 void tau_leap_one_step_wrap(int *, int *, const int *, const double *, int *, int *, int *);
 int tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich, const double *adH,                 
                        int nWhileMax, int *anRxns, int *anX);
+
 void tau_leap_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *anPre, const double *adTheta,
          const double *adTau, int *nSteps, 
          int *nWhileMax,
          int *anX);
 int tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
-         double adTau, int nSteps, int nWhileMax, int *anX); 
+         const double *adTau, int nSteps, int nWhileMax, int *anX); 
 
 int next_to_fire(int nRxns, double *adCuSum);
 
