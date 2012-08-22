@@ -2,18 +2,6 @@
 is.wholenumber = function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
 
 
-random.system = function(r=2,s=3)
-{
-    Pre  = matrix(rpois(r*s, 1),r,s)
-    Post = matrix(rpois(r*s, 1),r,s)
-    stoich = t(Post-Pre)
-    theta = rgamma(r,100,100)
-    X = rpois(s,10)+1    
-
-    return(list(r=r,s=s,Pre=Pre,Post=Post,stoich=stoich,theta=theta,X=X))
-}
-
-
 hazard.part = function(sys, engine="R")
 {
     engine = pmatch(engine, c("R","C"))

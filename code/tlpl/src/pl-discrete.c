@@ -23,7 +23,7 @@ double calculate_log_predictive_likelihood(int nSpecies, int nRxns, const int *a
                                     const int *anY, // Y_{t+1}
                                     const int *anX, // X_t
                                     const double *adP, 
-                                    const double *adHyper)       
+                                    const double *adHyper)   // only hyperparameters related to rates    
                                 
 {
     int i, anHazardPart[nRxns];

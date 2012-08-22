@@ -12,15 +12,7 @@ test_that("random.system passes check.system",
     }
 })
 
-set.seed(1)
-sys = list()
-sys$X = c(0,1,2)
-sys$Pre = rbind(c(0,0,0),c(1,0,0),c(0,1,0),c(0,0,1),c(1,1,0),c(1,0,1),c(0,1,1),c(1,1,1))
-sys$s = length(sys$X)
-sys$r = nrow(sys$Pre)
-sys$theta =  rgamma(sys$r, 100, 100)
-sys$Post = matrix(1,nrow=sys$r,ncol=sys$s)
-sys$stoich = t(sys$Post-sys$Pre)
+sys = test.system()
 hp = c(1,0,1,2,0,0,2,0)
 
 test_that("hazard.part passes test cases", {
