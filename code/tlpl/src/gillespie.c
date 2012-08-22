@@ -42,7 +42,7 @@ void hazard_wrap(int *nSpecies, int *nRxns, const int *anPre, const double *adTh
 int hazard(int nSpecies, int nRxns, const int *anPre, const double *adTheta,   
             const int *anX, 
             double dTau,  
-            int *anHazardPart, double *adHazard)                   // return: hazard
+            int *anHazardPart, double *adHazard)                   // return: hazard part and hazard
 {
     hazard_part(nSpecies, nRxns, anPre, anX, anHazardPart);
     int i;
@@ -149,6 +149,7 @@ int tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, con
     ipCurrent  = ipLast+nSpecies;
 */
     int i, nSO=0, anRxnCount[nRxns], anHazardPart[nRxns];
+int j; 
     double adHazard[nRxns];
     for (i=0; i<nSteps;i++)
     {
@@ -158,6 +159,8 @@ int tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, con
         hazard(nSpecies, nRxns, anPre, adTheta, &anX[nSO], adTau[i], anHazardPart, adHazard);
 
         tau_leap_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxnCount, &anX[nSO]);
+
+
 /*
           memcpy(ipCurrent, ipLast, nSpecies*sizeof(int));
           hazard(nSpecies, nRxns, anPre, adTheta, ipCurrent, adTau[i], anHazardPart, adHazard);
