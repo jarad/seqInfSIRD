@@ -15,7 +15,7 @@ predictive.likelihood = function(y, sys, part, log=T, engine="R")
     },
     {
         # C implementation
-        out = .C("calculate_log_predictive_likelihood_wrap",
+        out = .C("calculate_log_predictive_likelihood_R",
                  as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(t(sys$Post)),
                  as.integer(y), as.double(tau), 
                  as.integer(part$X), as.double(part$p), as.double(part$hyper),

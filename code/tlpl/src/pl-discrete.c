@@ -13,7 +13,7 @@
 
 /* Calculate the predictive likelihood */
 
-void calc_log_pred_like_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost,
+void calc_log_pred_like_R(int *nSpecies, int *nRxns, int *anPre, int *anPost,
                              const int *anY, const int *anX, const double *adP, const double *adHyper,
                              double *logPredLike)
 {   
@@ -110,7 +110,7 @@ int discrete_particle_update(Sckm *sckm, const int *anY, double dTau, int nWhile
 
 
 
-void discrete_all_particle_update_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost, 
+void discrete_all_particle_update_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, 
                                   const int *anY, const double *dTau,
                                   int *nParticles, int *nWhileMax,
                                   int *anX, double *adHyper, int *anSuccess) 

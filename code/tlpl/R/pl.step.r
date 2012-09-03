@@ -6,7 +6,7 @@ pl.step = function(y,tau,mod,part,while.max=1000)
     check.system(mod)
     #check.particles(part)
 
-    out = .C("discrete_all_particle_update_wrap",
+    out = .C("discrete_all_particle_update_R",
              as.integer(mod$s), as.integer(mod$r), as.integer(t(mod$Pre)), as.integer(mod$stoich),
              as.integer(y), as.double(tau), as.integer(part$n), as.integer(while.max),
              X=as.integer(t(part$X)), hyper=as.double(t(part$hyper)), success=integer(part$n))

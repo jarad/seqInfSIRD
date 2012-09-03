@@ -17,7 +17,7 @@ hazard.part = function(sys, engine="R")
     },
     {
         # C implementation
-        out = .C("hazard_part_wrap",
+        out = .C("hazard_part_R",
                  as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(t(sys$Post)), 
                  as.integer(sys$X), hp=integer(sys$r))
         return(out$hp)
@@ -38,7 +38,7 @@ hazard = function(sys, tau=1, engine="R")
     },
     {
         # C implementation
-        out = .C("hazard_wrap",
+        out = .C("hazard_R",
                  as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(t(sys$Post)), 
                  as.double(sys$theta), as.integer(sys$X), as.double(tau),
                  hp=integer(sys$r), h=double(sys$r))
@@ -59,7 +59,7 @@ update.species = function(sys, nr, engine="R")
     },
     {
         # C implementation
-        out = .C("update_species_wrap",
+        out = .C("update_species_R",
                  as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(t(sys$Post)), 
                  as.integer(nr), X=as.integer(sys$X))
         return(out$X)
@@ -94,7 +94,7 @@ tau.leap.one.step = function(sys, tau=1, while.max=1000, engine="R")
     },
     {
         # C implementation
-        out = .C("tau_leap_one_step_wrap",
+        out = .C("tau_leap_one_step_R",
                  as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(t(sys$Post)), 
                  as.double(h), as.integer(while.max), 
                  nr=integer(sys$r), X=as.integer(sys$X))
@@ -127,7 +127,7 @@ tau.leap = function(sys, n=1, tau=1, while.max=1000, engine="R")
     },
     {
         # C implementation
-        out = .C("tau_leap_wrap",
+        out = .C("tau_leap_R",
                  as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(t(sys$Post)), 
                  as.double(sys$theta), as.double(tau), 
                  as.integer(n), as.integer(while.max),
@@ -158,7 +158,7 @@ gillespie = function(sys, n, tau)
         n = round(n)
     }
 
-    out = .C("gillespie_wrap",
+    out = .C("gillespie_R",
              as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(t(sys$Post)), 
              as.double(sys$theta), as.double(tau), as.integer(n),
              X=as.integer(rep(sys$X,n+1)))

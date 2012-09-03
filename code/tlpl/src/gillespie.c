@@ -10,7 +10,7 @@
 
 
 /* Calculates the part of the hazard other than the fixed parameter */
-void hazard_part_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost, const int *anX, int *anHazardPart)
+void hazard_part_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, const int *anX, int *anHazardPart)
 {
     Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
     hazard_part(sckm, anX, anHazardPart);
@@ -32,7 +32,7 @@ int hazard_part(Sckm *sckm, const int *anX, int *anHazardPart)
 }
 
 /* Calculates the hazard for the next reaction */
-void hazard_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost,
+void hazard_R(int *nSpecies, int *nRxns, int *anPre, int *anPost,
             const double *adTheta,   
             const int *anX, 
             double *dTau,  
@@ -57,7 +57,7 @@ int hazard(Sckm *sckm, const double *adTheta, const int *anX, double dTau,
 
 
 /* Updates the species according to the stoichiometry */
-void update_species_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost,   
+void update_species_R(int *nSpecies, int *nRxns, int *anPre, int *anPost,   
                     const int *anRxnCount, int *anX)
 {
     Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
@@ -87,7 +87,7 @@ int update_species(Sckm *sckm, const int *anRxnCount, int *anX)              // 
 
 
 /* Forward simulate ahead one time-step */
-void tau_leap_one_step_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost, 
+void tau_leap_one_step_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, 
                   const double *adHazard,                 
                   int *nWhileMax,                          
                   int *anRxnCount, int *anX)
@@ -134,7 +134,7 @@ int tau_leap_one_step(Sckm *sckm,
 
 
 
-void tau_leap_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost, const double *adTheta,
+void tau_leap_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, const double *adTheta,
          const double *adTau, int *nSteps, 
          int *nWhileMax,
          int *anX)
@@ -190,7 +190,7 @@ int next_to_fire(int nRxns, double *adCuSum) {
 }
 
 
-void gillespie_one_step_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost, 
+void gillespie_one_step_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, 
                              const double *adTheta, double *dT,  int *anRxnCount, int *anX)
 {
     Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
@@ -225,7 +225,7 @@ int gillespie_one_step(Sckm *sckm, const double *adTheta, double dT, int *anRxnC
 
 
 
-void gillespie_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost, const double *adTheta,
+void gillespie_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, const double *adTheta,
                double *adT, int *nSteps, int *anX)
 {
     Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);

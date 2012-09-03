@@ -15,7 +15,7 @@ is.increasing = function(v, engine="C")
     },
     {
         # C implementation
-        out = .C("is_increasing_wrap", 
+        out = .C("is_increasing_R", 
                  as.integer(length(v)), 
                  as.double(v), 
                  increasing=integer(1))
@@ -35,7 +35,7 @@ cusum = function(v, engine="C")
     },
     {
         # C implementation
-        out = .C("cumulative_sum_wrap", 
+        out = .C("cumulative_sum_R", 
                  as.integer(length(v)), 
                  cusum=as.double(v))
         return(out$cusum)
@@ -65,7 +65,7 @@ rep2id = function(rep, engine="C")
     },
     {
         # C implementation
-        out = .C("rep2id_wrap", 
+        out = .C("rep2id_R", 
                  as.integer(rep),
                  as.integer(sum), 
                  id=integer(sum))
@@ -109,7 +109,7 @@ inverse.cdf.weights = function(weights, uniforms, engine="C")
     },
     {
         # C implementation
-        out = .C("inverse_cdf_weights_wrap", 
+        out = .C("inverse_cdf_weights_R", 
                  as.integer(length(weights)),
                  as.double(weights),
                  as.integer(n.samples),
@@ -135,7 +135,7 @@ renormalize = function(weights, log=F, engine="C")
     {
         # C implementation
         n = length(weights)
-        out = .C("renormalize_wrap", 
+        out = .C("renormalize_R", 
                  as.integer(n),
                  as.integer(log),  
                  weights=as.double(weights))
@@ -162,7 +162,7 @@ ess = function(weights, engine="C")
     },
     {
         # C implementation
-        out = .C("ess_wrap", 
+        out = .C("ess_R", 
                  as.integer(length(weights)),
                  as.double(weights), 
                  ess = double(1))
@@ -183,7 +183,7 @@ cov2 = function(weights, engine="C")
     },
     {
         # C implementation
-        out = .C("cov2_wrap", 
+        out = .C("cov2_R", 
                  as.integer(length(weights)),
                  as.double(weights), 
                  cov2 = double(1))
@@ -205,7 +205,7 @@ entropy = function(weights, engine="C")
     },
     {
         # C implementation
-        out = .C("entropy_wrap", 
+        out = .C("entropy_R", 
                  as.integer(length(weights)),
                  as.double(weights), 
                  entropy = double(1))
@@ -272,7 +272,7 @@ stratified.resample = function(weights, n.samples=length(weights), engine="C")
     },
     {
         # C implementation
-        out = .C("stratified_resample_wrap", 
+        out = .C("stratified_resample_R", 
                  as.integer(n),
                  as.double(weights),
                  as.integer(n.samples),
@@ -302,7 +302,7 @@ multinomial.resample = function(weights, n.samples=length(weights), engine="C")
     },
     {
         # C implementation
-        out = .C("multinomial_resample_wrap", 
+        out = .C("multinomial_resample_R", 
                  as.integer(n),
                  as.double(weights),
                  as.integer(n.samples),
@@ -328,7 +328,7 @@ systematic.resample = function(weights, n.samples=length(weights), engine="C")
     },
     {
         # C implementation
-        out = .C("systematic_resample_wrap", 
+        out = .C("systematic_resample_R", 
                  as.integer(n),
                  as.double(weights),
                  as.integer(n.samples),
@@ -366,7 +366,7 @@ residual.resample = function(weights, n.samples=length(weights), rrf="stratified
     },
     {
         # C implementation
-        out = .C("residual_resample_wrap", 
+        out = .C("residual_resample_R", 
                  as.integer(n),
                  as.double(weights),
                  as.integer(n.samples),
