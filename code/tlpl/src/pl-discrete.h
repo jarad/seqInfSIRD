@@ -1,7 +1,7 @@
-#ifndef __PL_DISCRETE_H__ // guard pl-discrete.h
-#define __PL_DISCRETE_H__
+#ifndef PL_DISCRETE_H // guard pl-discrete.h
+#define PL_DISCRETE_H
 
-#include <R.h>
+#include "Sckm.h"
 
 void calculate_log_predictive_likelihood_wrap(int *, int *, const int *, const int *, const int *, const double *,
                                               const double *, double *);

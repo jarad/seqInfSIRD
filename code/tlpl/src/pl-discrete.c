@@ -8,6 +8,7 @@
 #include "gillespie.h"
 #include "pl-utility.h"
 #include "pl-discrete.h"
+#include "Sckm.h"
 
 
 /* Calculate the predictive likelihood */

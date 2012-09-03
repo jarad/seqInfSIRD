@@ -6,47 +6,49 @@
 #include <Rmath.h>
 #include "utility.h"
 #include "gillespie.h"
+#include "Sckm.h"
+
 
 /* Calculates the part of the hazard other than the fixed parameter */
-void hazard_part_wrap(int *nSpecies, int *nRxns, const int *anPre, const int *anX, int *anHazardPart)
+void hazard_part_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost, const int *anX, int *anHazardPart)
 {
-    hazard_part(*nSpecies, *nRxns, anPre, anX, anHazardPart);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+    hazard_part(sckm, anX, anHazardPart);
+    deleteSckm(sckm);
 }
 
-int hazard_part(int nSpecies, int nRxns, const int *anPre, // system specific arguments 
-                 const int *anX,                                          // current system state
-                 int *anHazardPart)                                       // return: (partial) system hazard
+int hazard_part(Sckm *sckm, const int *anX, int *anHazardPart)
 {
-    int i, j;
-    for (i=0; i<nRxns; i++) 
+    int nSpecies=sckm->s;
+    for (int i=0; i<sckm->r; i++) 
     {
         anHazardPart[i] = 1;
-        for (j=0; j<nSpecies; j++) 
+        for (int j=0; j<nSpecies; j++) 
         {
-            anHazardPart[i] *= choose(anX[j], anPre[i* nSpecies+j]); 
+            anHazardPart[i] *= choose(anX[j], sckm->Pre[i* nSpecies+j]); 
         }    
     }  
     return 0;     
 }
 
 /* Calculates the hazard for the next reaction */
-void hazard_wrap(int *nSpecies, int *nRxns, const int *anPre, const double *adTheta,   
+void hazard_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost,
+            const double *adTheta,   
             const int *anX, 
             double *dTau,  
             int *anHazardPart, double *adHazard) 
 {
-    hazard(*nSpecies, *nRxns, anPre, adTheta, anX, *dTau, anHazardPart, adHazard);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+    hazard(sckm, adTheta, anX, *dTau, anHazardPart, adHazard);
+    deleteSckm(sckm);
 }
 
 
-int hazard(int nSpecies, int nRxns, const int *anPre, const double *adTheta,   
-            const int *anX, 
-            double dTau,  
+int hazard(Sckm *sckm, const double *adTheta, const int *anX, double dTau,  
             int *anHazardPart, double *adHazard)                   // return: hazard part and hazard
 {
-    hazard_part(nSpecies, nRxns, anPre, anX, anHazardPart);
-    int i;
-    for (i=0; i<nRxns; i++) 
+    hazard_part(sckm, anX, anHazardPart);
+    for (int i=0; i<sckm->r; i++) 
     {
         adHazard[i] = adTheta[i]*anHazardPart[i]*dTau;
     }
@@ -55,23 +57,22 @@ int hazard(int nSpecies, int nRxns, const int *anPre, const double *adTheta,
 
 
 /* Updates the species according to the stoichiometry */
-void update_species_wrap(int *nSpecies, int *nRxns,     
-                    const int *anStoich, const int *anRxnCount,    
-                    int *anX)
+void update_species_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost,   
+                    const int *anRxnCount, int *anX)
 {
-    update_species(*nSpecies, *nRxns, anStoich, anRxnCount, anX);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+    update_species(sckm, anRxnCount, anX);
+    deleteSckm(sckm);
 }
 
-int update_species(int nSpecies, int nRxns,     
-                    const int *anStoich, const int *anRxnCount,    
-                    int *anX)                               // return: updated species
+int update_species(Sckm *sckm, const int *anRxnCount, int *anX)              // return: updated species
 {
     int i,j;
-    for (i=0; i<nSpecies; i++) 
+    for (i=0; i<sckm->s; i++) 
     {
-        for (j=0; j<nRxns; j++) 
+        for (j=0; j<sckm->r; j++) 
         {
-            anX[i] += anStoich[nSpecies*j+i]*anRxnCount[j];
+            anX[i] += sckm->Stoich[sckm->s*j+i]*anRxnCount[j];
         }    
     } 
     return 0;
@@ -86,20 +87,23 @@ int update_species(int nSpecies, int nRxns,
 
 
 /* Forward simulate ahead one time-step */
-void tau_leap_one_step_wrap(int *nSpecies, int *nRxns, const int *anStoich, 
+void tau_leap_one_step_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost, 
                   const double *adHazard,                 
                   int *nWhileMax,                          
                   int *anRxnCount, int *anX)
 {
-    tau_leap_one_step(*nSpecies,*nRxns, anStoich, adHazard, *nWhileMax, anRxnCount, anX);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+    tau_leap_one_step(sckm, adHazard, *nWhileMax, anRxnCount, anX);
+    deleteSckm(sckm);
 }
 
-int tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich, 
+int tau_leap_one_step(Sckm *sckm, 
                   const double *adHazard,                 
                   int nWhileMax,                          
                   int *anRxnCount, int *anX)                                 // return: updated species
 {
-    int  whileCount=0, anTempX[nSpecies];
+    int nSpecies=sckm->s;
+    int i, whileCount=0, anTempX[nSpecies];
     while (1) 
     {
         memcpy(anTempX, anX, nSpecies*sizeof(int));
@@ -107,10 +111,10 @@ int tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich,
         // Get number of reactions
         int i;
         GetRNGstate();
-        for (i=0; i<nRxns; i++) anRxnCount[i] = rpois(adHazard[i]);
+        for (i=0; i<sckm->r; i++) anRxnCount[i] = rpois(adHazard[i]);
         PutRNGstate();
 
-        update_species(nSpecies, nRxns, anStoich, anRxnCount, anTempX);
+        update_species(sckm, anRxnCount, anTempX);
 
         if (!anyNegative(nSpecies, anTempX)) 
         {
@@ -130,19 +134,22 @@ int tau_leap_one_step(int nSpecies, int nRxns, const int *anStoich,
 
 
 
-void tau_leap_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+void tau_leap_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost, const double *adTheta,
          const double *adTau, int *nSteps, 
          int *nWhileMax,
          int *anX)
 {
-    tau_leap(*nSpecies, *nRxns, anStoich, anPre, adTheta, adTau, *nSteps, *nWhileMax, anX);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+    tau_leap(sckm, adTheta, adTau, *nSteps, *nWhileMax, anX);
+    deleteSckm(sckm);
 }
 
-int tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+int tau_leap(Sckm *sckm, const double *adTheta,
          const double *adTau, int nSteps, 
          int nWhileMax,
          int *anX)
 {
+    int nRxns = sckm->r, nSpecies = sckm->s;
     int i, *ipLast, *ipCurrent, anRxnCount[nRxns], anHazardPart[nRxns];
     ipLast     = anX;             // Points to last state
     ipCurrent  = ipLast+nSpecies; // Points to current state
@@ -151,8 +158,8 @@ int tau_leap(int nSpecies, int nRxns, const int *anStoich, const int *anPre, con
     for (i=0; i<nSteps;i++)
     {
         memcpy(ipCurrent, ipLast, nSpecies*sizeof(int));
-        hazard(nSpecies, nRxns, anPre, adTheta, ipCurrent, adTau[i], anHazardPart, adHazard);
-        tau_leap_one_step(nSpecies, nRxns, anStoich, adHazard, nWhileMax, anRxnCount, ipCurrent);
+        hazard(sckm, adTheta, ipCurrent, adTau[i], anHazardPart, adHazard);
+        tau_leap_one_step(sckm, adHazard, nWhileMax, anRxnCount, ipCurrent);
         ipLast += nSpecies; ipCurrent += nSpecies;
     }
     return 0;
@@ -183,21 +190,23 @@ int next_to_fire(int nRxns, double *adCuSum) {
 }
 
 
-void gillespie_one_step_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *anPre, const double *adTheta,
-                             double *dT,  int *anRxnCount, int *anX)
+void gillespie_one_step_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost, 
+                             const double *adTheta, double *dT,  int *anRxnCount, int *anX)
 {
-    gillespie_one_step(*nSpecies, *nRxns, anStoich, anPre, adTheta, *dT, anRxnCount, anX);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+    gillespie_one_step(sckm, adTheta, *dT, anRxnCount, anX);
+    deleteSckm(sckm);
 }
 
 
-int gillespie_one_step(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
-               double dT, int *anRxnCount, int *anX)
+int gillespie_one_step(Sckm *sckm, const double *adTheta, double dT, int *anRxnCount, int *anX)
 {
+    int nSpecies = sckm->s, nRxns = sckm->r;
     int i, nRxnID, anX0[nSpecies], anHazardPart[nRxns];
     double dCurrentTime=0, adHazard[nRxns], adCuSum;
     while (1) {
         memcpy(anX0, anX, nSpecies*sizeof(int));
-        hazard(nSpecies, nRxns, anPre, adTheta, anX, 1, anHazardPart, adHazard);
+        hazard(sckm, adTheta, anX, 1, anHazardPart, adHazard);
         
         // Calculate cumulative hazard
         for (i=1; i<nRxns; i++) adHazard[i] += adHazard[i-1];
@@ -209,33 +218,34 @@ int gillespie_one_step(int nSpecies, int nRxns, const int *anStoich, const int *
         nRxnID = next_to_fire(nRxns, adHazard);
         anRxnCount[nRxnID]++;
 
-        for (i=0; i<nSpecies; i++) anX[i] += anStoich[nSpecies * nRxnID + i]; 
+        for (i=0; i<nSpecies; i++) anX[i] += sckm->Stoich[nSpecies * nRxnID + i]; 
     }
     return 0;               
 }
 
 
 
-void gillespie_wrap(int *nSpecies, int *nRxns, const int *anStoich, const int *anPre, const double *adTheta,
+void gillespie_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost, const double *adTheta,
                double *adT, int *nSteps, int *anX)
 {
-    gillespie(*nSpecies, *nRxns, anStoich, anPre, adTheta, adT, *nSteps, anX);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+    gillespie(sckm, adTheta, adT, *nSteps, anX);
+    deleteSckm(sckm);
 }
 
 
 
 
-int gillespie(int nSpecies, int nRxns, const int *anStoich, const int *anPre, const double *adTheta,
-               double *adT, int nSteps, int *anX)
+int gillespie(Sckm *sckm, const double *adTheta, double *adT, int nSteps, int *anX)
 {
-    int i, nSO=0, anRxnCount[nRxns], anHazardPart[nRxns];
-    double adHazard[nRxns];
+    int i, nSO=0, anRxnCount[sckm->r], anHazardPart[sckm->r];
+    double adHazard[sckm->r];
     for (i=0; i<nSteps;i++)
     {
-        memcpy(&anX[nSO+nSpecies], &anX[nSO], nSpecies*sizeof(int));
-        nSO += nSpecies;
+        memcpy(&anX[nSO+sckm->s], &anX[nSO], sckm->s*sizeof(int));
+        nSO += sckm->s;
 
-        gillespie_one_step(nSpecies, nRxns, anStoich, anPre, adTheta, adT[i], anRxnCount,  &anX[nSO]);
+        gillespie_one_step(sckm, adTheta, adT[i], anRxnCount,  &anX[nSO]);
     }
     return 0;
 }

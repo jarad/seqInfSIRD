@@ -18,7 +18,7 @@ hazard.part = function(sys, engine="R")
     {
         # C implementation
         out = .C("hazard_part_wrap",
-                 as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), 
+                 as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(t(sys$Post)), 
                  as.integer(sys$X), hp=integer(sys$r))
         return(out$hp)
     })
@@ -39,7 +39,7 @@ hazard = function(sys, tau=1, engine="R")
     {
         # C implementation
         out = .C("hazard_wrap",
-                 as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)),
+                 as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(t(sys$Post)), 
                  as.double(sys$theta), as.integer(sys$X), as.double(tau),
                  hp=integer(sys$r), h=double(sys$r))
         return(list(h=out$h,hp=out$hp))
@@ -60,7 +60,7 @@ update.species = function(sys, nr, engine="R")
     {
         # C implementation
         out = .C("update_species_wrap",
-                 as.integer(sys$s), as.integer(sys$r), as.integer(sys$stoich),
+                 as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(t(sys$Post)), 
                  as.integer(nr), X=as.integer(sys$X))
         return(out$X)
     })
@@ -95,7 +95,7 @@ tau.leap.one.step = function(sys, tau=1, while.max=1000, engine="R")
     {
         # C implementation
         out = .C("tau_leap_one_step_wrap",
-                 as.integer(sys$s), as.integer(sys$r), as.integer(sys$stoich),
+                 as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(t(sys$Post)), 
                  as.double(h), as.integer(while.max), 
                  nr=integer(sys$r), X=as.integer(sys$X))
         return(list(X=out$X, nr=out$nr))
@@ -128,8 +128,8 @@ tau.leap = function(sys, n=1, tau=1, while.max=1000, engine="R")
     {
         # C implementation
         out = .C("tau_leap_wrap",
-                 as.integer(sys$s), as.integer(sys$r), as.integer(sys$stoich), 
-                 as.integer(t(sys$Pre)), as.double(sys$theta), as.double(tau), 
+                 as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(t(sys$Post)), 
+                 as.double(sys$theta), as.double(tau), 
                  as.integer(n), as.integer(while.max),
                  X=as.integer(rep(sys$X,n+1)))
         return(matrix(out$X, n+1, sys$s, byrow=T))    
@@ -159,7 +159,7 @@ gillespie = function(sys, n, tau)
     }
 
     out = .C("gillespie_wrap",
-             as.integer(sys$s), as.integer(sys$r), as.integer(sys$stoich), as.integer(t(sys$Pre)), 
+             as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(t(sys$Post)), 
              as.double(sys$theta), as.double(tau), as.integer(n),
              X=as.integer(rep(sys$X,n+1)))
     return(matrix(out$X, n+1, sys$s, byrow=T))
