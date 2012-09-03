@@ -13,25 +13,25 @@
 
 /* Calculate the predictive likelihood */
 
-void calculate_log_predictive_likelihood_wrap(int *nSpecies, int *nRxns, const int *anPre,
-                                              const int *anY, const int *anX, const double *adP, const double *adHyper,
-                                              double *logPredLike)
-{
-    *logPredLike = calculate_log_predictive_likelihood(*nSpecies, *nRxns, anPre, anY, anX, adP, adHyper);
+void calc_log_pred_like_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost,
+                             const int *anY, const int *anX, const double *adP, const double *adHyper,
+                             double *logPredLike)
+{   
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);        
+    *logPredLike = calc_log_pred_like(sckm, anY, anX, adP, adHyper);
+    deleteSckm(sckm);
 }
 
-double calculate_log_predictive_likelihood(int nSpecies, int nRxns, const int *anPre,
-                                    const int *anY, // Y_{t+1}
-                                    const int *anX, // X_t
-                                    const double *adP, 
-                                    const double *adHyper)   // only hyperparameters related to rates    
+double calc_log_pred_like(Sckm *sckm, const int *anY /* Y_{t+1} */, const int *anX /* X_t */,
+                          const double *adP, const double *adHyper)   // only hyperparameters related to rates    
                                 
 {
-    int i, anHazardPart[nRxns];
-    hazard_part(nSpecies, nRxns, anPre, anX, anHazardPart);
+    int nRxns = sckm->r;
+    int anHazardPart[nRxns];
+    hazard_part(sckm, anX, anHazardPart);
 
     double adP2[nRxns], dLogPredLik=0;
-    for (i=0; i<nRxns; i++) {
+    for (int i=0; i<nRxns; i++) {
         adP2[i] = 1/(1+adHyper[i]/(adP[i]*anHazardPart[i]));
         dLogPredLik += dnbinom(adHyper[i+nRxns], anY[i], adP2[i], 1);
     }
@@ -40,12 +40,11 @@ double calculate_log_predictive_likelihood(int nSpecies, int nRxns, const int *a
 
 
 /* Sample from the state conditional on the observations */
-int cond_discrete_sim_step(int nSpecies, int nRxns, const int *anStoich,  
-                       const double *adHazard, const int *anY, const double *adP, int nWhileMax,
-                       int *anRxnCount, int *anX)
+int cond_discrete_sim_step(Sckm *sckm, const double *adHazard, const int *anY, const double *adP, 
+                       int nWhileMax, int *anRxnCount, int *anX)
 {
     // update hazard by probability of not observing
-    int i;
+    int i, nRxns=sckm->r, nSpecies=sckm->s;
     double adHazardTemp[nRxns];
     for (i=0; i<nRxns; i++) adHazardTemp[i] = adHazard[i] * (1-adP[i]); 
     
@@ -61,7 +60,7 @@ int cond_discrete_sim_step(int nSpecies, int nRxns, const int *anStoich,
             anTotalRxns[i] = anUnobservedRxnCount[i]+anY[i];
         }
 
-        update_species(nSpecies, nRxns, anStoich, anTotalRxns, anTempX);
+        update_species(sckm, anTotalRxns, anTempX);
 
         if (!anyNegative(nSpecies, anTempX)) 
         {
@@ -81,12 +80,11 @@ int cond_discrete_sim_step(int nSpecies, int nRxns, const int *anStoich,
 
 
 /* Particle learning update for a single particle */
-int discrete_particle_update(int nSpecies, int nRxns, const int *anPre, const int *anStoich, 
-                              const int *anY, double dTau, int nWhileMax,
+int discrete_particle_update(Sckm *sckm, const int *anY, double dTau, int nWhileMax,
                               int *anX, double *adHyper, int *nSuccess)
 {
     // Sample parameters
-    int i;
+    int i, nRxns=sckm->r;
     double adP[nRxns], adTheta[nRxns];
     GetRNGstate();
     for (i=0;i<nRxns;i++) 
@@ -98,11 +96,11 @@ int discrete_particle_update(int nSpecies, int nRxns, const int *anPre, const in
 
     int    anHazardPart[nRxns];
     double adHazard[    nRxns];
-    hazard(nSpecies, nRxns, anPre, adTheta, anX, dTau, anHazardPart, adHazard);
+    hazard(sckm, adTheta, anX, dTau, anHazardPart, adHazard);
 
     // Forward simulate system
     int anRxnCount[nRxns];
-    *nSuccess = 1-cond_discrete_sim_step(nSpecies, nRxns, anStoich, adHazard, anY, adP, nWhileMax, anRxnCount, anX);
+    *nSuccess = 1-cond_discrete_sim_step(sckm, adHazard, anY, adP, nWhileMax, anRxnCount, anX);
 
     suff_stat_update(nRxns, anRxnCount, anY, anHazardPart, adHyper);
 
@@ -112,32 +110,27 @@ int discrete_particle_update(int nSpecies, int nRxns, const int *anPre, const in
 
 
 
-
-
-void discrete_all_particle_update_wrap(int *nSpecies, int *nRxns, const int *anPre, const int *anStoich, 
+void discrete_all_particle_update_wrap(int *nSpecies, int *nRxns, int *anPre, int *anPost, 
                                   const int *anY, const double *dTau,
                                   int *nParticles, int *nWhileMax,
                                   int *anX, double *adHyper, int *anSuccess) 
 {
-    discrete_all_particle_update(*nSpecies, *nRxns, anPre, anStoich, 
-                                  anY,  *dTau,
-                                  *nParticles, *nWhileMax,
-                                  anX,  adHyper, anSuccess);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);        
+    discrete_all_particle_update(sckm, anY,  *dTau, *nParticles, *nWhileMax,
+                                 anX,  adHyper, anSuccess);
+    deleteSckm(sckm);
 
 }
 
 /* Particle learning update for all particles */
-int discrete_all_particle_update(int nSpecies, int nRxns, const int *anPre, const int *anStoich, 
-                                  const int *anY, double dTau,
+int discrete_all_particle_update(Sckm *sckm, const int *anY, double dTau,
                                   int nParticles, int nWhileMax,
                                   int *anX, double *adHyper, int *anSuccess) 
 {
-    int i;
-    for (i=0; i< nParticles; i++) 
+    for (int i=0; i< nParticles; i++) 
     {
-        discrete_particle_update(nSpecies, nRxns, anPre, anStoich, anY, dTau, nWhileMax,
-                                 &anX[i* nSpecies], 
-                                 &adHyper[i* 4*nRxns], &anSuccess[i]); // 4 hyper parameters per reaction
+        discrete_particle_update(sckm, anY, dTau, nWhileMax, &anX[i* (sckm->s)], 
+                                 &adHyper[i* 4*(sckm->r)], &anSuccess[i]); // 4 hyper parameters per reaction
     }
     return 0;
 }
