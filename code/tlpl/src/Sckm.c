@@ -6,8 +6,7 @@
 
 
 
-Sckm *newSckm(const  int s, const  int r,
-               int *Pre,  int *Post)
+Sckm *newSckm(const int s, const int r, int *Pre, int *Post)
 {
     Sckm *sckm;
     sckm = (Sckm *) malloc(sizeof(Sckm));
@@ -23,7 +22,7 @@ Sckm *newSckm(const  int s, const  int r,
     {
         for (int j=0; j<r; j++) 
         {
-            sckm->Stoich[i*r+j] = Post[i+j*s]-Pre[i+j*s];
+            sckm->Stoich[i*r+j] = Post[j+i*r]-Pre[j+i*r];
         }
     }
 

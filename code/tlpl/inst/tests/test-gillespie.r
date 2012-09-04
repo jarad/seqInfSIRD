@@ -1,5 +1,5 @@
 
-n.reps = 8
+n.reps = 9
 
 context("Gillespie")
 

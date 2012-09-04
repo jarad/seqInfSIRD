@@ -67,12 +67,12 @@ void update_species_R(int *nSpecies, int *nRxns, int *anPre, int *anPost,
 
 int update_species(Sckm *sckm, const int *anRxnCount, int *anX)              // return: updated species
 {
-    int i,j;
-    for (i=0; i<sckm->s; i++) 
+    int i,j, nSpecies=sckm->s;
+    for (i=0; i<nSpecies; i++) 
     {
-        for (j=0; j<sckm->r; j++) 
+        for (j=0; j< (sckm->r); j++) 
         {
-            anX[i] += sckm->Stoich[sckm->s*j+i]*anRxnCount[j];
+            anX[i] += sckm->Stoich[nSpecies*j+i]*anRxnCount[j];
         }    
     } 
     return 0;
