@@ -103,38 +103,6 @@ test_that("inverse.cdf.weights works properly", {
 
 
 
-test_that("renormalize throws errors", {
-    w = runif(4); w[2]=-w[2]
-    expect_error(renormalize(w))
-})
-
-test_that("renormalize works properly", {
-    w = rep(1/4,4)
-    expect_equal(renormalize(w,   ),w)   
-    expect_equal(renormalize(w,engine="R"),w)   
-    expect_equal(renormalize(w,engine="C"),w)   
-
-    w = runif(4)
-    lw = log(w) 
-    w = w/sum(w)
-    expect_equal(renormalize(lw,T,   ),w)   
-    expect_equal(renormalize(lw,T,"R"),w)   
-    expect_equal(renormalize(lw,T,"C"),w)   
-
-    for (i in 1:n.reps) {
-        w = runif(rpois(1,10)+1)
-        expect_equal(renormalize(w,engine="R"),
-                     renormalize(w,engine="C"))
-
-        lw = log(w)
-        expect_equal(renormalize(w,T,"R"),
-                     renormalize(w,T,"C"))
-    }
-})
-
-
-
-
 
 ###############################################################
 # Effective sample size functions
