@@ -341,7 +341,12 @@ int residual_resample(int nW, double *adWeights, int nI, int *anIndices,
 
     // Particles are then randomly sampled with remaining weight
     nI -= nDeterministicReps;
-    renormalize(nW, 0, adWeights);
+
+    // Renormalize weights
+    double sum=0;
+    for (i=0; i<nW; i++) sum += adWeights[i];
+    for (i=0; i<nW; i++) adWeights[i] /= sum;
+
     switch (nResidualResampleFunction) 
     {
         case 1:

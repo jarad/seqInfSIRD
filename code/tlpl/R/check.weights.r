@@ -14,7 +14,7 @@ check.weights = function(weights,log=F,normalized=T)
 
     if (log) weights=exp(weights)
 
-    stopifnot(all(weights>0))
+    stopifnot(all(weights>=0))
 }
 
 
