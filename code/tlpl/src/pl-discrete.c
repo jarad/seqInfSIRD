@@ -9,31 +9,35 @@
 #include "pl-utility.h"
 #include "pl-discrete.h"
 #include "Sckm.h"
+#include "SckmParticle.h"
 
 
 /* Calculate the predictive likelihood */
 
-void calc_log_pred_like_R(int *nSpecies, int *nRxns, int *anPre, int *anPost,
-                             const int *anY, const int *anX, const double *adP, const double *adHyper,
-                             double *logPredLike)
+void calc_log_pred_like_R(const int *anY, const double *dTau, 
+                          int *nSpecies, int *nRxns, int *anPre, int *anPost,
+                          int *anX, double *probA, double *probB, double *rateA, double *rateB, 
+                          double *prob, double *rate,
+                          double *logPredLike)
 {   
     Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);        
-    *logPredLike = calc_log_pred_like(sckm, anY, anX, adP, adHyper);
+    SckmParticle *part = newSckmParticle(sckm, anX, probA, probB, rateA, rateB, prob, rate);
+    *logPredLike = calc_log_pred_like(anY, *dTau, sckm, part);
     deleteSckm(sckm);
+    deleteSckmParticle(part);
 }
 
-double calc_log_pred_like(Sckm *sckm, const int *anY /* Y_{t+1} */, const int *anX /* X_t */,
-                          const double *adP, const double *adHyper)   // only hyperparameters related to rates    
-                                
+double calc_log_pred_like(const int *anY, double dTau, Sckm *sckm, SckmParticle *particle) 
 {
     int nRxns = sckm->r;
     int anHazardPart[nRxns];
-    hazard_part(sckm, anX, anHazardPart);
+    hazard_part(sckm, particle->state, anHazardPart);
 
     double adP2[nRxns], dLogPredLik=0;
     for (int i=0; i<nRxns; i++) {
-        adP2[i] = 1/(1+adHyper[i]/(adP[i]*anHazardPart[i]));
-        dLogPredLik += dnbinom(adHyper[i+nRxns], anY[i], adP2[i], 1);
+        adP2[i] = 1/(1+particle->rateB[i]/(particle->prob[i]*anHazardPart[i]*dTau));
+        if (adP2[i]>0)
+            dLogPredLik += dnbinom(anY[i], particle->rateA[i], adP2[i], 1);
     }
     return dLogPredLik;
 }

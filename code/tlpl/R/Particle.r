@@ -10,7 +10,9 @@ test.particle = function(i=1)
     {
         X = c(0,1,2)
         p = rep(.5,r)
-        hyper = matrix(1:(s*r),2,3)
+        hyper = list()
+        hyper$prob = list(a=rep(1,r), b=rep(1,r))
+        hyper$rate = list(a=rep(1,r), b=rep(1,r))
         foundi=TRUE        
     })
 

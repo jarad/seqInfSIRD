@@ -2,10 +2,13 @@
 #define PL_DISCRETE_H
 
 #include "Sckm.h"
+#include "SckmParticle.h"
 
-void calc_log_pred_like_R(int *, int *, int *, int *, 
-                             const int *, const int *, const double *, const double *, double *);
-double calc_log_pred_like(Sckm *sckm, const int *, const int *, const double *, const double *);
+void calc_log_pred_like_R(const int *, const double *, 
+                          int *, int *, int *, int *, 
+                          int *, double *, double *, double *, double *,
+                          double *, double *, double *);
+double calc_log_pred_like(const int *, double , Sckm *, SckmParticle *);
 
 int cond_discrete_sim_step(Sckm *sckm, const double *adHazard, const int *anY, 
                            const double *adP, int nWhileMax, int *anRxns, int *anX);
