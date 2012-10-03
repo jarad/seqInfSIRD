@@ -14,3 +14,5 @@ test_that("calc.pred.like passes test case",
     expect_equal(calc.pred.like(y,tau,sys,part,engine="C"), answer, info=paste(calc.pred.like(y,tau,sys,part,engine="C")))
 })
 
+    
+
