@@ -105,45 +105,51 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
     part$hyper$rate = list()
     w = rep(NA, np)
     newswarm = swarm
-
+    hp = numeric(nr)
 
     # Run through all data points
     for (i in 1:n) 
     {  
+        y = data$[i,]
+        tau = data$tau[i]
+
         # Sample observation probability
         swarm$p = matrix(rbeta(r*np, swarm$hyper$prob$a, swarm$hyper$prob$b), r, np)
 
         # Calculate all particle weights
         for (j in 1:n.particles) 
         {           
-            # Extract a particle
-            part$p = swarm$p[,j]
-            part$hyper$prob$a = swarm$hyper$prob$a[,j]
-            part$hyper$prob$b = swarm$hyper$prob$b[,j]            
-            part$hyper$rate$a = swarm$hyper$rate$a[,j]
-            part$hyper$rate$b = swarm$hyper$rate$b[,j]
-            
-            # Calculate particle's weight
-            w[j] = calc.pred.like(data$y[i,], data$tau[i], sckm, part)
+            for (k in 1:nr) hp[k] = exp(sum(lchoose(swarm$x[,j], sckm$Pre[k,])))
+
+            ph = swarm$p[,j] * hp * tau
+            prob = ph/(swarm$hyper$rate$a[,j]+ph) 
+            nz = which(ph>0)
+            w[j] = sum(dnbinom(y[nz],swarm$hyper$rate$b[nz,j],prob[nz],log=T))
         }
 
         # Resample particles
-        w = renormalize.weights(w, log=swarm$log.weights)
-        k = resample(w)$indices
+        w = renormalize.weights(w, log=T)
+        rs = resample(w)$indices
+
         for (j in 1:n.particles)
         {
-            part$p = swarm$p[,k[j]]
-            part$hyper$prob$a = swarm$hyper$prob$a[,k[j]]
-            part$hyper$prob$b = swarm$hyper$prob$b[,k[j]]            
-            part$hyper$rate$a = swarm$hyper$rate$a[,k[j]]
-            part$hyper$rate$b = swarm$hyper$rate$b[,k[j]]
+            kk = rs[j] # new particle id
 
-            # Sample trajectory
-            newswarm$x[,j] = tau.leap(sckm, tau=tau[i])[2,]
+            # Calculate mean for unknown transitions
+            lambda = rgamma(nr, swarm$hyper$rate$a[,kk], swarm$hyper$rate$b[,kk])
+            for (k in 1:nr) hp[k] = exp(sum(lchoose(swarm$x[,kk], sckm$Pre[k,])))
+            mn = (1-swarm$p[,kk])* lambda * tau * hp
 
-            # Update states
+            # Sample transitions and update state
+            z = rpois(nr, mn) # unobserved transitions
+            n.rxns = y + z    # total transitions
+            newswarm$x[,j] = swarm$x[,kk] + sckm$stoich %*% n.rxns 
+
             # Update sufficient statistics
-
+            newswarm$hyper$prob$a[,j] = swarm$hyper$prob$a[,kk] + y
+            newswarm$hyper$prob$b[,j] = swarm$hyper$prob$b[,kk] + z
+            newswarm$hyper$rate$a[,j] = swarm$hyper$rate$a[,kk] + n.rxns
+            newswarm$hyper$rate$b[,j] = swarm$hyper$rate$b[,kk] + hp * tau
         }
         swarm = newswarm
 
