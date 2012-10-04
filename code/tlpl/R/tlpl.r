@@ -65,7 +65,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
     # Run through all data points
     for (i in 1:n) 
     {  
-        y = data$[i,]
+        y = data$y[i,]
         tau = data$tau[i]
 
         # Sample observation probability
