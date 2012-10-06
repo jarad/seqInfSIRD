@@ -13,6 +13,14 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
     # Create swarm
     if (is.null(swarm)) 
     {
+        if (is.null(n.particles)) 
+        {
+            # Determine number of particles based on number of reactions/species
+            # and number of time points
+            # n.particles = 2 set for testing purposes
+            n.particles = 2
+        }
+
         if (is.null(prior)) 
         {
             prior = list()
