@@ -13,7 +13,16 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
     # Create swarm
     if (is.null(swarm)) 
     {
-        if (is.null(prior)) stop("Both prior and swarm cannot be NULL.")
+        if (is.null(prior)) 
+        {
+            prior = list()
+            prior$prob = list()
+            prior$prob$a = rep(1,nr)
+            prior$prob$b = rep(1,nr)
+            prior$rate = list()
+            prior$rate$a = rep(1,nr)
+            prior$rate$b = rep(1,nr)
+        }
         np = n.particles
 
         swarm = list()
