@@ -6,6 +6,16 @@ test.system = function(i=1)
 {
     foundi = FALSE
     switch(i,
+    {            # Constitutive production
+        X = c(0)
+        Pre  = matrix(0,1,1)
+        Post = matrix(1,1,1)
+        s = length(X)
+        r = nrow(Pre)
+        theta =  rgamma(r, 100, 100)
+        stoich = t(Post-Pre)
+        foundi = TRUE
+    }, 
     {
         X = c(0,1,2)
         Pre = rbind(c(0,0,0),c(1,0,0),c(0,1,0),c(0,0,1),c(1,1,0),c(1,0,1),c(0,1,1),c(1,1,1))

@@ -1,9 +1,11 @@
 tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R")
 {
     nr = sckm$r
- 
+    ns = sckm$s 
+
     # Check data, sckm, swarm
     n = nrow(data$y)
+    if (length(data$tau)==1) data$tau = rep(data$tau,n)
     stopifnot(length(data$tau)==n)
     stopifnot(ncol(data$y)==nr) # Only observations on transitions are currently implemented
 
@@ -24,6 +26,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
         if (is.null(prior)) 
         {
             prior = list()
+            prior$X = rep(1, ns)
             prior$prob = list()
             prior$prob$a = rep(1,nr)
             prior$prob$b = rep(1,nr)
@@ -38,14 +41,14 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
         swarm$weights = rep(1/np, np)
         swarm$normalized = TRUE
         swarm$log.weights = FALSE
-        swarm$x = matrix( ,s,np)
+        swarm$X = matrix(prior$X, ns, np)
         swarm$hyper = list()
         swarm$hyper$prob = list()
-        swarm$hyper$prob$a = matrix(prior$prob$a, r, np)
-        swarm$hyper$prob$b = matrix(prior$prob$b, r, np)
+        swarm$hyper$prob$a = matrix(prior$prob$a, nr, np)
+        swarm$hyper$prob$b = matrix(prior$prob$b, nr, np)
         swarm$hyper$rate = list()
-        swarm$hyper$rate$a = matrix(prior$rate$a, r, np)
-        swarm$hyper$rate$b = matrix(prior$rate$b, r, np)
+        swarm$hyper$rate$a = matrix(prior$rate$a, nr, np)
+        swarm$hyper$rate$b = matrix(prior$rate$b, nr, np)
 
         
     } else { # !is.null(swarm)
@@ -54,17 +57,17 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
 
     # Create output 
     out = list()
-    out$x = array(NA, dim=c(n+1,s,np))
+    out$X = array(NA, dim=c(n+1,ns,np))
     out$hyper = list()
     out$hyper$prob = list()
-    out$hyper$prob$a = array(NA, dim=c(n+1,r,np))
-    out$hyper$prob$b = array(NA, dim=c(n+1,r,np))
+    out$hyper$prob$a = array(NA, dim=c(n+1,nr,np))
+    out$hyper$prob$b = array(NA, dim=c(n+1,nr,np))
     out$hyper$rate = list()
-    out$hyper$rate$a = array(NA, dim=c(n+1,r,np))
-    out$hyper$rate$b = array(NA, dim=c(n+1,r,np))
+    out$hyper$rate$a = array(NA, dim=c(n+1,nr,np))
+    out$hyper$rate$b = array(NA, dim=c(n+1,nr,np))
 
     # Fill output with initial values
-    out$x[1,] = swarm$x
+    out$X[1,,] = swarm$X
     out$hyper$prob$a[1,,] = swarm$hyper$prob$a
     out$hyper$prob$b[1,,] = swarm$hyper$prob$b
     out$hyper$rate$a[1,,] = swarm$hyper$rate$a
@@ -86,12 +89,12 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
         tau = data$tau[i]
 
         # Sample observation probability
-        swarm$p = matrix(rbeta(r*np, swarm$hyper$prob$a, swarm$hyper$prob$b), r, np)
+        swarm$p = matrix(rbeta(nr*np, swarm$hyper$prob$a, swarm$hyper$prob$b), nr, np)
 
         # Calculate all particle weights
         for (j in 1:n.particles) 
         {           
-            for (k in 1:nr) hp[k] = exp(sum(lchoose(swarm$x[,j], sckm$Pre[k,])))
+            for (k in 1:nr) hp[k] = exp(sum(lchoose(swarm$X[,j], sckm$Pre[k,])))
 
             ph = swarm$p[,j] * hp * tau
             prob = ph/(swarm$hyper$rate$a[,j]+ph) 
@@ -102,6 +105,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
         # Resample particles
         w = renormalize.weights(w, log=T)
         rs = resample(w)$indices
+        rs = resample(w)[[2]]
 
         for (j in 1:n.particles)
         {
@@ -109,13 +113,13 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
 
             # Calculate mean for unknown transitions
             lambda = rgamma(nr, swarm$hyper$rate$a[,kk], swarm$hyper$rate$b[,kk])
-            for (k in 1:nr) hp[k] = exp(sum(lchoose(swarm$x[,kk], sckm$Pre[k,])))
+            for (k in 1:nr) hp[k] = exp(sum(lchoose(swarm$X[,kk], sckm$Pre[k,])))
             mn = (1-swarm$p[,kk])* lambda * tau * hp
 
             # Sample transitions and update state
             z = rpois(nr, mn) # unobserved transitions
             n.rxns = y + z    # total transitions
-            newswarm$x[,j] = swarm$x[,kk] + sckm$stoich %*% n.rxns 
+            newswarm$X[,j] = swarm$X[,kk] + sckm$stoich %*% n.rxns 
 
             # Update sufficient statistics
             newswarm$hyper$prob$a[,j] = swarm$hyper$prob$a[,kk] + y
@@ -126,7 +130,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
         swarm = newswarm
 
         # Fill output with current values
-        out$x[i+1,] = swarm$x
+        out$X[i+1,,] = swarm$X
         out$hyper$prob$a[i+1,,] = swarm$hyper$prob$a
         out$hyper$prob$b[i+1,,] = swarm$hyper$prob$b
         out$hyper$rate$a[i+1,,] = swarm$hyper$rate$a

@@ -12,7 +12,7 @@ test_that("random.system passes check.system",
     }
 })
 
-sys = test.system()
+sys = test.system(2)
 hp = c(1,0,1,2,0,0,2,0)
 
 test_that("hazard.part passes test cases", {
