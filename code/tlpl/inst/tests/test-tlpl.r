@@ -28,4 +28,12 @@ test_that("tlpl: constitutive production", {
     expect_equal(res$hyper$rate$b, array(1:(n+1), dim=c(n+1,1,np))) 
 })
 
+f = function() {
+  w = runif(5); w = w/sum(w)
+  resample(w)
+}
+
+test_that("lm works", {
+    expect_true({f();TRUE})
+})
 

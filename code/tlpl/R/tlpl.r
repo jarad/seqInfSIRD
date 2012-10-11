@@ -104,14 +104,14 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
 
         # Resample particles
         w = renormalize.weights(w, log=T)
-        rs = resample(w)$indices
-        rs = resample(w)[[2]]
+        #rs = resample(w)$indices
+        rs = resample(w)[[2]]     # The above line gives an error with testthat::auto_test
 
         for (j in 1:n.particles)
         {
             kk = rs[j] # new particle id
 
-            # Calculate mean for unknown transitions
+            # Calculate mean for unobserved transitions
             lambda = rgamma(nr, swarm$hyper$rate$a[,kk], swarm$hyper$rate$b[,kk])
             for (k in 1:nr) hp[k] = exp(sum(lchoose(swarm$X[,kk], sckm$Pre[k,])))
             mn = (1-swarm$p[,kk])* lambda * tau * hp
