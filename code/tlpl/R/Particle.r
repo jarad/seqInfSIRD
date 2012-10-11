@@ -25,7 +25,16 @@ test.particle = function(i=1)
 
 check.particles = function(part)
 {
+    stopifnot(!is.null(part),
+              !is.null(part$hyper),
+              !is.null(part$hyper$a),
+              !is.null(part$hyper$b),
+              !is.null(part$prob),
+              !is.null(part$prob$a),
+              !is.null(part$prob$b))
 
+    stopifnot(length(part$hyper$rate$a) == length(part$hyper$rate$b),
+              length(part$hyper$prob$a) == length(part$hyper$prob$b))
 }
 
 
