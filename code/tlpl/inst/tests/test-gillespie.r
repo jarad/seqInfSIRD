@@ -1,7 +1,7 @@
 
 n.reps = 9
 
-context("Gillespie")
+context("gillespie")
 
 
 test_that("random.system passes check.system",
