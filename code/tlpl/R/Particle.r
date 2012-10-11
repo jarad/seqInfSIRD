@@ -23,3 +23,10 @@ test.particle = function(i=1)
 }
 
 
+check.particles = function(part)
+{
+
+}
+
+
+
