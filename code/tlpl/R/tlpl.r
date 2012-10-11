@@ -1,4 +1,4 @@
-tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R")
+tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R",...)
 {
     nr = sckm$r
     ns = sckm$s 
@@ -104,8 +104,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
 
         # Resample particles
         w = renormalize.weights(w, log=T)
-        #rs = resample(w)$indices
-        rs = resample(w)[[2]]     # The above line gives an error with testthat::auto_test
+        rs = resample(w,...)$indices
 
         for (j in 1:n.particles)
         {
