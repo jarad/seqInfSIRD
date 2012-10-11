@@ -23,17 +23,12 @@ test_that("tlpl: constitutive production", {
     dat$y = matrix(1:n, n, 1)
     dat$tau = 1
     res = tlpl(dat,sys)
-    np = dim(res$X)[3]
-    expect_equal(res$X[-1,,1], dat$y+1) 
-    expect_equal(res$hyper$rate$b, array(1:(n+1), dim=c(n+1,1,np))) 
+    print(res)
+    np = dim(res$X)[3]; 
+    expect_equal(res$hyper$rate$b, array(c(0,dat$y)+1, dim=c(n+1,1,np)))
+    for (i in 1:np) expect_equal(res$hyper$rate$b[,,i], c(0,dat$y)+1)
 })
 
-f = function() {
-  w = runif(5); w = w/sum(w)
-  resample(w)
-}
 
-test_that("lm works", {
-    expect_true({f();TRUE})
-})
+
 
