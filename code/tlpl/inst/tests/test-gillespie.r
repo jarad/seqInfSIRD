@@ -70,19 +70,19 @@ test_that("tau.leap.one.step R and C match", {
     }
 })
 
-########### tau.leap.one.step ###########
-nr = c(0,0,1,2,0,0,4,0)
-X = c(7,3,3)
+########### tau.leap ###########
 
-test_that("tau.leap.one.step passes test cases", {
-    expect_equal({set.seed(1); tau.leap.one.step(sys,engine="R")}, list(X=X,nr=nr))
-    expect_equal({set.seed(1); tau.leap.one.step(sys,engine="C")}, list(X=X,nr=nr))
-})
+#test_that("tau.leap passes test cases", {
+#    expect_equal({set.seed(1); tau.leap.one.step(sys,engine="R")}, list(X=X,nr=nr))
+#    expect_equal({set.seed(1); tau.leap.one.step(sys,engine="C")}, list(X=X,nr=nr))
+#})
 
-
+context("tau.leap")    
+set.seed(proc.time()*1e6)
 test_that("tau.leap R and C match", { 
     for (i in 1:n.reps) {
         seed = sample(1e6,1)
+        #sys = random.system()
         n = rpois(1,1)+1
         tau = rgamma(1,100,100)
         expect_equal({set.seed(seed); tau.leap(sys, n, tau, engine="R")},

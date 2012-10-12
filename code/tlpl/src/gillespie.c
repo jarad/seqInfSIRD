@@ -100,7 +100,7 @@ void tau_leap_one_step_R(int *nSpecies, int *nRxns, int *anPre, int *anPost,
 int tau_leap_one_step(Sckm *sckm, 
                   const double *adHazard,                 
                   int nWhileMax,                          
-                  int *anRxnCount, int *anX)                                 // return: updated species
+                  int *anRxnCount, int *anX)                                 // return: number of reactions and updated species
 {
     int nSpecies=sckm->s;
     int i, whileCount=0, anTempX[nSpecies];
@@ -137,20 +137,20 @@ int tau_leap_one_step(Sckm *sckm,
 void tau_leap_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, const double *adTheta,
          const double *adTau, int *nSteps, 
          int *nWhileMax,
-         int *anX)
+         int *anRxnCount, int *anX)
 {
     Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
-    tau_leap(sckm, adTheta, adTau, *nSteps, *nWhileMax, anX);
+    tau_leap(sckm, adTheta, adTau, *nSteps, *nWhileMax, anRxnCount, anX);
     deleteSckm(sckm);
 }
 
 int tau_leap(Sckm *sckm, const double *adTheta,
          const double *adTau, int nSteps, 
          int nWhileMax,
-         int *anX)
+         int *anRxnCount, int *anX)
 {
     int nRxns = sckm->r, nSpecies = sckm->s;
-    int i, *ipLast, *ipCurrent, anRxnCount[nRxns], anHazardPart[nRxns];
+    int i, *ipLast, *ipCurrent, anHazardPart[nRxns];
     ipLast     = anX;             // Points to last state
     ipCurrent  = ipLast+nSpecies; // Points to current state
 
@@ -159,7 +159,7 @@ int tau_leap(Sckm *sckm, const double *adTheta,
     {
         memcpy(ipCurrent, ipLast, nSpecies*sizeof(int));
         hazard(sckm, adTheta, ipCurrent, adTau[i], anHazardPart, adHazard);
-        tau_leap_one_step(sckm, adHazard, nWhileMax, anRxnCount, ipCurrent);
+        tau_leap_one_step(sckm, adHazard, nWhileMax, &anRxnCount[i*nRxns], ipCurrent);
         ipLast += nSpecies; ipCurrent += nSpecies;
     }
     return 0;

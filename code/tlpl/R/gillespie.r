@@ -119,11 +119,14 @@ tau.leap = function(sys, n=1, tau=1, while.max=1000, engine="R")
     {
         # R implementation
         X = matrix(sys$X, n+1, sys$s, byrow=T)
+        nr = matrix(NA, n, sys$r)
         for (i in 1:n) { 
             sys$X = X[i,]
-            X[i+1,] = tau.leap.one.step(sys,tau[i],while.max,engine="R")$X
+            tmp = tau.leap.one.step(sys,tau[i],while.max,engine="R")
+            X[i+1,] = tmp$X
+            nr[i,]  = tmp$nr
         }
-        return(X)
+        return(list(X=X,nr=nr))
     },
     {
         # C implementation
@@ -131,11 +134,11 @@ tau.leap = function(sys, n=1, tau=1, while.max=1000, engine="R")
                  as.integer(sys$s), as.integer(sys$r), as.integer(t(sys$Pre)), as.integer(t(sys$Post)), 
                  as.double(sys$theta), as.double(tau), 
                  as.integer(n), as.integer(while.max),
-                 X=as.integer(rep(sys$X,n+1)))
-        return(matrix(out$X, n+1, sys$s, byrow=T))    
+                 nr=integer(n*sys$r), X=as.integer(rep(sys$X,n+1)))
+        return(list(X=matrix(out$X, n+1, sys$s, byrow=T), nr=matrix(out$nr, n, sys$r, byrow=T)))    
     },
     {
-        stop(paste("No 'engine' matching: ",engine,".\n")) 
+        stop(paste("No 'engine' matching: ",engine,".\n", sep="")) 
     })
 }
 

@@ -17,8 +17,8 @@ int tau_leap_one_step(Sckm *sckm, const double *adH, int nWhileMax, int *anRxns,
 
 void tau_leap_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, 
                    const double *adTheta, const double *adTau, int *nSteps, 
-                   int *nWhileMax, int *anX);
-int tau_leap(Sckm *sckm, const double *adTheta, const double *adTau, int nSteps, int nWhileMax, int *anX); 
+                   int *nWhileMax, int *anRxnCount, int *anX);
+int tau_leap(Sckm *sckm, const double *adTheta, const double *adTau, int nSteps, int nWhileMax, int *anRxnCount, int *anX); 
 
 int next_to_fire(int nRxns, double *adCuSum);
 
