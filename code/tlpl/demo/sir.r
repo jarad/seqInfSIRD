@@ -12,7 +12,9 @@ set.seed(1)
 y = tau.leap(sckm, 15)
 
 
-z = tlpl(list(y=y$nr, tau=1), sckm, n.particles=100)
+# Sequential inference
+prior = tlpl.prior(sckm$X, 1e4, 1, sckm$theta*10, 10, sckm$r)
+z = tlpl(list(y=y$nr, tau=1), sckm, prior=prior, n.particles=100)
 
 
 
