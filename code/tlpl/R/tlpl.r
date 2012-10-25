@@ -27,6 +27,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
         {
             prior = list()
             prior$X = rep(1, ns)
+            prior$X = sckm$X
             prior$prob = list()
             prior$prob$a = rep(1,nr)
             prior$prob$b = rep(1,nr)
