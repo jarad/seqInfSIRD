@@ -108,18 +108,24 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
         rs = resample(w,...)$indices
 
         for (j in 1:n.particles)
-        {
-            kk = rs[j] # new particle id
+        {            
+            any.negative = T
+            while (any.negative) {
+                kk = rs[j] # new particle id
 
-            # Calculate mean for unobserved transitions
-            lambda = rgamma(nr, swarm$hyper$rate$a[,kk], swarm$hyper$rate$b[,kk])
-            for (k in 1:nr) hp[k] = exp(sum(lchoose(swarm$X[,kk], sckm$Pre[k,])))
-            mn = (1-swarm$p[,kk])* lambda * tau * hp
+                # Calculate mean for unobserved transitions
+                lambda = rgamma(nr, swarm$hyper$rate$a[,kk], swarm$hyper$rate$b[,kk])
+                for (k in 1:nr) hp[k] = exp(sum(lchoose(swarm$X[,kk], sckm$Pre[k,])))
+                mn = (1-swarm$p[,kk])* lambda * tau * hp
 
-            # Sample transitions and update state
-            z = rpois(nr, mn) # unobserved transitions
-            n.rxns = y + z    # total transitions
-            newswarm$X[,j] = swarm$X[,kk] + sckm$stoich %*% n.rxns 
+                # Sample transitions and update state
+                z = rpois(nr, mn) # unobserved transitions
+                n.rxns = y + z    # total transitions
+                newswarm$X[,j] = swarm$X[,kk] + sckm$stoich %*% n.rxns
+
+                # Check to see if any state is negative 
+                any.negative = any(newswarm$X[,j]<0)
+            }
 
             # Update sufficient statistics
             newswarm$hyper$prob$a[,j] = swarm$hyper$prob$a[,kk] + y
