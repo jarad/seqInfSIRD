@@ -99,7 +99,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
     part$hyper$rate = list()
     w = rep(NA, np)
     newswarm = swarm
-    hp = numeric(nr)
+    hp = matrix(NA, nr, np)
 
     # Run through all data points
     for (i in 1:n) 
@@ -113,9 +113,9 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
         # Calculate all particle weights
         for (j in 1:n.particles) 
         {           
-            for (k in 1:nr) hp[k] = exp(sum(lchoose(swarm$X[,j], sckm$Pre[k,])))
+            for (k in 1:nr) hp[k,j] = exp(sum(lchoose(swarm$X[,j], sckm$Pre[k,])))
 
-            ph = swarm$p[,j] * hp * tau
+            ph = swarm$p[,j] * hp[,j] * tau
             prob = ph/(swarm$hyper$rate$a[,j]+ph) 
             nz = which(ph>0)
             w[j] = sum(dnbinom(y[nz],swarm$hyper$rate$b[nz,j],prob[nz],log=T))
@@ -133,8 +133,8 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
 
                 # Calculate mean for unobserved transitions
                 lambda = rgamma(nr, swarm$hyper$rate$a[,kk], swarm$hyper$rate$b[,kk])
-                for (k in 1:nr) hp[k] = exp(sum(lchoose(swarm$X[,kk], sckm$Pre[k,])))
-                mn = (1-swarm$p[,kk])* lambda * tau * hp
+                #for (k in 1:nr) hp[k] = exp(sum(lchoose(swarm$X[,kk], sckm$Pre[k,])))
+                mn = (1-swarm$p[,kk])* lambda * tau * hp[,kk]
 
                 # Sample transitions and update state
                 z = rpois(nr, mn) # unobserved transitions
@@ -149,7 +149,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
             newswarm$hyper$prob$a[,j] = swarm$hyper$prob$a[,kk] + y
             newswarm$hyper$prob$b[,j] = swarm$hyper$prob$b[,kk] + z
             newswarm$hyper$rate$a[,j] = swarm$hyper$rate$a[,kk] + n.rxns
-            newswarm$hyper$rate$b[,j] = swarm$hyper$rate$b[,kk] + hp * tau
+            newswarm$hyper$rate$b[,j] = swarm$hyper$rate$b[,kk] + hp[,kk] * tau
         }
         swarm = newswarm
 
