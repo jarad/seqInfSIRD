@@ -1,3 +1,22 @@
+# A convenience function to make the prior
+tlpl.prior = function(X, p.a, p.b, r.a, r.b, nr) 
+{
+    prior = list()
+    prior$X = sckm$X
+    prior$prob = list()
+    prior$prob$a = rep(p.a,nr)
+    prior$prob$b = rep(p.b,nr)
+    prior$rate = list()
+    prior$rate$a = rep(r.a,nr)
+    prior$rate$b = rep(r.b,nr)
+
+    return(prior)
+}
+
+
+
+
+
 tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R",...)
 {
     nr = sckm$r
@@ -25,15 +44,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
 
         if (is.null(prior)) 
         {
-            prior = list()
-            prior$X = rep(1, ns)
-            prior$X = sckm$X
-            prior$prob = list()
-            prior$prob$a = rep(1,nr)
-            prior$prob$b = rep(1,nr)
-            prior$rate = list()
-            prior$rate$a = rep(1,nr)
-            prior$rate$b = rep(1,nr)
+            prior = tlpl.prior(sckm$X, 1, 1, 1, 1, nr)
         }
         np = n.particles
 
