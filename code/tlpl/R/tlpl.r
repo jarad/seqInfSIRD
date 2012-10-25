@@ -1,14 +1,21 @@
 # A convenience function to make the prior
 tlpl.prior = function(X, p.a, p.b, r.a, r.b, nr) 
 {
+    if (length(p.a)==1) p.a = rep(p.a, nr)
+    if (length(p.b)==1) p.b = rep(p.b, nr)
+    if (length(r.a)==1) r.a = rep(r.a, nr)
+    if (length(r.b)==1) r.b = rep(r.b, nr)
+
+    stopifnot(length(p.a)==nr, length(p.b)==nr, length(r.a)==nr, length(r.b)==nr)
+
     prior = list()
     prior$X = sckm$X
     prior$prob = list()
-    prior$prob$a = rep(p.a,nr)
-    prior$prob$b = rep(p.b,nr)
+    prior$prob$a = p.a
+    prior$prob$b = p.b
     prior$rate = list()
-    prior$rate$a = rep(r.a,nr)
-    prior$rate$b = rep(r.b,nr)
+    prior$rate$a = r.a
+    prior$rate$b = r.b
 
     return(prior)
 }
