@@ -12,11 +12,11 @@ set.seed(1)
 y = tau.leap(sckm, 15)
 
 
-# Sequential inference
+cat("Running sequential inference...\n")
 prior = tlpl.prior(sckm$X, 1e4, 1, sckm$theta*10, 10, sckm$r)
 z = tlpl(list(y=y$nr, tau=1), sckm, prior=prior, n.particles=100)
 
-
+qs = tlpl_quantile(z)
 
 # Make figures
 par(mfrow=c(2,2))
