@@ -24,7 +24,7 @@ tlpl.prior = function(X, p.a, p.b, r.a, r.b, nr)
 
 
 
-tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R",...)
+tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R", verbose=F, ...)
 {
     nr = sckm$r
     ns = sckm$s 
@@ -104,6 +104,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
     # Run through all data points
     for (i in 1:n) 
     {  
+        if (verbose) cat(paste("Time point ",i,", ",round(i/n*100), "% completed.\n", sep=''))
         y = data$y[i,]
         tau = data$tau[i]
 
@@ -125,8 +126,10 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
         w = renormalize.weights(w, log=T)
         rs = resample(w,...)$indices
 
-        for (j in 1:n.particles)
-        {            
+        for (j in 1:np)
+        {               
+            if (verbose) cat(paste("  Particle ",j,", ",round(j/np*100), "% completed.\n", sep=''))
+
             any.negative = T
             while (any.negative) {
                 kk = rs[j] # new particle id
