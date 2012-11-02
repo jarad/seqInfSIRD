@@ -104,7 +104,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
     # Run through all data points
     for (i in 1:n) 
     {  
-        if (verbose) cat(paste("Time point ",i,", ",round(i/n*100), "% completed.\n", sep=''))
+        cat(paste("Time point ",i,", ",round(i/n*100), "% completed.\n", sep=''))
         y = data$y[i,]
         tau = data$tau[i]
 
@@ -118,8 +118,12 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
 
             ph = swarm$p[,j] * hp[,j] * tau
             prob = ph/(swarm$hyper$rate$a[,j]+ph) 
-            nz = which(ph>0)
+            nz = which(ph>0) # otherwise NaNs produced
             w[j] = sum(dnbinom(y[nz],swarm$hyper$rate$b[nz,j],prob[nz],log=T))
+
+            # Fix so that if particle outbreak is over but data indicates continuing outbreak
+            # particle weight becomes -Inf
+            if (any(ph==0)) { if (any(y[ph==0]!=0)) w[j] = -Inf }
         }
 
         # Resample particles
@@ -128,11 +132,13 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
 
         for (j in 1:np)
         {               
-            if (verbose) cat(paste("  Particle ",j,", ",round(j/np*100), "% completed.\n", sep=''))
+            if (verbose && (j%%100)==0) 
+                cat(paste("  Particle ",j,", ",round(j/np*100), "% completed.\n", sep=''))
 
             any.negative = T
             while (any.negative) {
-                kk = rs[j] # new particle id
+                kk = rs[j] 
+                kk = resample(w,1, method="multinomial")$indices # new particle id
 
                 # Calculate mean for unobserved transitions
                 lambda = rgamma(nr, swarm$hyper$rate$a[,kk], swarm$hyper$rate$b[,kk])
@@ -146,6 +152,21 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
 
                 # Check to see if any state is negative 
                 any.negative = any(newswarm$X[,j]<0)
+
+                if (any.negative) {
+                    cat(paste("Particle",kk,"failed.\n"))
+                    cat("Probabilities: ")
+                    for (k in 1:nr) cat(paste(swarm$p[k,kk]," "))
+                    cat("\nRates: ")
+                    for (k in 1:nr) cat(paste(lambda[k]," "))
+                    cat("\nStates: ")
+                    for (k in 1:ns) cat(paste(swarm$X[k,kk]," "))
+                    cat("\nData: ")
+                    for (k in 1:nr) cat(paste(y[k]," "))
+                    cat("\nHazard parts: ")
+                    for (k in 1:nr) cat(paste(hp[k,kk]," "))
+                    cat(paste("\nWeight:",w[kk],"\n"))
+                }
             }
 
             # Update sufficient statistics

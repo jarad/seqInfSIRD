@@ -24,8 +24,8 @@ y = cbind(rbinom(n, tl$nr[,1], p[1]), rbinom(n, tl$nr[,2], p[2]))
 
 # Perform inference
 cat("Running sequential inference...\n")
-prior = tlpl.prior(sckm$X, 1, 1, sckm$theta*10, 10, sckm$r)
-z = tlpl(list(y=y, tau=1), sckm, prior=prior, n.particles=100, verbose=T)
+prior = tlpl.prior(sckm$X, 1e3, 1e3, sckm$theta*100, 100, sckm$r)
+z = tlpl(list(y=y, tau=1), sckm, prior=prior, n.particles=1000, verbose=T)
 qs = tlpl_quantile(z)
 
 # Make figures
@@ -34,9 +34,9 @@ clrs = c("green","red","blue")
 
 ## Data
 
-plot( y$X[,1], type="l", ylim=c(0,sckm$X[1]), lwd=ld, col=clrs[1], xlab="Time", ylab="Number")
-lines(y$X[,2], lwd=ld, col=clrs[2])
-lines(y$X[,3], lwd=ld, col=clrs[3])
+plot( tl$X[,1], type="l", ylim=c(0,sckm$X[1]), lwd=ld, col=clrs[1], xlab="Time", ylab="Number")
+lines(tl$X[,2], lwd=ld, col=clrs[2])
+lines(tl$X[,3], lwd=ld, col=clrs[3])
 legend("right", c("S","I","R"), col=clrs, lwd=ld)
 
 
