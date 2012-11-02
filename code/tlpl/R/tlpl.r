@@ -121,8 +121,8 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
             nz = which(ph>0) # otherwise NaNs produced
             w[j] = sum(dnbinom(y[nz],swarm$hyper$rate$b[nz,j],prob[nz],log=T))
 
-            # Fix so that if particle outbreak is over but data indicates continuing outbreak
-            # particle weight becomes -Inf
+            # If particle outbreak is over but data indicates continuing outbreak,
+            # particle weight becomes 0 ( log(weight)=-Inf )
             if (any(ph==0)) { if (any(y[ph==0]!=0)) w[j] = -Inf }
         }
 
@@ -137,7 +137,10 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
 
             any.negative = T
             while (any.negative) {
-                kk = rs[j] 
+                kk = rs[j]
+
+                # To ensure a new particle is resampled
+                # Clearly reasonable for multinomial sample, but what about the rest? 
                 kk = resample(w,1, method="multinomial")$indices # new particle id
 
                 # Calculate mean for unobserved transitions
