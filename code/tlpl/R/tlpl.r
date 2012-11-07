@@ -24,8 +24,11 @@ tlpl.prior = function(X, p.a, p.b, r.a, r.b, nr)
 
 
 
-tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R", verbose=F, ...)
+tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, 
+                mult=rep(1, sckm$r), engine="R", verbose=F, ...)
 {
+    # mult is a constant multiplier for each reaction
+
     nr = sckm$r
     ns = sckm$s 
 
@@ -37,6 +40,9 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
 
     check.system(sckm)
     if (!is.null(swarm)) check.swarm(swarm)
+
+    stopifnot(length(mult)==sckm$r)
+    lmult = log(mult)
 
     # Create swarm
     if (is.null(swarm)) 
@@ -113,13 +119,13 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
 
         # Calculate all particle weights
         for (j in 1:n.particles) 
-        {           
-            for (k in 1:nr) hp[k,j] = exp(sum(lchoose(swarm$X[,j], sckm$Pre[k,])))
+        {          
+            for (k in 1:nr) hp[k,j] = exp(sum(lchoose(swarm$X[,j], sckm$Pre[k,]))+lmult[k])
 
             ph = swarm$p[,j] * hp[,j] * tau
             prob = ph/(swarm$hyper$rate$a[,j]+ph) 
             nz = which(ph>0) # otherwise NaNs produced
-            w[j] = sum(dnbinom(y[nz],swarm$hyper$rate$b[nz,j],prob[nz],log=T))
+            w[j] = sum(dnbinom(y[nz],swarm$hyper$rate$b[nz,j],1-prob[nz],log=T))
 
             # If particle outbreak is over but data indicates continuing outbreak,
             # particle weight becomes 0 ( log(weight)=-Inf )
@@ -137,15 +143,12 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, engine="R"
 
             any.negative = T
             while (any.negative) {
-                kk = rs[j]
-
                 # To ensure a new particle is resampled
-                # Clearly reasonable for multinomial sample, but what about the rest? 
+                # Clearly reasonable for multinomial resampling, but what about the rest? 
                 kk = resample(w,1, method="multinomial")$indices # new particle id
 
                 # Calculate mean for unobserved transitions
                 lambda = rgamma(nr, swarm$hyper$rate$a[,kk], swarm$hyper$rate$b[,kk])
-                #for (k in 1:nr) hp[k] = exp(sum(lchoose(swarm$X[,kk], sckm$Pre[k,])))
                 mn = (1-swarm$p[,kk])* lambda * tau * hp[,kk]
 
                 # Sample transitions and update state
