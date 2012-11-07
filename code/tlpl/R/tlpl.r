@@ -123,9 +123,9 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
             for (k in 1:nr) hp[k,j] = exp(sum(lchoose(swarm$X[,j], sckm$Pre[k,]))+lmult[k])
 
             ph = swarm$p[,j] * hp[,j] * tau
-            prob = ph/(swarm$hyper$rate$a[,j]+ph) 
+            prob = ph/(swarm$hyper$rate$b[,j]+ph) 
             nz = which(ph>0) # otherwise NaNs produced
-            w[j] = sum(dnbinom(y[nz],swarm$hyper$rate$b[nz,j],1-prob[nz],log=T))
+            w[j] = sum(dnbinom(y[nz], swarm$hyper$rate$a[nz,j], 1-prob[nz], log=T))
 
             # If particle outbreak is over but data indicates continuing outbreak,
             # particle weight becomes 0 ( log(weight)=-Inf )

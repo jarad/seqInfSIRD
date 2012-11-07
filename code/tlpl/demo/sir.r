@@ -14,7 +14,7 @@ sckm$theta = c(0.5/N,0.25)
 
 ## Simulate data
 set.seed(2)
-n = 1
+n = 20
 
 ### True states and transitions
 tl = tau.leap(sckm, n)
