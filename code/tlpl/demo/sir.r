@@ -14,7 +14,7 @@ sckm$theta = c(0.5/N,0.25)
 
 ## Simulate data
 set.seed(2)
-n = 20
+n = 50
 
 ### True states and transitions
 tl = tau.leap(sckm, n)
@@ -26,8 +26,8 @@ y = cbind(rbinom(n, tl$nr[,1], p[1]), rbinom(n, tl$nr[,2], p[2]))
 # Perform inference
 cat("Running sequential inference...\n")
 sckm$theta[1] = sckm$theta[1]*N
-prior = tlpl.prior(sckm$X, 1e5, 1e5, sckm$theta*10, 10, sckm$r)
-z = tlpl(list(y=y, tau=1), sckm, prior=prior, n.particles=1000, mult=c(1/N,1), verbose=T)
+prior = tlpl.prior(sckm$X, 1e1, 1e1, sckm$theta*2, 2, sckm$r)
+z = tlpl(list(y=y, tau=1), sckm, prior=prior, n.particles=1e4, mult=c(1/N,1), verbose=T)
 qs = tlpl_quantile(z)
 
 # Make figures

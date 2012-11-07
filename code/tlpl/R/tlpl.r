@@ -159,7 +159,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
                 # Check to see if any state is negative 
                 any.negative = any(newswarm$X[,j]<0)
 
-                if (any.negative) {
+                if (any.negative && verbose) {
                     cat(paste("Particle",kk,"failed.\n"))
                     cat("Probabilities: ")
                     for (k in 1:nr) cat(paste(swarm$p[k,kk]," "))
