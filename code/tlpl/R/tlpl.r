@@ -91,13 +91,6 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
     out$hyper$rate$a = array(NA, dim=c(n+1,nr,np))
     out$hyper$rate$b = array(NA, dim=c(n+1,nr,np))
 
-    # Fill output with initial values
-    out$X[1,,] = swarm$X
-    out$hyper$prob$a[1,,] = swarm$hyper$prob$a
-    out$hyper$prob$b[1,,] = swarm$hyper$prob$b
-    out$hyper$rate$a[1,,] = swarm$hyper$rate$a
-    out$hyper$rate$b[1,,] = swarm$hyper$rate$b
-
     engine = pmatch(engine, c("R","C"))
 
     switch(engine,
@@ -106,6 +99,15 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
         ################################################################
         # R
         ################################################################
+
+        # Fill output with initial values
+        out$X[1,,] = swarm$X
+
+		# ?? Check to make sure this is being copied correctly for all particles 
+        out$hyper$prob$a[1,,] = swarm$hyper$prob$a
+        out$hyper$prob$b[1,,] = swarm$hyper$prob$b
+        out$hyper$rate$a[1,,] = swarm$hyper$rate$a
+        out$hyper$rate$b[1,,] = swarm$hyper$rate$b
 
         # Create variables used throughout
         part = list()
@@ -255,4 +257,5 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
 
 
 
+:wq
 
