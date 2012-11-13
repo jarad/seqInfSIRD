@@ -23,18 +23,35 @@ test.particle = function(i=1)
 }
 
 
-check.particles = function(part)
+check.swarm = function(swarm)
 {
-    stopifnot(!is.null(part),
-              !is.null(part$hyper),
-              !is.null(part$hyper$a),
-              !is.null(part$hyper$b),
-              !is.null(part$prob),
-              !is.null(part$prob$a),
-              !is.null(part$prob$b))
+    stopifnot(!is.null(swarm),
+              !is.null(swarm$n.particles),
+              !is.null(swarm$weights),
+              !is.null(swarm$normalized),
+              !is.null(swarm$log.weights),
+              !is.null(swarm$X),
+              !is.null(swarm$hyper),
+              !is.null(swarm$hyper$prob),
+              !is.null(swarm$hyper$prob$a),
+              !is.null(swarm$hyper$prob$b),
+              !is.null(swarm$hyper$rate),
+              !is.null(swarm$hyper$rate$a),
+              !is.null(swarm$hyper$rate$b))
 
-    stopifnot(length(part$hyper$rate$a) == length(part$hyper$rate$b),
-              length(part$hyper$prob$a) == length(part$hyper$prob$b))
+    np = swarm$n.particles
+    nr = nrow(swarm$hyper$prob$a)
+
+    stopifnot(np == length(swarm$weights),
+              np == ncol(swarm$X),
+              np == ncol(swarm$hyper$prob$a),
+              np == ncol(swarm$hyper$prob$b),
+              np == ncol(swarm$hyper$rate$a),
+              np == ncol(swarm$hyper$rate$b),
+              nr == nrow(swarm$hyper$prob$a),
+              nr == nrow(swarm$hyper$prob$b),
+              nr == nrow(swarm$hyper$rate$a),
+              nr == nrow(swarm$hyper$rate$b))
 }
 
 

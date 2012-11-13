@@ -25,10 +25,8 @@ tlpl.prior = function(X, p.a, p.b, r.a, r.b, nr)
 
 
 tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, 
-                mult=rep(1, sckm$r), engine="R", verbose=F, ...)
+                engine="R", verbose=F, ...)
 {
-    # mult is a constant multiplier for each reaction
-
     nr = sckm$r
     ns = sckm$s 
 
@@ -39,10 +37,6 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
     stopifnot(ncol(data$y)==nr) # Only observations on transitions are currently implemented
 
     check.system(sckm)
-    if (!is.null(swarm)) check.swarm(swarm)
-
-    stopifnot(length(mult)==sckm$r)
-    lmult = log(mult)
 
     # Create swarm
     if (is.null(swarm)) 
@@ -79,6 +73,8 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
     } else { # !is.null(swarm)
         np = swarm$n.particles
     }
+	check.swarm(swarm)
+
 
     # Create output 
     out = list()
@@ -91,6 +87,14 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
     out$hyper$rate$a = array(NA, dim=c(n+1,nr,np))
     out$hyper$rate$b = array(NA, dim=c(n+1,nr,np))
 
+    # Fill output with initial values
+    out$X[1,,] = swarm$X
+
+    out$hyper$prob$a[1,,] = swarm$hyper$prob$a
+    out$hyper$prob$b[1,,] = swarm$hyper$prob$b
+    out$hyper$rate$a[1,,] = swarm$hyper$rate$a
+    out$hyper$rate$b[1,,] = swarm$hyper$rate$b
+
     engine = pmatch(engine, c("R","C"))
 
     switch(engine,
@@ -99,15 +103,6 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
         ################################################################
         # R
         ################################################################
-
-        # Fill output with initial values
-        out$X[1,,] = swarm$X
-
-		# ?? Check to make sure this is being copied correctly for all particles 
-        out$hyper$prob$a[1,,] = swarm$hyper$prob$a
-        out$hyper$prob$b[1,,] = swarm$hyper$prob$b
-        out$hyper$rate$a[1,,] = swarm$hyper$rate$a
-        out$hyper$rate$b[1,,] = swarm$hyper$rate$b
 
         # Create variables used throughout
         part = list()
@@ -131,7 +126,10 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
         	# Calculate all particle weights
         	for (j in 1:n.particles) 
         	{          
-            	for (k in 1:nr) hp[k,j] = exp(sum(lchoose(swarm$X[,j], sckm$Pre[k,]))+lmult[k])
+            	for (k in 1:nr) 
+				{
+					hp[k,j] = exp(sum(lchoose(swarm$X[,j], sckm$Pre[k,]))+sckm$lmult[k])
+				}
 
             	ph = swarm$p[,j] * hp[,j] * tau
            		prob = ph/(swarm$hyper$rate$b[,j]+ph) 
@@ -229,18 +227,19 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
 				 as.integer(swarm$normalized),
 				 as.integer(swarm$log.weights),
 				 as.integer(swarm$X),
-				 as.double( swarm$hyper$prob$a),
-				 as.double( swarm$hyper$prob$b),
-				 as.double( swarm$hyper$rate$a),
-				 as.double( swarm$hyper$rate$b),
 
-				 # Outputs
+                 ## Auxiliary
+
+
+				 # Outputs (pre-filled with t=1 values)
 				 X     = as.integer(out$X),
 				 proba = as.double( out$hyper$prob$a),
 				 probb = as.double( out$hyper$prob$b),
                  ratea = as.double( out$hyper$rate$a),
 				 rateb = as.double( out$hyper$rate$b))
 
+        # Re-organize output
+        # ?? make sure this is done properly
     	out = list()
     	out$X = array(tmp$X, dim=c(n+1,ns,np))
     	out$hyper = list()
@@ -257,5 +256,4 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
 
 
 
-:wq
 
