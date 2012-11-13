@@ -247,9 +247,6 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
 				 
 		 ## particles
 		 as.integer(swarm$n.particles),
-		 as.double( swarm$weights),
-		 as.integer(swarm$normalized),
-		 as.integer(swarm$log.weights),
 
                  ## Auxiliary
                  as.integer(x$method),

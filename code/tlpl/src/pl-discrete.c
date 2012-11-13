@@ -156,9 +156,6 @@ void tlpl_R(
 
            /* Particles */
            int *nParticles, 
-           double *adWeights, 
-           int *nNormalized, 
-           int *nLogWeights, 
 
            /* Auxiliary */
            int *nResamplingMethod,
