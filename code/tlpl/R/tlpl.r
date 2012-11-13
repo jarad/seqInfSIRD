@@ -212,18 +212,18 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
 
 		         # Inputs
 				 ## Data
-				 as.integer(y),
-				 as.double(tau),
+				 as.integer(data$y),
+				 as.double( data$tau),
 				 
 				 ## sckm
-				 as.integer(sckm$r),
 				 as.integer(sckm$s),
+				 as.integer(sckm$r),
 				 as.integer(sckm$Pre),
-				 as.integer(sckm$stoich),
+				 as.integer(sckm$Post),
 				 
 				 ## particles
 				 as.integer(swarm$n.particles),
-				 as.double(swarm$weights),
+				 as.double( swarm$weights),
 				 as.integer(swarm$normalized),
 				 as.integer(swarm$log.weights),
 				 as.integer(swarm$X),

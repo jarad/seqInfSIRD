@@ -142,4 +142,31 @@ int discrete_all_particle_update(Sckm *sckm, const int *anY, double dTau,
 
 
 
+int tlpl_R(
+           /* Data */
+           int *anY, 
+           double *adTau, 
+
+           /* sckm */
+           int *nSpecies, 
+           int *nRxns, 
+           int *anPre, 
+           int *anPost,
+
+           /* Particles */
+           int *nParticles, 
+           double *adWeights, 
+           int *nNormalized, 
+           int *nLogWeights, 
+
+           /* Outputs */
+           int *anX,
+           double *
+           
+           /* ?? Add remaining inputs */ 
+           )
+{
+    return 0;
+}
+
 
