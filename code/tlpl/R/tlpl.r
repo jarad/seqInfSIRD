@@ -110,7 +110,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
     # Run through all data points
     for (i in 1:n) 
     {  
-        cat(paste("Time point ",i,", ",round(i/n*100), "% completed.\n", sep=''))
+        if (verbose) cat(paste("Time point ",i,", ",round(i/n*100), "% completed.\n", sep=''))
         y = data$y[i,]
         tau = data$tau[i]
 
