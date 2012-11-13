@@ -116,20 +116,20 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
     	# Run through all data points
     	for (i in 1:n) 
     	{  
-        	if (verbose) cat(paste("Time point ",i,", ",round(i/n*100), "% completed.\n", sep=''))
-        	y = data$y[i,]
-        	tau = data$tau[i]
+            if (verbose) cat(paste("Time point ",i,", ",round(i/n*100), "% completed.\n", sep=''))
+            y = data$y[i,]
+            tau = data$tau[i]
 
-        	# Sample observation probability
-        	swarm$p = matrix(rbeta(nr*np, swarm$hyper$prob$a, swarm$hyper$prob$b), nr, np)
+            # Sample observation probability
+            swarm$p = matrix(rbeta(nr*np, swarm$hyper$prob$a, swarm$hyper$prob$b), nr, np)
 
-        	# Calculate all particle weights
-        	for (j in 1:n.particles) 
-        	{          
+            # Calculate all particle weights
+            for (j in 1:n.particles) 
+            {          
             	for (k in 1:nr) 
-				{
-					hp[k,j] = exp(sum(lchoose(swarm$X[,j], sckm$Pre[k,]))+sckm$lmult[k])
-				}
+	        {
+		    hp[k,j] = exp(sum(lchoose(swarm$X[,j], sckm$Pre[k,]))+sckm$lmult[k])
+		}
 
             	ph = swarm$p[,j] * hp[,j] * tau
            		prob = ph/(swarm$hyper$rate$b[,j]+ph) 
@@ -139,69 +139,69 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
             	# If particle outbreak is over but data indicates continuing outbreak,
             	# particle weight becomes 0 ( log(weight)=-Inf )
             	if (any(ph==0)) { if (any(y[ph==0]!=0)) w[j] = -Inf }
-        	}
+            }
 
-        	# Resample particles
-        	w = renormalize.weights(w, log=T)
-        	rs = resample(w,...)$indices
+            # Resample particles
+            w = renormalize.weights(w, log=T)
+            rs = resample(w,...)$indices
 
-        	for (j in 1:np)
-        	{               
-            	if (verbose && (j%%100)==0) 
-                	cat(paste("  Particle ",j,", ",round(j/np*100), "% completed.\n", sep=''))
+            for (j in 1:np)
+            {               
+                if (verbose && (j%%100)==0) 
+                    cat(paste("  Particle ",j,", ",round(j/np*100), "% completed.\n", sep=''))
 
             	any.negative = T
             	while (any.negative) {
-                	# To ensure a new particle is resampled
-                	# Clearly reasonable for multinomial resampling, but what about the rest? 
-                	kk = resample(w,1, method="multinomial")$indices # new particle id
+                    # To ensure a new particle is resampled
+                    # Clearly reasonable for multinomial resampling, but what about the rest? 
+                    kk = resample(w,1, method="multinomial")$indices # new particle id
 
-                	# Calculate mean for unobserved transitions
-                	lambda = rgamma(nr, swarm$hyper$rate$a[,kk], swarm$hyper$rate$b[,kk])
-                	mn = (1-swarm$p[,kk])* lambda * tau * hp[,kk]
+                    # Calculate mean for unobserved transitions
+                    lambda = rgamma(nr, swarm$hyper$rate$a[,kk], swarm$hyper$rate$b[,kk])
+                    mn = (1-swarm$p[,kk])* lambda * tau * hp[,kk]
 
-                	# Sample transitions and update state
-                	z = rpois(nr, mn) # unobserved transitions
-                	n.rxns = y + z    # total transitions
-                	newswarm$X[,j] = swarm$X[,kk] + sckm$stoich %*% n.rxns
+               	    # Sample transitions and update state
+                    z = rpois(nr, mn) # unobserved transitions
+                    n.rxns = y + z    # total transitions
+                    newswarm$X[,j] = swarm$X[,kk] + sckm$stoich %*% n.rxns
 
-                	# Check to see if any state is negative 
-                	any.negative = any(newswarm$X[,j]<0)
+                    # Check to see if any state is negative 
+                    any.negative = any(newswarm$X[,j]<0)
 
-                	if (any.negative && verbose) {
-                    	cat(paste("Particle",kk,"failed.\n"))
-                    	cat("Probabilities: ")
+                    if (any.negative && verbose) {
+                        cat(paste("Particle",kk,"failed.\n"))
+                        cat("Probabilities: ")
                     	for (k in 1:nr) cat(paste(swarm$p[k,kk]," "))
                     	cat("\nRates: ")
                     	for (k in 1:nr) cat(paste(lambda[k]," "))
                     	cat("\nStates: ")
                     	for (k in 1:ns) cat(paste(swarm$X[k,kk]," "))
                     	cat("\nData: ")
-                    	for (k in 1:nr) cat(paste(y[k]," "))
+                        for (k in 1:nr) cat(paste(y[k]," "))
                     	cat("\nHazard parts: ")
                     	for (k in 1:nr) cat(paste(hp[k,kk]," "))
                     	cat(paste("\nWeight:",w[kk],"\n"))
-                	}
-            	}
+                    }
+            	} # any.negative
 
             	# Update sufficient statistics
             	newswarm$hyper$prob$a[,j] = swarm$hyper$prob$a[,kk] + y
             	newswarm$hyper$prob$b[,j] = swarm$hyper$prob$b[,kk] + z
-            	newswarm$hyper$rate$a[,j] = swarm$hyper$rate$a[,kk] + n.rxns
+                newswarm$hyper$rate$a[,j] = swarm$hyper$rate$a[,kk] + n.rxns
             	newswarm$hyper$rate$b[,j] = swarm$hyper$rate$b[,kk] + hp[,kk] * tau
-        	}
-        	swarm = newswarm
+            } # j: loop over particles
 
-        	# Fill output with current values
-        	out$X[i+1,,] = swarm$X
-        	out$hyper$prob$a[i+1,,] = swarm$hyper$prob$a
-        	out$hyper$prob$b[i+1,,] = swarm$hyper$prob$b
-        	out$hyper$rate$a[i+1,,] = swarm$hyper$rate$a
-        	out$hyper$rate$b[i+1,,] = swarm$hyper$rate$b
-    	}
+            swarm = newswarm
+
+            # Fill output with current values
+            out$X[i+1,,] = swarm$X
+            out$hyper$prob$a[i+1,,] = swarm$hyper$prob$a
+            out$hyper$prob$b[i+1,,] = swarm$hyper$prob$b
+            out$hyper$rate$a[i+1,,] = swarm$hyper$rate$a
+            out$hyper$rate$b[i+1,,] = swarm$hyper$rate$b
+    	} # i: loop over times
     },
     {
-
         ################################################################
         # C
         ################################################################
@@ -235,6 +235,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
 
 		 # Inputs
                  ## Data
+                 as.integer(n),
 		 as.integer(data$y),
 		 as.double( data$tau),
 				 

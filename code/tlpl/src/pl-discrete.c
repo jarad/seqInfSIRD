@@ -142,8 +142,9 @@ int discrete_all_particle_update(Sckm *sckm, const int *anY, double dTau,
 
 
 
-int tlpl_R(
+void tlpl_R(
            /* Data */
+           int *nObservations,
            int *anY, 
            double *adTau, 
 
@@ -173,7 +174,13 @@ int tlpl_R(
            double *adRateB
            )
 {
-    return 0;
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);     
+    SckmSwarm *swarm = newSckmSwarm(sckm, *nParticles, 
+
+
+    deleteSckm(sckm);
 }
+
+
 
 
