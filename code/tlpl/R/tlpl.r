@@ -78,14 +78,14 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
 
     # Create output 
     out = list()
-    out$X = array(NA, dim=c(n+1,ns,np))
+    out$X = array(0, dim=c(n+1,ns,np))
     out$hyper = list()
     out$hyper$prob = list()
-    out$hyper$prob$a = array(NA, dim=c(n+1,nr,np))
-    out$hyper$prob$b = array(NA, dim=c(n+1,nr,np))
+    out$hyper$prob$a = array(0, dim=c(n+1,nr,np))
+    out$hyper$prob$b = array(0, dim=c(n+1,nr,np))
     out$hyper$rate = list()
-    out$hyper$rate$a = array(NA, dim=c(n+1,nr,np))
-    out$hyper$rate$b = array(NA, dim=c(n+1,nr,np))
+    out$hyper$rate$a = array(0, dim=c(n+1,nr,np))
+    out$hyper$rate$b = array(0, dim=c(n+1,nr,np))
 
     # Fill output with initial values
     out$X[1,,] = swarm$X
@@ -206,44 +206,62 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
         # C
         ################################################################
         
-        cat("C implementation")
+        cat("C implementation\n")
 
         # set default resampling values
         x = list(...)
-        x$method = pmatch(x$method,  c("stratified","residual","multinomial","systematic"), 1)
-        if (length(x$method)==0) x$method = 1 # Default to stratified
+        if (is.null(x$method)) 
+        {
+            x$method = 1
+        } else {
+            x$method = pmatch(x$method,  c("stratified","residual","multinomial","systematic"), 1)
+        }       
         if (x$method==2) stop("Residual not yet implemented.\n")
+
+        if (is.null(x$nonuniformity)) 
+        {
+            x$nonuniformity = 1
+        } else {
+            x$nonuniformity = pmatch(x$nonuniformity, c("none","ess","cov","entropy"))
+        }
+
+        if (is.null(x$threshold)) 
+        {
+            x$threshold = 0.5 * ifelse(x$nonuniformity==4, log2(np), np)
+        } 
 
 
         tmp = .C("tlpl_R",
 
-		         # Inputs
-				 ## Data
-				 as.integer(data$y),
-				 as.double( data$tau),
+		 # Inputs
+                 ## Data
+		 as.integer(data$y),
+		 as.double( data$tau),
 				 
-				 ## sckm
-				 as.integer(sckm$s),
-				 as.integer(sckm$r),
-				 as.integer(sckm$Pre),
-				 as.integer(sckm$Post),
+	         ## sckm
+		 as.integer(sckm$s),
+		 as.integer(sckm$r),
+		 as.integer(sckm$Pre),
+		 as.integer(sckm$Post),
 				 
-				 ## particles
-				 as.integer(swarm$n.particles),
-				 as.double( swarm$weights),
-				 as.integer(swarm$normalized),
-				 as.integer(swarm$log.weights),
-				 as.integer(swarm$X),
+		 ## particles
+		 as.integer(swarm$n.particles),
+		 as.double( swarm$weights),
+		 as.integer(swarm$normalized),
+		 as.integer(swarm$log.weights),
 
                  ## Auxiliary
+                 as.integer(x$method),
+                 as.integer(x$nonuniformity),
+                 as.double( x$threshold),
+                 as.integer(verbose),
 
-
-				 # Outputs (pre-filled with t=1 values)
-				 X     = as.integer(out$X),
-				 proba = as.double( out$hyper$prob$a),
-				 probb = as.double( out$hyper$prob$b),
+		 # Outputs (pre-filled with t=1 values)
+		 X     = as.integer(out$X),
+		 proba = as.double( out$hyper$prob$a),
+		 probb = as.double( out$hyper$prob$b),
                  ratea = as.double( out$hyper$rate$a),
-				 rateb = as.double( out$hyper$rate$b))
+	         rateb = as.double( out$hyper$rate$b))
 
         # Re-organize output
         # ?? make sure this is done properly

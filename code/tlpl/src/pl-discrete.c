@@ -159,11 +159,18 @@ int tlpl_R(
            int *nNormalized, 
            int *nLogWeights, 
 
+           /* Auxiliary */
+           int *nResamplingMethod,
+           int *nNonuniformity,
+           double *dThreshold,
+           int *nVerbose,
+
            /* Outputs */
            int *anX,
-           double *
-           
-           /* ?? Add remaining inputs */ 
+           double *adProbA,
+           double *adProbB,
+           double *adRateA,
+           double *adRateB
            )
 {
     return 0;
