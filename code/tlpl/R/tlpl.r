@@ -208,6 +208,13 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
         
         cat("C implementation")
 
+        # set default resampling values
+        x = list(...)
+        x$method = pmatch(x$method,  c("stratified","residual","multinomial","systematic"), 1)
+        if (length(x$method)==0) x$method = 1 # Default to stratified
+        if (x$method==2) stop("Residual not yet implemented.\n")
+
+
         tmp = .C("tlpl_R",
 
 		         # Inputs
