@@ -11,6 +11,7 @@ sckm$stoich = t(sckm$Post-sckm$Pre)
 sckm$X = c(16000,100,0)
 N = sum(sckm$X)
 sckm$theta = c(0.5/N,0.25)
+sckm$lmult = log(c(1/N,1))
 
 ## Simulate data
 set.seed(2)
@@ -25,9 +26,8 @@ y = cbind(rbinom(n, tl$nr[,1], p[1]), rbinom(n, tl$nr[,2], p[2]))
 
 # Perform inference
 cat("Running sequential inference...\n")
-sckm$theta[1] = sckm$theta[1]*N
 prior = tlpl.prior(sckm$X, 1e1, 1e1, sckm$theta*2, 2, sckm$r)
-z = tlpl(list(y=y, tau=1), sckm, prior=prior, n.particles=1e1, mult=c(1/N,1), engine="C", verbose=T)
+z = tlpl(list(y=y, tau=1), sckm, prior=prior, n.particles=1e1, engine="R", verbose=T)
 qs = tlpl_quantile(z)
 
 # Make figures

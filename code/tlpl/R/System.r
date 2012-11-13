@@ -71,10 +71,12 @@ check.system = function(sys) {
               sys$r == nrow(  sys$Post),
               sys$r == ncol(  sys$stoich),
               sys$r == length(sys$theta),
+              sys$r == length(sys$lmult),
               all(sys$theta>=0),
               all(sys$X    >=0),
               all(sys$Pre  >=0),
-              all(sys$Post >=0))
+              all(sys$Post >=0),
+              all(sys$mult >=0))
 
     if (!all.equal(sys$stoich,t(sys$Post-sys$Pre))) warning("sys$stoich!=t(sys$Post-sys$Pre))")
 }
