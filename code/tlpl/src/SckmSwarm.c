@@ -38,8 +38,9 @@ SckmSwarm *newSckmSwarm(Sckm *sckm, int _nParticles,
 
 void deleteSckmSwarm(SckmSwarm *swarm)
 {
-    free(swarm->pParticle);
-    free(swarm->dWeights);
+    // These free's created an error. But without them don't I have a memory leak?
+    //free(swarm->pParticle);
+    //free(swarm->dWeights);
     free(swarm);
 }
 
