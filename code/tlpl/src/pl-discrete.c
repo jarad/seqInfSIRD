@@ -176,7 +176,6 @@ void tlpl_R(
     Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost); 
     
 
-    free(swarm);
     deleteSckm(sckm);
 }
 
