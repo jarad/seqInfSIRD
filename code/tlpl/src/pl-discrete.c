@@ -175,53 +175,7 @@ void tlpl_R(
 {
     Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost); 
     
-    SckmSwarm **swarm;
-    swarm = (SckmSwarm **) malloc( (*nObservations+1) * sizeof(SckmSwarm *)); 
 
-    /* Create one swarm for each observation plus initial swarm */ 
-    int i,j,k;   
-    double prob[*nRxns], rate[*nRxns]; 
-    for (i=0; i<=0; i++)
-    {
-        swarm[i] = newSckmSwarm(sckm, *nParticles, anX, 
-                                adProbA, adProbB, adRateA, adRateB, 
-                                prob, rate);
-    }
-
-    assert(swarm[0]);
-    for (i=0; i<*nParticles; i++) {
-      Rprintf("Particle %d:",i);
-      for (j=0; j<*nSpecies; j++) {
-        Rprintf("%d ", swarm[0]->aParticles[i]->state[j]);
-      } 
-    }
-
-
-    /* Run tlpl */
-
-
-    /* Copy output back from swarms */
-    /* This should be able to be avoided by pointing swarm/particle pointers
-       to the correct location in anX, adProbA, adProbB, adRateA, and adRateB */
-    for (i=0; i<=*nObservations; i++) 
-    {
-        for (j=0; j<*nParticles; j++) 
-        {
-            for (k=0; k<*nSpecies; k++)
-            {
-                /* copy state (X) */
-            }
-            for (k=0; k<*nRxns; k++) 
-            {
-                /* copy probA */
-                /* copy probB */
-                /* copy rateA */
-                /* copy rateB */
-            }
-        }
-    }
-
-/*    for (i=0; i<=0; i++) deleteSckmSwarm(swarm[i]);  */
     free(swarm);
     deleteSckm(sckm);
 }
