@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <R.h>
 #include <Rmath.h>
 
 #include "Sckm.h"
@@ -20,14 +21,11 @@ SckmSwarm *newSckmSwarm(Sckm *sckm, int _nParticles,
     swarm->nRxns      = sckm->r;
 
     // Allocate dWeights and make uniform
-    int i;
-    double weight = 1.0/_nParticles;
     swarm->dWeights = (double *) malloc(_nParticles * sizeof(double));
-    for (i=0; i< _nParticles; i++) swarm->dWeights[i] = weight;
-    swarm->logWeights = 0;        // not log dWeights
+    memset(swarm->dWeights, 0, _nParticles);
+
+    swarm->logWeights = 1;        // log dWeights
     swarm->normalizedWeights = 1; // dWeights are normalized
-    Rprintf("log(weights):\n");
-    for (i=0; i< _nParticles; i++) Rprintf("%4.6f\n", swarm->dWeights[i]);
 
     // Associate particle pointers
     swarm->pParticle = (SckmParticle *) malloc(sizeof(SckmParticle *));
