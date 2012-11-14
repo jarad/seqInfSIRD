@@ -11,8 +11,7 @@
 
 SckmSwarm *newSckmSwarm(Sckm *sckm, int _nParticles,
                         int *_state,
-                        double *_probA, double *_probB, double *_rateA, double *_rateB,
-                        double *_prob, double *_rate)
+                        double *_probA, double *_probB, double *_rateA, double *_rateB)
 {
     SckmSwarm *swarm;
     swarm = (SckmSwarm *) malloc(sizeof(SckmSwarm));
@@ -27,22 +26,22 @@ SckmSwarm *newSckmSwarm(Sckm *sckm, int _nParticles,
     for (i=0; i< _nParticles; i++) swarm->dWeights[i] = weight;
     swarm->logWeights = 0;        // not log dWeights
     swarm->normalizedWeights = 1; // dWeights are normalized
+    Rprintf("log(weights):\n");
+    for (i=0; i< _nParticles; i++) Rprintf("%4.6f\n", swarm->dWeights[i]);
 
-    // Allocate and fill particles
+    // Associate particle pointers
     swarm->pParticle = (SckmParticle *) malloc(sizeof(SckmParticle *));
     swarm->pParticle->state = _state;
     swarm->pParticle->probA = _probA;
     swarm->pParticle->probB = _probB;
     swarm->pParticle->rateA = _rateA;
     swarm->pParticle->rateB = _rateB;
-    swarm->pParticle->prob  = _prob;
-    swarm->pParticle->rate  = _rate;
 }
 
 void deleteSckmSwarm(SckmSwarm *swarm)
 {
-    free(swarm->dWeights);
     free(swarm->pParticle);
+    free(swarm->dWeights);
     free(swarm);
 }
 

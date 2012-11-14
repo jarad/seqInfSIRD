@@ -174,23 +174,10 @@ void tlpl_R(
            )
 {
     Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost); 
+    SckmSwarm *swarm = newSckmSwarm(sckm, *nParticles, anX, adProbA, adProbB, adRateA, adRateB);
     
-    double *prob, *rate;
-    SckmSwarm *swarm;
-    swarm = (SckmSwarm *) malloc(sizeof(SckmSwarm));
 
-    /* Put this in a function? */
-    swarm->nParticles = *nParticles;
-    swarm->nStates    = *nSpecies;
-    swarm->nRxns      = *nRxns;
-    swarm->logWeights = 0;
-    swarm->normalizedWeights = 1;
-    swarm->dWeights          = (double *) malloc(*nParticles * sizeof(double));
-    for (int i=0; i<*nParticles; i++) swarm->dWeights[i] = 1.0/ *nParticles;
-    swarm->aParticles = 
-
-    free(swarm->dWeights);
-    free(swarm);
+    deleteSckmSwarm(swarm);
     deleteSckm(sckm);
 }
 

@@ -9,8 +9,7 @@ typedef struct SckmSwarm {
 
 SckmSwarm *newSckmSwarm(Sckm *sckm, int _nParticles,
                         int *_state,
-                        double *_probA, double *_probB, double *_rateA, double *_rateB,
-                        double *_prob, double *_rate);
+                        double *_probA, double *_probB, double *_rateA, double *_rateB);
 
 void deleteSckmSwarm(SckmSwarm *swarm);
                         
