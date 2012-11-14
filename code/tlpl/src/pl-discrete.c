@@ -187,7 +187,7 @@ void tlpl_R(
     swarm->normalizedWeights = 1;
     swarm->dWeights          = (double *) malloc(*nParticles * sizeof(double));
     for (int i=0; i<*nParticles; i++) swarm->dWeights[i] = 1.0/ *nParticles;
-    //swarm->aParticles = 
+    swarm->aParticles = 
 
     free(swarm->dWeights);
     free(swarm);

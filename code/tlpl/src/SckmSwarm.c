@@ -30,6 +30,13 @@ SckmSwarm *newSckmSwarm(Sckm *sckm, int _nParticles,
 
     // Allocate and fill particles
     swarm->pParticle = (SckmParticle *) malloc(sizeof(SckmParticle *));
+    swarm->pParticle->state = _state;
+    swarm->pParticle->probA = _probA;
+    swarm->pParticle->probB = _probB;
+    swarm->pParticle->rateA = _rateA;
+    swarm->pParticle->rateB = _rateB;
+    swarm->pParticle->prob  = _prob;
+    swarm->pParticle->rate  = _rate;
 }
 
 void deleteSckmSwarm(SckmSwarm *swarm)
