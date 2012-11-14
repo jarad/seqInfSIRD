@@ -4,7 +4,7 @@
 typedef struct SckmSwarm {
     int nParticles, nStates, nRxns, logWeights, normalizedWeights;
     double *dWeights;
-    SckmParticle **aParticles;
+    SckmParticle *pParticle;
 } SckmSwarm;
 
 SckmSwarm *newSckmSwarm(Sckm *sckm, int _nParticles,
