@@ -172,24 +172,69 @@ void tlpl_R(
            double *adRateB
            )
 {
-    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost); 
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+
+    tlpl(*nObs, anY, adTau,
+         sckm,
+         *nParticles,
+         *nResamplingMethod, *nNonuniformity, *dThreshold, *nVerbose,
+         anX, adProbA, adProbB, adRateA, adRateB);
+
     deleteSckm(sckm);
 }
 
 int tlpl(int nObs, int *anY, double *adTau,
          Sckm *sckm, 
          int nParticles, 
-         int nResamplingMethod, int nNonuniformity, double dTreshold, int nVerbose,
+         int nResamplingMethod, int nNonuniformity, double dThreshold, int nVerbose,
          int *anX, double *adProbA, double *adProbB, double *adRateA, double *adRateB)
 {
-    int *hp = (int *) malloc( nParticles * sizeof(int));
+    int nr = sckm->r, ns = sckm->s;
+    int *hp = (int *) malloc( nParticles * nr * sizeof(int));
 
-    double *prob    = (double *) malloc( nParticles * sizeof(double));
-    double *rate    = (double *) malloc( nParticles * sizeof(double));
-    double *weights = (double *) malloc( nParticles * sizeof(double));
+    double *prob    = (double *) malloc( nParticles * nr * sizeof(double));
+    double *rate    = (double *) malloc( nParticles * nr * sizeof(double));
+    double *weights = (double *) malloc( nParticles *      sizeof(double));
 
-    for (int i=0; i<nObs; i++) 
+    // Pointers 
+    int *cY; cY = anY;
+    double *cTau; cTau = adTau;
+    
+    int *cX;  cX  = anX;
+    double *cPA; cPA = adProbA;
+    double *cPB; cPB = adProbB;
+    double *cRA; cRA = adRateA;
+    double *cRB; cRB = adRateB;
+
+    double *cP;
+
+    int i,j,k;
+    for (i=0; i<nObs; i++) 
     {
+        if (nVerbose) Rprintf("Time point %d, %3.0f%% completed.\n", i+1, (double) (i+1)/nObs*100);
+       
+        // Sample observation probability for all particles
+        cP = prob;
+        GetRNGstate();
+        for (j=0; j<nParticles; j++) 
+        {
+            for (k=0; k<nr; k++)
+            {
+                *cP = rbeta(*cPA, *cPB);
+                cP++; cPA++; cPB++;
+            }
+        }
+        PutRNGstate();
+        cP = prob; cPA = adProbA; cPB = adProbB;
+
+        // Update pointers
+        cY += nr;
+        cTau++;
+        cX += ns;
+        cPA += nr;
+        cPB += nr;
+        cRA += nr;
+        cRB += nr;
     }
 
     return 0;   

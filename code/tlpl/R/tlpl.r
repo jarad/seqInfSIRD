@@ -73,7 +73,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
     } else { # !is.null(swarm)
         np = swarm$n.particles
     }
-	check.swarm(swarm)
+    check.swarm(swarm)
 
 
     # Create output 
