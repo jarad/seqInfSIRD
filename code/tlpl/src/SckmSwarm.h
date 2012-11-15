@@ -1,7 +1,10 @@
+#ifndef SCKM_SWARM_H
+#define SCKM_SWARM_H
+
 #include "Sckm.h"
 #include "SckmParticle.h"
 
-typedef struct SckmSwarm {
+typedef struct StochasticChemicalKineticModelSwarm {
     int nParticles, nStates, nRxns, logWeights, normalizedWeights;
     double *dWeights;
     SckmParticle *pParticle;
@@ -15,3 +18,4 @@ void deleteSckmSwarm(SckmSwarm *swarm);
                         
 int renormalize(SckmSwarm *swarm);
 
+#endif // SCKM_SWARM_H

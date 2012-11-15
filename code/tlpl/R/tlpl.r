@@ -78,22 +78,22 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
 
     # Create output 
     out = list()
-    out$X = array(0, dim=c(n+1,ns,np))
+    out$X = array(0, dim=c(ns,np,n+1))
     out$hyper = list()
     out$hyper$prob = list()
-    out$hyper$prob$a = array(0, dim=c(n+1,nr,np))
-    out$hyper$prob$b = array(0, dim=c(n+1,nr,np))
+    out$hyper$prob$a = array(0, dim=c(nr,np,n+1))
+    out$hyper$prob$b = array(0, dim=c(nr,np,n+1))
     out$hyper$rate = list()
-    out$hyper$rate$a = array(0, dim=c(n+1,nr,np))
-    out$hyper$rate$b = array(0, dim=c(n+1,nr,np))
+    out$hyper$rate$a = array(0, dim=c(nr,np,n+1))
+    out$hyper$rate$b = array(0, dim=c(nr,np,n+1))
 
     # Fill output with initial values
-    out$X[1,,] = swarm$X
+    out$X[,,1] = swarm$X
 
-    out$hyper$prob$a[1,,] = swarm$hyper$prob$a
-    out$hyper$prob$b[1,,] = swarm$hyper$prob$b
-    out$hyper$rate$a[1,,] = swarm$hyper$rate$a
-    out$hyper$rate$b[1,,] = swarm$hyper$rate$b
+    out$hyper$prob$a[,,1] = swarm$hyper$prob$a
+    out$hyper$prob$b[,,1] = swarm$hyper$prob$b
+    out$hyper$rate$a[,,1] = swarm$hyper$rate$a
+    out$hyper$rate$b[,,1] = swarm$hyper$rate$b
 
     engine = pmatch(engine, c("R","C"))
 
@@ -194,11 +194,11 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
             swarm = newswarm
 
             # Fill output with current values
-            out$X[i+1,,] = swarm$X
-            out$hyper$prob$a[i+1,,] = swarm$hyper$prob$a
-            out$hyper$prob$b[i+1,,] = swarm$hyper$prob$b
-            out$hyper$rate$a[i+1,,] = swarm$hyper$rate$a
-            out$hyper$rate$b[i+1,,] = swarm$hyper$rate$b
+            out$X[,,i+1] = swarm$X
+            out$hyper$prob$a[,,i+1] = swarm$hyper$prob$a
+            out$hyper$prob$b[,,i+1] = swarm$hyper$prob$b
+            out$hyper$rate$a[,,i+1] = swarm$hyper$rate$a
+            out$hyper$rate$b[,,i+1] = swarm$hyper$rate$b
     	} # i: loop over times
     },
     {
@@ -264,14 +264,14 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
         # Re-organize output
         # ?? make sure this is done properly
     	out = list()
-    	out$X = array(tmp$X, dim=c(n+1,ns,np))
+    	out$X = array(tmp$X, dim=c(ns,np,n+1))
     	out$hyper = list()
     	out$hyper$prob = list()
-    	out$hyper$prob$a = array(tmp$proba, dim=c(n+1,nr,np))
-    	out$hyper$prob$b = array(tmp$probb, dim=c(n+1,nr,np))
+    	out$hyper$prob$a = array(tmp$proba, dim=c(nr,np,n+1))
+    	out$hyper$prob$b = array(tmp$probb, dim=c(nr,np,n+1))
     	out$hyper$rate = list()
-    	out$hyper$rate$a = array(tmp$ratea, dim=c(n+1,nr,np))
-    	out$hyper$rate$b = array(tmp$rateb, dim=c(n+1,nr,np))	            
+    	out$hyper$rate$a = array(tmp$ratea, dim=c(nr,np,n+1))
+    	out$hyper$rate$b = array(tmp$rateb, dim=c(nr,np,n+1))	            
     })
 
     return(out)

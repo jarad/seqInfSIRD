@@ -47,22 +47,22 @@ xx = 0:n
 par(mfrow=c(1,3))
 
 ### Susceptible
-plot( xx, qs$X[,1,1], type="l", ylim=c(0, max(sckm$X)), main="Susceptible", ylab="Count", xlab="Time")
-lines(xx, qs$X[,1,2], lwd=2)
-lines(xx, qs$X[,1,3])
+plot( xx, qs$X[1,1,], type="l", ylim=c(0, max(sckm$X)), main="Susceptible", ylab="Count", xlab="Time")
+lines(xx, qs$X[1,2,], lwd=2)
+lines(xx, qs$X[1,3,])
 lines(xx, tl$X[,1], col="red")
 
 ### Infecteds
-plot( xx, qs$X[,2,1], type="l", ylim=c(0, max(sckm$X)), main="Infected", ylab="Count", xlab="Time")
-lines(xx, qs$X[,2,2], lwd=2)
-lines(xx, qs$X[,2,3])
+plot( xx, qs$X[2,1,], type="l", ylim=c(0, max(sckm$X)), main="Infected", ylab="Count", xlab="Time")
+lines(xx, qs$X[2,2,], lwd=2)
+lines(xx, qs$X[2,3,])
 lines(xx, tl$X[,2], col="red")
 
 
 ### Recovered
-plot( xx, qs$X[,3,1], type="l", ylim=c(0, max(sckm$X)), main="Recovered", ylab="Count", xlab="Time")
-lines(xx, qs$X[,3,2], lwd=2)
-lines(xx, qs$X[,3,3])
+plot( xx, qs$X[3,1,], type="l", ylim=c(0, max(sckm$X)), main="Recovered", ylab="Count", xlab="Time")
+lines(xx, qs$X[3,2,], lwd=2)
+lines(xx, qs$X[3,3,])
 lines(xx, tl$X[,3], col="red")
 
 
@@ -70,29 +70,29 @@ lines(xx, tl$X[,3], col="red")
 par(mfrow=c(2,2))
 
 ### S->I probability
-plot( xx, qs$p[,1,1], type="l", ylim=range(qs$p[,1,]), main="S -> I", ylab="Probability", xlab="Time")
-lines(xx, qs$p[,1,2], lwd=2)
-lines(xx, qs$p[,1,3])
+plot( xx, qs$p[1,1,], type="l", ylim=range(qs$p[,1,]), main="S -> I", ylab="Probability", xlab="Time")
+lines(xx, qs$p[1,2,], lwd=2)
+lines(xx, qs$p[1,3,])
 abline(h=p[1], col="red")
 
 ### I->R probability
-plot( xx, qs$p[,2,1], type="l", ylim=range(qs$p[,2,]), main="I -> R", ylab="Probability", xlab="Time")
-lines(xx, qs$p[,2,2], lwd=2)
-lines(xx, qs$p[,2,3])
+plot( xx, qs$p[2,1,], type="l", ylim=range(qs$p[,2,]), main="I -> R", ylab="Probability", xlab="Time")
+lines(xx, qs$p[2,2,], lwd=2)
+lines(xx, qs$p[2,3,])
 abline(h=p[2], col="red")
 
 
 ### S->I rate
-plot( xx, qs$r[,1,1], type="l", ylim=range(qs$r[,1,]), main="S -> I", ylab="Rate", xlab="Time")
-lines(xx, qs$r[,1,2], lwd=2)
-lines(xx, qs$r[,1,3])
+plot( xx, qs$r[1,1,], type="l", ylim=range(qs$r[,1,]), main="S -> I", ylab="Rate", xlab="Time")
+lines(xx, qs$r[1,2,], lwd=2)
+lines(xx, qs$r[1,3,])
 abline(h=sckm$theta[1], col="red")
 
 
 ### I->R rate
-plot( xx, qs$r[,2,1], type="l", ylim=range(qs$r[,2,]), main="I -> R", ylab="Rate", xlab="Time")
-lines(xx, qs$r[,2,2], lwd=2)
-lines(xx, qs$r[,2,3])
+plot( xx, qs$r[2,1,], type="l", ylim=range(qs$r[,2,]), main="I -> R", ylab="Rate", xlab="Time")
+lines(xx, qs$r[2,2,], lwd=2)
+lines(xx, qs$r[2,3,])
 abline(h=sckm$theta[2], col="red")
 
 

@@ -146,7 +146,7 @@ int discrete_all_particle_update(Sckm *sckm, const int *anY, double dTau,
 
 void tlpl_R(
            /* Data */
-           int *nObservations,
+           int *nObs,
            int *anY, 
            double *adTau, 
 
@@ -174,12 +174,25 @@ void tlpl_R(
            )
 {
     Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost); 
+/*
     SckmSwarm *swarm = newSckmSwarm(sckm, *nParticles, anX, adProbA, adProbB, adRateA, adRateB);
-    
+   
+    tlpl(*nObs, anY, adTau,
+         sckm, swarm,
+         *nResamplingMethod, *nNonuniformity, *dThreshold, *nVerbose);  
 
     deleteSckmSwarm(swarm);
+*/
     deleteSckm(sckm);
 }
+
+int tlpl(int nObs, int *anY, double *adTau,
+         Sckm *sckm, SckmSwarm *swarm,
+         int nResamplingMethod, int nNonuniformity, double dTreshold, int nVerbose)
+{
+    return 0;
+}
+
 
 
 
