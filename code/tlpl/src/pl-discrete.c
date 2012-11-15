@@ -10,7 +10,6 @@
 #include "pl-utility.h"
 #include "pl-discrete.h"
 #include "Sckm.h"
-#include "SckmSwarm.h"
 #include "SckmParticle.h"
 
 
@@ -174,23 +173,26 @@ void tlpl_R(
            )
 {
     Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost); 
-/*
-    SckmSwarm *swarm = newSckmSwarm(sckm, *nParticles, anX, adProbA, adProbB, adRateA, adRateB);
-   
-    tlpl(*nObs, anY, adTau,
-         sckm, swarm,
-         *nResamplingMethod, *nNonuniformity, *dThreshold, *nVerbose);  
-
-    deleteSckmSwarm(swarm);
-*/
     deleteSckm(sckm);
 }
 
 int tlpl(int nObs, int *anY, double *adTau,
-         Sckm *sckm, SckmSwarm *swarm,
-         int nResamplingMethod, int nNonuniformity, double dTreshold, int nVerbose)
+         Sckm *sckm, 
+         int nParticles, 
+         int nResamplingMethod, int nNonuniformity, double dTreshold, int nVerbose,
+         int *anX, double *adProbA, double *adProbB, double *adRateA, double *adRateB)
 {
-    return 0;
+    int *hp = (int *) malloc( nParticles * sizeof(int));
+
+    double *prob    = (double *) malloc( nParticles * sizeof(double));
+    double *rate    = (double *) malloc( nParticles * sizeof(double));
+    double *weights = (double *) malloc( nParticles * sizeof(double));
+
+    for (int i=0; i<nObs; i++) 
+    {
+    }
+
+    return 0;   
 }
 
 
