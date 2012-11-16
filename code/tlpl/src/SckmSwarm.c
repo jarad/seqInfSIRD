@@ -10,38 +10,78 @@
 #include "SckmSwarm.h"
 
 
+
+SckmSwarm **newSckmSwarms(Sckm *sckm, int _nParticles, int _nObs,
+                        int *_state,
+                        double *_probA, double *_probB, double *_rateA, double *_rateB)
+{
+    SckmSwarm **swarms;
+    swarms = (SckmSwarm **) malloc((_nObs+1) * sizeof(SckmSwarm *));
+
+    int i, nRxnOffset = _nParticles * sckm->r, nSpeciesOffset = _nParticles * sckm->s;
+
+    for (i=0; i<=_nObs; i++) 
+    {
+        swarms[i] = newSckmSwarm(sckm, _nParticles, _state, _probA, _probB, _rateA, _rateB);
+
+        _state += nSpeciesOffset;
+        _probA += nRxnOffset;
+        _probB += nRxnOffset;
+        _rateA += nRxnOffset;
+        _rateB += nRxnOffset;
+
+    }
+
+    return swarms;
+}
+
+
+void **deleteSckmSwarms(SckmSwarm **swarms, int nObs)
+{
+    for (int i=0; i<=nObs; i++) deleteSckmSwarm(swarms[i]);
+    assert(swarms); free(swarms);
+}
+
+
 SckmSwarm *newSckmSwarm(Sckm *sckm, int _nParticles,
                         int *_state,
                         double *_probA, double *_probB, double *_rateA, double *_rateB)
 {
     SckmSwarm *swarm;
-    swarm = (SckmSwarm *) malloc(sizeof(SckmSwarm));
+    swarm = (SckmSwarm *) malloc(sizeof(SckmSwarm)); 
     swarm->nParticles = _nParticles;
     swarm->nStates    = sckm->s;
     swarm->nRxns      = sckm->r;
 
     // Allocate dWeights and make uniform
-    swarm->dWeights = (double *) malloc(_nParticles * sizeof(double));
-    memset(swarm->dWeights, 0, _nParticles);
+    swarm->adWeights = (double *) malloc(_nParticles * sizeof(double));
+    memset(swarm->adWeights, 0, _nParticles);
 
-    swarm->logWeights = 1;        // log dWeights
-    swarm->normalizedWeights = 1; // dWeights are normalized
+    swarm->logWeights        = 1; // log weights
+    swarm->normalizedWeights = 0; // weights are unnormalized
 
     // Associate particle pointers
-    swarm->pParticle = (SckmParticle *) malloc(sizeof(SckmParticle *));
-    swarm->pParticle->state = _state;
-    swarm->pParticle->probA = _probA;
-    swarm->pParticle->probB = _probB;
-    swarm->pParticle->rateA = _rateA;
-    swarm->pParticle->rateB = _rateB;
+    swarm->pParticle = (SckmParticle **) malloc(_nParticles * sizeof(SckmParticle *));
+    for (int i=0; i< _nParticles; i++) 
+    {
+        swarm->pParticle[i] = (SckmParticle *) malloc(sizeof(SckmParticle));
+        swarm->pParticle[i]->state = _state; _state += sckm->s;
+        swarm->pParticle[i]->probA = _probA; _probA += sckm->r;
+        swarm->pParticle[i]->probB = _probB; _probB += sckm->r;
+        swarm->pParticle[i]->rateA = _rateA; _rateA += sckm->r;
+        swarm->pParticle[i]->rateB = _rateB; _rateB += sckm->r;
+    }
+
+    return swarm;
 }
 
 void deleteSckmSwarm(SckmSwarm *swarm)
 {
-    // These free's created an error. But without them don't I have a memory leak?
-    //free(swarm->pParticle);
-    //free(swarm->dWeights);
-    free(swarm);
+    assert(swarm->adWeights); free(swarm->adWeights); 
+    assert(swarm->pParticle); 
+    for (int i=0; i< swarm->nParticles; i++) free(swarm->pParticle[i]);
+    free(swarm->pParticle);
+    assert(swarm); free(swarm);
 }
 
 int renormalize(SckmSwarm *swarm)
@@ -50,7 +90,7 @@ int renormalize(SckmSwarm *swarm)
 
     int i, n=swarm->nParticles;
     double *w;
-    w = swarm->dWeights; 
+    w = swarm->adWeights; 
 
     if (swarm->logWeights) 
     {

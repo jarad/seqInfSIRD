@@ -10,6 +10,7 @@
 #include "pl-utility.h"
 #include "pl-discrete.h"
 #include "Sckm.h"
+#include "SckmSwarm.h"
 #include "SckmParticle.h"
 
 
@@ -173,55 +174,47 @@ void tlpl_R(
            double *adRateB
            )
 {
+    int i;
     Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost, adlMult);
 
-
-
+    SckmSwarm **swarm = newSckmSwarms(sckm, *nParticles, *nObs, 
+                                       anX, adProbA, adProbB, adRateA, adRateB);
+    
     tlpl(*nObs, anY, adTau,
-         sckm,
-         *nParticles,
-         *nResamplingMethod, *nNonuniformity, *dThreshold, *nVerbose,
-         anX, adProbA, adProbB, adRateA, adRateB);
+         sckm, swarm, 
+         *nResamplingMethod, *nNonuniformity, *dThreshold, *nVerbose);
 
+    deleteSckmSwarms(swarm, *nObs);
     deleteSckm(sckm);
 }
 
 int tlpl(int nObs, int *anY, double *adTau,
-         Sckm *sckm, 
-         int nParticles, 
-         int nResamplingMethod, int nNonuniformity, double dThreshold, int nVerbose,
-         int *anX, double *adProbA, double *adProbB, double *adRateA, double *adRateB)
+         Sckm *sckm, SckmSwarm **swarm,
+         int nResamplingMethod, int nNonuniformity, double dThreshold, int nVerbose)
 {
-    int nr = sckm->r, ns = sckm->s;
-    double *hp = (double *) malloc( nParticles * nr * sizeof(double));
+    int nr = sckm->r, ns = sckm->s, np = swarm[0]-> nParticles;
+    double *hp = (double *) malloc( np * nr * sizeof(double));
 
-    double *prob    = (double *) malloc( nParticles * nr * sizeof(double));
-    double *rate    = (double *) malloc( nParticles * nr * sizeof(double));
-    double *weights = (double *) malloc( nParticles *      sizeof(double));
+    double *prob    = (double *) malloc( np * nr * sizeof(double));
+    double *rate    = (double *) malloc( np * nr * sizeof(double));
+    double *weights = (double *) malloc( np *      sizeof(double));
 
     // Pointers 
     int *cY; cY = anY;
     double *cTau; cTau = adTau;
     
-    int *cX;  cX  = anX;
-    double *cPA; cPA = adProbA;
-    double *cPB; cPB = adProbB;
-    double *cRA; cRA = adRateA;
-    double *cRB; cRB = adRateB;
-
     double *cP, *cR, *cHP;
 
-    SckmParticle *part;
 
     int i,j,k,l;
     for (i=0; i<nObs; i++) 
     {
         if (nVerbose) Rprintf("Time point %d, %3.0f%% completed.\n", i+1, (double) (i+1)/nObs*100);
-       
+/*       
         // Sample observation probability for all particles
         cP = prob;
         GetRNGstate();
-        for (j=0; j< (nParticles*nr); j++) 
+        for (j=0; j< (np*nr); j++) 
         {
             *cP = rbeta(*cPA, *cPB);
             cP++; cPA++; cPB++;
@@ -231,7 +224,7 @@ int tlpl(int nObs, int *anY, double *adTau,
 
         // Calculate hazard parts for all particle-reaction combinations
         cHP = hp; 
-        for (j=0; j<nParticles; j++) 
+        for (j=0; j<np; j++) 
         {
             setSckmParticle(part, cX, cPA, cPB, cRA, cRB, cP, cR);
             weights[j] = calc_log_pred_like(cY, *cTau, sckm, part);
@@ -246,10 +239,10 @@ int tlpl(int nObs, int *anY, double *adTau,
 
         // Update pointers
         cY += nr;
-        cTau++;    
+        cTau++; 
+*/   
     }
 
-    deleteSckmParticle(part);
 
     free(weights);
     free(rate);

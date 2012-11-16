@@ -130,9 +130,10 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
 	        {
 		    hp[k,j] = exp(sum(lchoose(swarm$X[,j], sckm$Pre[k,]))+sckm$lmult[k])
 		}
+                hp[,j] = hp[,j] * tau
 
-            	ph = swarm$p[,j] * hp[,j] * tau
-           		prob = ph/(swarm$hyper$rate$b[,j]+ph) 
+            	ph = swarm$p[,j] * hp[,j]
+                prob = ph/(swarm$hyper$rate$b[,j]+ph) 
             	nz = which(ph>0) # otherwise NaNs produced
             	w[j] = sum(dnbinom(y[nz], swarm$hyper$rate$a[nz,j], 1-prob[nz], log=T))
 
@@ -158,7 +159,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
 
                     # Calculate mean for unobserved transitions
                     lambda = rgamma(nr, swarm$hyper$rate$a[,kk], swarm$hyper$rate$b[,kk])
-                    mn = (1-swarm$p[,kk])* lambda * tau * hp[,kk]
+                    mn = (1-swarm$p[,kk])* lambda * hp[,kk]
 
                	    # Sample transitions and update state
                     z = rpois(nr, mn) # unobserved transitions
@@ -188,7 +189,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
             	newswarm$hyper$prob$a[,j] = swarm$hyper$prob$a[,kk] + y
             	newswarm$hyper$prob$b[,j] = swarm$hyper$prob$b[,kk] + z
                 newswarm$hyper$rate$a[,j] = swarm$hyper$rate$a[,kk] + n.rxns
-            	newswarm$hyper$rate$b[,j] = swarm$hyper$rate$b[,kk] + hp[,kk] * tau
+            	newswarm$hyper$rate$b[,j] = swarm$hyper$rate$b[,kk] + hp[,kk]
             } # j: loop over particles
 
             swarm = newswarm
