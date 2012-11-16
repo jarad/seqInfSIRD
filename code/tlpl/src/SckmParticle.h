@@ -14,6 +14,11 @@ SckmParticle *newSckmParticle(Sckm *sckm,
                               double *_probA, double *_probB, double *_rateA, double *_rateB,
                               double *_prob, double *_rate);
 
+void setSckmParticle(SckmParticle *particle,
+                     int *_state,
+                     double *_probA, double *_probB, double *_rateA, double *_rateB,
+                     double *_prob, double *_rate);
+
 void deleteSckmParticle(SckmParticle *particle);
 
 

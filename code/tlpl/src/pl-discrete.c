@@ -175,6 +175,8 @@ void tlpl_R(
 {
     Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost, adlMult);
 
+
+
     tlpl(*nObs, anY, adTau,
          sckm,
          *nParticles,
@@ -207,7 +209,9 @@ int tlpl(int nObs, int *anY, double *adTau,
     double *cRA; cRA = adRateA;
     double *cRB; cRB = adRateB;
 
-    double *cP, *cHP;
+    double *cP, *cR, *cHP;
+
+    SckmParticle *part;
 
     int i,j,k,l;
     for (i=0; i<nObs; i++) 
@@ -226,21 +230,26 @@ int tlpl(int nObs, int *anY, double *adTau,
         cP = prob; cPA = adProbA; cPB = adProbB;
 
         // Calculate hazard parts for all particle-reaction combinations
-        cHP = hp;
+        cHP = hp; 
         for (j=0; j<nParticles; j++) 
         {
-            
+            setSckmParticle(part, cX, cPA, cPB, cRA, cRB, cP, cR);
+            weights[j] = calc_log_pred_like(cY, *cTau, sckm, part);
+            cX  += ns;
+            cPA += nr;
+            cPB += nr;
+            cRA += nr;
+            cRB += nr;
+            cP  += nr;
+            cR  += nr;
         }
 
         // Update pointers
         cY += nr;
-        cTau++;
-        cX += ns;
-        cPA += nr;
-        cPB += nr;
-        cRA += nr;
-        cRB += nr;
+        cTau++;    
     }
+
+    deleteSckmParticle(part);
 
     free(weights);
     free(rate);

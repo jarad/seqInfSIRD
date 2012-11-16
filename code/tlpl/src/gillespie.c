@@ -10,9 +10,10 @@
 
 
 /* Calculates the part of the hazard other than the fixed parameter */
-void hazard_part_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, const int *anX, int *anHazardPart)
+void hazard_part_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, double *adlMult,
+                   const int *anX, int *anHazardPart)
 {
-    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost, adlMult);
     hazard_part(sckm, anX, anHazardPart);
     deleteSckm(sckm);
 }
@@ -32,13 +33,13 @@ int hazard_part(Sckm *sckm, const int *anX, int *anHazardPart)
 }
 
 /* Calculates the hazard for the next reaction */
-void hazard_R(int *nSpecies, int *nRxns, int *anPre, int *anPost,
+void hazard_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, double *adlMult,
             const double *adTheta,   
             const int *anX, 
             double *dTau,  
             int *anHazardPart, double *adHazard) 
 {
-    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost, adlMult);
     hazard(sckm, adTheta, anX, *dTau, anHazardPart, adHazard);
     deleteSckm(sckm);
 }
@@ -57,10 +58,10 @@ int hazard(Sckm *sckm, const double *adTheta, const int *anX, double dTau,
 
 
 /* Updates the species according to the stoichiometry */
-void update_species_R(int *nSpecies, int *nRxns, int *anPre, int *anPost,   
+void update_species_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, double *adlMult,  
                     const int *anRxnCount, int *anX)
 {
-    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost, adlMult);
     update_species(sckm, anRxnCount, anX);
     deleteSckm(sckm);
 }
@@ -87,12 +88,12 @@ int update_species(Sckm *sckm, const int *anRxnCount, int *anX)              // 
 
 
 /* Forward simulate ahead one time-step */
-void tau_leap_one_step_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, 
+void tau_leap_one_step_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, double *adlMult,
                   const double *adHazard,                 
                   int *nWhileMax,                          
                   int *anRxnCount, int *anX)
 {
-    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost, adlMult);
     tau_leap_one_step(sckm, adHazard, *nWhileMax, anRxnCount, anX);
     deleteSckm(sckm);
 }
@@ -134,12 +135,13 @@ int tau_leap_one_step(Sckm *sckm,
 
 
 
-void tau_leap_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, const double *adTheta,
+void tau_leap_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, double *adlMult,
+         const double *adTheta,
          const double *adTau, int *nSteps, 
          int *nWhileMax,
          int *anRxnCount, int *anX)
 {
-    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost, adlMult);
     tau_leap(sckm, adTheta, adTau, *nSteps, *nWhileMax, anRxnCount, anX);
     deleteSckm(sckm);
 }
@@ -190,10 +192,10 @@ int next_to_fire(int nRxns, double *adCuSum) {
 }
 
 
-void gillespie_one_step_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, 
+void gillespie_one_step_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, double *adlMult,
                              const double *adTheta, double *dT,  int *anRxnCount, int *anX)
 {
-    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost, adlMult);
     gillespie_one_step(sckm, adTheta, *dT, anRxnCount, anX);
     deleteSckm(sckm);
 }
@@ -225,10 +227,11 @@ int gillespie_one_step(Sckm *sckm, const double *adTheta, double dT, int *anRxnC
 
 
 
-void gillespie_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, const double *adTheta,
+void gillespie_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, double *adlMult,
+               const double *adTheta,
                double *adT, int *nSteps, int *anX)
 {
-    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost, adlMult);
     gillespie(sckm, adTheta, adT, *nSteps, anX);
     deleteSckm(sckm);
 }

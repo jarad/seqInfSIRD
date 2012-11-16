@@ -36,6 +36,24 @@ SckmParticle *newSckmParticle(Sckm *sckm,
 }
 
 
+// Switches pointers to point to a new particle
+void setSckmParticle(SckmParticle *particle,
+                     int *_state,
+                     double *_probA, double *_probB, double *_rateA, double *_rateB,
+                     double *_prob, double *_rate) 
+{
+    particle->state = _state;
+    particle->probA = _probA;
+    particle->probB = _probB;
+    particle->rateA = _rateA;
+    particle->rateB = _rateB;
+    particle->prob  = _prob;
+    particle->rate  = _rate;
+}
+
+
+
+
 
 void deleteSckmParticle(SckmParticle *particle)
 {
