@@ -6,7 +6,7 @@
 #include "SckmParticle.h"
 
 void calc_log_pred_like_R(const int *, const double *, 
-                          int *, int *, int *, int *, 
+                          int *, int *, int *, int *, double *,
                           int *, double *, double *, double *, double *,
                           double *, double *, double *);
 double calc_log_pred_like(const int *, double , Sckm *, SckmParticle *);
@@ -16,7 +16,7 @@ int cond_discrete_sim_step(Sckm *sckm, const double *adHazard, const int *anY,
 int discrete_particle_update(Sckm *sckm, const int *anY, double dTau, int nWhileMax,
                               int *anX, double *adHyper, int *);
 
-void discrete_all_particle_update_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, 
+void discrete_all_particle_update_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, double *adlMult,
                                   const int *anY, const double *dTau,
                                   int *nParticles, int *nWhileMax,
                                   int *anX, double *adHyper, int *);
@@ -37,6 +37,7 @@ void tlpl_R(
            int *nRxns, 
            int *anPre, 
            int *anPost,
+           double *adlMult,
 
            /* Particles */
            int *nParticles, 

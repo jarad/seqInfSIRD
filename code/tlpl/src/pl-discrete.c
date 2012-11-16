@@ -16,12 +16,12 @@
 /* Calculate the predictive likelihood */
 
 void calc_log_pred_like_R(const int *anY, const double *dTau, 
-                          int *nSpecies, int *nRxns, int *anPre, int *anPost,
+                          int *nSpecies, int *nRxns, int *anPre, int *anPost, double *adlMult,
                           int *anX, double *probA, double *probB, double *rateA, double *rateB, 
                           double *prob, double *rate,
                           double *logPredLike)
 {   
-    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);        
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost, adlMult);        
     SckmParticle *part = newSckmParticle(sckm, anX, probA, probB, rateA, rateB, prob, rate);
     *logPredLike = calc_log_pred_like(anY, *dTau, sckm, part);
     deleteSckm(sckm);
@@ -115,12 +115,12 @@ int discrete_particle_update(Sckm *sckm, const int *anY, double dTau, int nWhile
 
 
 
-void discrete_all_particle_update_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, 
+void discrete_all_particle_update_R(int *nSpecies, int *nRxns, int *anPre, int *anPost, double *adlMult,
                                   const int *anY, const double *dTau,
                                   int *nParticles, int *nWhileMax,
                                   int *anX, double *adHyper, int *anSuccess) 
 {
-    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);        
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost, adlMult);        
     discrete_all_particle_update(sckm, anY,  *dTau, *nParticles, *nWhileMax,
                                  anX,  adHyper, anSuccess);
     deleteSckm(sckm);
@@ -154,6 +154,7 @@ void tlpl_R(
            int *nRxns, 
            int *anPre, 
            int *anPost,
+           double *adlMult,
 
            /* Particles */
            int *nParticles, 
@@ -172,7 +173,7 @@ void tlpl_R(
            double *adRateB
            )
 {
-    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost);
+    Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost, adlMult);
 
     tlpl(*nObs, anY, adTau,
          sckm,
@@ -190,7 +191,7 @@ int tlpl(int nObs, int *anY, double *adTau,
          int *anX, double *adProbA, double *adProbB, double *adRateA, double *adRateB)
 {
     int nr = sckm->r, ns = sckm->s;
-    int *hp = (int *) malloc( nParticles * nr * sizeof(int));
+    double *hp = (double *) malloc( nParticles * nr * sizeof(double));
 
     double *prob    = (double *) malloc( nParticles * nr * sizeof(double));
     double *rate    = (double *) malloc( nParticles * nr * sizeof(double));
@@ -206,9 +207,9 @@ int tlpl(int nObs, int *anY, double *adTau,
     double *cRA; cRA = adRateA;
     double *cRB; cRB = adRateB;
 
-    double *cP;
+    double *cP, *cHP;
 
-    int i,j,k;
+    int i,j,k,l;
     for (i=0; i<nObs; i++) 
     {
         if (nVerbose) Rprintf("Time point %d, %3.0f%% completed.\n", i+1, (double) (i+1)/nObs*100);
@@ -216,16 +217,20 @@ int tlpl(int nObs, int *anY, double *adTau,
         // Sample observation probability for all particles
         cP = prob;
         GetRNGstate();
-        for (j=0; j<nParticles; j++) 
+        for (j=0; j< (nParticles*nr); j++) 
         {
-            for (k=0; k<nr; k++)
-            {
-                *cP = rbeta(*cPA, *cPB);
-                cP++; cPA++; cPB++;
-            }
+            *cP = rbeta(*cPA, *cPB);
+            cP++; cPA++; cPB++;
         }
         PutRNGstate();
         cP = prob; cPA = adProbA; cPB = adProbB;
+
+        // Calculate hazard parts for all particle-reaction combinations
+        cHP = hp;
+        for (j=0; j<nParticles; j++) 
+        {
+            
+        }
 
         // Update pointers
         cY += nr;
@@ -236,6 +241,11 @@ int tlpl(int nObs, int *anY, double *adTau,
         cRA += nr;
         cRB += nr;
     }
+
+    free(weights);
+    free(rate);
+    free(prob);
+    free(hp);
 
     return 0;   
 }

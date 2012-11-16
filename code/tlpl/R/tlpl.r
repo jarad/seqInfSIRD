@@ -244,6 +244,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
 		 as.integer(sckm$r),
 		 as.integer(sckm$Pre),
 		 as.integer(sckm$Post),
+                 as.double(sckm$lmult),
 				 
 		 ## particles
 		 as.integer(swarm$n.particles),

@@ -6,7 +6,7 @@
 
 
 
-Sckm *newSckm(const int s, const int r, int *Pre, int *Post)
+Sckm *newSckm(const int s, const int r, int *Pre, int *Post, double *lMult)
 {
     Sckm *sckm;
     sckm = (Sckm *) malloc(sizeof(Sckm));
@@ -14,8 +14,9 @@ Sckm *newSckm(const int s, const int r, int *Pre, int *Post)
     sckm->s = s;
     sckm->r = r;
 
-    sckm->Pre = Pre;
-    sckm->Post = Post; 
+    sckm->Pre   = Pre;
+    sckm->Post  = Post; 
+    sckm->lMult = lMult;
 
     sckm->Stoich = (int *) malloc(s*r*sizeof(int));
     for (int i=0; i<s; i++) 
