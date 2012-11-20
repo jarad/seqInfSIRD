@@ -31,7 +31,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
     ns = sckm$s 
 
     # Check data, sckm, swarm
-    n = nrow(data$y)
+    n = ncol(data$y)
     if (length(data$tau)==1) data$tau = rep(data$tau,n)
     stopifnot(length(data$tau)==n)
     stopifnot(ncol(data$y)==nr) # Only observations on transitions are currently implemented
@@ -117,7 +117,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
     	for (i in 1:n) 
     	{  
             if (verbose) cat(paste("Time point ",i,", ",round(i/n*100), "% completed.\n", sep=''))
-            y = data$y[i,]
+            y = data$y[,i]
             tau = data$tau[i]
 
             # Sample observation probability

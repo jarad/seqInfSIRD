@@ -24,9 +24,11 @@ void calc_log_pred_like_R(const int *anY, const double *dTau,
 {   
     Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost, adlMult);        
     SckmParticle *part = newSckmParticle(sckm, anX, probA, probB, rateA, rateB, prob, rate);
+
     double adHazardPart[*nRxns];
     hazard_part(sckm, anX, adHazardPart);
     *logPredLike = calc_log_pred_like(anY, *dTau, sckm, part, adHazardPart);
+
     deleteSckm(sckm);
     deleteSckmParticle(part);
 }
@@ -40,7 +42,7 @@ double calc_log_pred_like(const int *anY, double dTau, Sckm *sckm, SckmParticle 
     for (int i=0; i<nr; i++) {
         adP2[i] = 1/(1+particle->rateB[i]/(particle->prob[i]*adHazardPart[i]*dTau));
         if (adP2[i]>0)
-            dLogPredLik += dnbinom(anY[i], particle->rateA[i], adP2[i], 1);
+            dLogPredLik += dnbinom(anY[i], particle->rateA[i], 1-adP2[i], 1);
     }
     return dLogPredLik;
 }
@@ -230,8 +232,7 @@ int tlpl(int nObs, int *anY, double *adTau,
         {
             cPart = swarm[i]->pParticle[j];
             hazard_part(sckm, cPart->state, &hp[j*nr]);
-            // weights[j] = calc_log_pred_like(cY, *cTau, sckm, cPart);
-            // Rprintf("Particle %d: %4.4f\n",j,weights[j]);
+            weights[j] = calc_log_pred_like(cY, *cTau, sckm, cPart, &hp[j*nr]);
         }
         
 
