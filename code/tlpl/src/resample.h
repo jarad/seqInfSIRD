@@ -13,6 +13,9 @@ int rep2id(int *, int , int *);
 void inverse_cdf_weights_R(int *, double *, int *, double *, int *);
 int inverse_cdf_weights(int , double *, int , double *, int *);
 
+int one_multinomial_sample(int nW, double *adWeights);
+
+
 void ess_R(int *, double *, double *);
 double ess(int , double *);
 
@@ -22,6 +25,7 @@ double cov2(int , double *);
 void entropy_R(int *, double *, double *);
 double entropy(int , double *);
 
+int doResample(int n, double *weights, int nNonuniformity, double dThreshold);
 
 void resample_R(int *, double *, int *, int *, int *);
 int resample(int , double *, int , int *, int );

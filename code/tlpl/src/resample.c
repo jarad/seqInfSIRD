@@ -133,6 +133,16 @@ int inverse_cdf_weights(int nW,
 }
 
 
+int one_multinomial_sample(int nW, double *adWeights)
+{
+    int i;
+    GetRNGstate();
+    double u=runif(0,1);
+    PutRNGstate();
+
+    inverse_cdf_weights(nW, adWeights, 1, &u, &i); 
+    return i;
+}
 
 
 
@@ -198,6 +208,25 @@ double entropy(int n, double *weights)
     return -sum;
 }
 
+
+
+int doResample(int n, double *weights, int nNonuniformity, double dThreshold)
+{
+    int dr=0;
+    switch(nNonuniformity)
+    {
+        case 1: // "none" means always resample
+            return 1;
+        case 2: 
+            return ess(    n, weights) < dThreshold ? 1 : 0;
+        case 3: 
+            return cov2(   n, weights) > dThreshold ? 1 : 0; // notice the greater than sign
+        case 4: 
+            return entropy(n, weights) < dThreshold ? 1 : 0;
+        default:
+            error("Nonuniformity measure not found.\n");
+    }
+}
 
 
 /***********************************************************************/
