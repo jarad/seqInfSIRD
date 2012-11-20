@@ -9,7 +9,7 @@ void calc_log_pred_like_R(const int *, const double *,
                           int *, int *, int *, int *, double *,
                           int *, double *, double *, double *, double *,
                           double *, double *, double *);
-double calc_log_pred_like(const int *, double , Sckm *, SckmParticle *);
+double calc_log_pred_like(const int *, double , Sckm *, SckmParticle *, double *);
 
 int cond_discrete_sim_step(Sckm *sckm, const double *adHazard, const int *anY, 
                            const double *adP, int nWhileMax, int *anRxns, int *anX);

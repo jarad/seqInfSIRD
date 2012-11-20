@@ -3,12 +3,12 @@
 #ifndef GILLESPIE_H // guard for gillespie.h
 #define GILLESPIE_H 
 
-void hazard_part_R(int *, int *, int *, int *, double *, const int *, int *);
-int hazard_part(Sckm *sckm, const int *anX, int *anHp);
+void hazard_part_R(int *, int *, int *, int *, double *, const int *, double *);
+int hazard_part(Sckm *sckm, const int *anX, double *anHp);
 
 void hazard_R(int *, int *, int *, int *, double *, 
-              const double *, const int *, double *, int *, double *);
-int hazard(Sckm *sckm, const double *adTheta, const int *anX, double dTau, int *anHp, double *adH); 
+              const double *, const int *, double *, double *, double *);
+int hazard(Sckm *sckm, const double *adTheta, const int *anX, double dTau, double *anHp, double *adH); 
 
 void update_species_R(int *, int *, int *, int *, double *, const int *, int *);
 int update_species(Sckm *sckm, const int *anRxns, int *anX);

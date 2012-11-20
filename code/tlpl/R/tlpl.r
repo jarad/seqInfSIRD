@@ -122,7 +122,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
 
             # Sample observation probability
             swarm$p = matrix(rbeta(nr*np, swarm$hyper$prob$a, swarm$hyper$prob$b), nr, np)
-
+            
             # Calculate all particle weights
             for (j in 1:n.particles) 
             {          

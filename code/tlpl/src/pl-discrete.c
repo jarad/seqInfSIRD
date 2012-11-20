@@ -24,20 +24,21 @@ void calc_log_pred_like_R(const int *anY, const double *dTau,
 {   
     Sckm *sckm = newSckm(*nSpecies, *nRxns, anPre, anPost, adlMult);        
     SckmParticle *part = newSckmParticle(sckm, anX, probA, probB, rateA, rateB, prob, rate);
-    *logPredLike = calc_log_pred_like(anY, *dTau, sckm, part);
+    double adHazardPart[*nRxns];
+    hazard_part(sckm, anX, adHazardPart);
+    *logPredLike = calc_log_pred_like(anY, *dTau, sckm, part, adHazardPart);
     deleteSckm(sckm);
     deleteSckmParticle(part);
 }
 
-double calc_log_pred_like(const int *anY, double dTau, Sckm *sckm, SckmParticle *particle) 
+double calc_log_pred_like(const int *anY, double dTau, Sckm *sckm, SckmParticle *particle,
+                          double *adHazardPart) 
 {
-    int nRxns = sckm->r;
-    int anHazardPart[nRxns];
-    hazard_part(sckm, particle->state, anHazardPart);
+    int nr = sckm->r;
 
-    double adP2[nRxns], dLogPredLik=0;
-    for (int i=0; i<nRxns; i++) {
-        adP2[i] = 1/(1+particle->rateB[i]/(particle->prob[i]*anHazardPart[i]*dTau));
+    double adP2[nr], dLogPredLik=0;
+    for (int i=0; i<nr; i++) {
+        adP2[i] = 1/(1+particle->rateB[i]/(particle->prob[i]*adHazardPart[i]*dTau));
         if (adP2[i]>0)
             dLogPredLik += dnbinom(anY[i], particle->rateA[i], adP2[i], 1);
     }
@@ -90,25 +91,24 @@ int discrete_particle_update(Sckm *sckm, const int *anY, double dTau, int nWhile
                               int *anX, double *adHyper, int *nSuccess)
 {
     // Sample parameters
-    int i, nRxns=sckm->r;
-    double adP[nRxns], adTheta[nRxns];
+    int i, nr=sckm->r;
+    double adP[nr], adTheta[nr];
     GetRNGstate();
-    for (i=0;i<nRxns;i++) 
+    for (i=0;i<nr;i++) 
     {
-        adP[i] = rbeta(adHyper[i], adHyper[i+nRxns]);
-        adTheta[i] = rgamma(adHyper[i+2*nRxns], adHyper[i+3*nRxns]);
+        adP[i] = rbeta(adHyper[i], adHyper[i+nr]);
+        adTheta[i] = rgamma(adHyper[i+2*nr], adHyper[i+3*nr]);
     }
     PutRNGstate();
 
-    int    anHazardPart[nRxns];
-    double adHazard[    nRxns];
-    hazard(sckm, adTheta, anX, dTau, anHazardPart, adHazard);
+    double adHazardPart[nr], adHazard[nr];
+    hazard(sckm, adTheta, anX, dTau, adHazardPart, adHazard);
 
     // Forward simulate system
-    int anRxnCount[nRxns];
+    int anRxnCount[nr];
     *nSuccess = 1-cond_discrete_sim_step(sckm, adHazard, anY, adP, nWhileMax, anRxnCount, anX);
 
-    suff_stat_update(nRxns, anRxnCount, anY, anHazardPart, adHyper);
+    suff_stat_update(nr, anRxnCount, anY, adHazardPart, adHyper);
 
     return 0;
 }
@@ -192,9 +192,9 @@ int tlpl(int nObs, int *anY, double *adTau,
          Sckm *sckm, SckmSwarm **swarm,
          int nResamplingMethod, int nNonuniformity, double dThreshold, int nVerbose)
 {
-    int nr = sckm->r, ns = sckm->s, np = swarm[0]-> nParticles;
-    double *hp = (double *) malloc( np * nr * sizeof(double));
+    int nr = sckm->r, ns = sckm->s, np = swarm[0]-> nParticles; 
 
+    double *hp      = (double *) malloc( np * nr * sizeof(double));
     double *prob    = (double *) malloc( np * nr * sizeof(double));
     double *rate    = (double *) malloc( np * nr * sizeof(double));
     double *weights = (double *) malloc( np *      sizeof(double));
@@ -204,43 +204,40 @@ int tlpl(int nObs, int *anY, double *adTau,
     double *cTau; cTau = adTau;
     
     double *cP, *cR, *cHP;
+    SckmParticle *cPart;
 
 
     int i,j,k,l;
     for (i=0; i<nObs; i++) 
     {
         if (nVerbose) Rprintf("Time point %d, %3.0f%% completed.\n", i+1, (double) (i+1)/nObs*100);
-/*       
+
         // Sample observation probability for all particles
-        cP = prob;
         GetRNGstate();
-        for (j=0; j< (np*nr); j++) 
+        for (j=0; j< np; j++) 
         {
-            *cP = rbeta(*cPA, *cPB);
-            cP++; cPA++; cPB++;
+            cPart = swarm[i]->pParticle[j];
+            cPart->prob = &prob[j * nr];
+            for (k=0; k<nr; k++)
+            {
+                cPart->prob[k] = rbeta(cPart->probA[k], cPart->probB[k]);
+            }
         }
         PutRNGstate();
-        cP = prob; cPA = adProbA; cPB = adProbB;
 
-        // Calculate hazard parts for all particle-reaction combinations
-        cHP = hp; 
+        // Calculate hazard parts 
         for (j=0; j<np; j++) 
         {
-            setSckmParticle(part, cX, cPA, cPB, cRA, cRB, cP, cR);
-            weights[j] = calc_log_pred_like(cY, *cTau, sckm, part);
-            cX  += ns;
-            cPA += nr;
-            cPB += nr;
-            cRA += nr;
-            cRB += nr;
-            cP  += nr;
-            cR  += nr;
+            cPart = swarm[i]->pParticle[j];
+            hazard_part(sckm, cPart->state, &hp[j*nr]);
+            // weights[j] = calc_log_pred_like(cY, *cTau, sckm, cPart);
+            // Rprintf("Particle %d: %4.4f\n",j,weights[j]);
         }
+        
 
         // Update pointers
         cY += nr;
         cTau++; 
-*/   
     }
 
 

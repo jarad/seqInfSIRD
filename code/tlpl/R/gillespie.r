@@ -25,7 +25,7 @@ hazard.part = function(sys, engine="R")
                  as.double(sys$lmult),
                  as.integer(sys$X), 
 
-                 hp=integer(sys$r))
+                 hp=double(sys$r))
 
         return(out$hp)
     })
@@ -55,8 +55,8 @@ hazard = function(sys, tau=1, engine="R")
                  as.integer(sys$X), 
                  as.double(tau),
 
-                 hp=integer(sys$r), 
-                 h=double(sys$r))
+                 hp=double(sys$r), 
+                 h= double(sys$r))
 
         return(list(h=out$h,hp=out$hp))
     })

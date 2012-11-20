@@ -3,7 +3,7 @@
 #include "pl-utility.h"
 
 /* Particle learning sufficient statistic update */
-int suff_stat_update(int nRxns, const int *anRxnCount, const int *anY, const int *anHazardPart, 
+int suff_stat_update(int nRxns, const int *anRxnCount, const int *anY, const double *anHazardPart, 
                       double *adHyper) 
 {
     int i,j;
