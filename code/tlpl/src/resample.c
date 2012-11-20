@@ -278,7 +278,10 @@ int stratified_resample(int nW, double *adWeights, int nI, int *anIndices)
 {
     int i;
     double adUniforms[nI];
+
+    GetRNGstate();
     for (i=0;i<nI;i++) adUniforms[i] = runif((double) i/nI, (double) (i+1)/nI);
+    PutRNGstate();
 
     inverse_cdf_weights(nW, adWeights, nI, adUniforms, anIndices);
 
