@@ -12,6 +12,7 @@
 #include "Sckm.h"
 #include "SckmSwarm.h"
 #include "SckmParticle.h"
+#include "resample.h"
 
 
 /* Calculate the predictive likelihood */
@@ -190,35 +191,46 @@ void tlpl_R(
     deleteSckm(sckm);
 }
 
+
+
+
+
+
 int tlpl(int nObs, int *anY, double *adTau,
          Sckm *sckm, SckmSwarm **swarm,
          int nResamplingMethod, int nNonuniformity, double dThreshold, int nVerbose)
 {
     int nr = sckm->r, ns = sckm->s, np = swarm[0]-> nParticles; 
+    int anUnobservedTransitions[nr], anTotalTransitions[nr];
 
-    double *hp      = (double *) malloc( np * nr * sizeof(double));
-    double *prob    = (double *) malloc( np * nr * sizeof(double));
-    double *rate    = (double *) malloc( np * nr * sizeof(double));
-    double *weights = (double *) malloc( np *      sizeof(double));
+    double rate[nr], mn[nr];
+    double *hp   = (double *) malloc( np * nr * sizeof(double));
+    double *prob = (double *) malloc( np * nr * sizeof(double));
 
     // Pointers 
-    int *cY; cY = anY;
-    double *cTau; cTau = adTau;
+    int *cY;      cY   = anY;   // current observations
+    double *cTau; cTau = adTau; // current tau
     
-    double *cP, *cR, *cHP;
-    SckmParticle *cPart;
+    double *w;           // swarm weights
+    SckmSwarm *s;        // current swarm
+    SckmParticle *cPart; // current particle
+    SckmParticle *nPart; // next particles
 
 
-    int i,j,k,l;
+    int i,j,k,l, nDoResample, anResampledIndices[np], nAnyNegative;
     for (i=0; i<nObs; i++) 
     {
         if (nVerbose) Rprintf("Time point %d, %3.0f%% completed.\n", i+1, (double) (i+1)/nObs*100);
+
+        // Update pointers
+        s = swarm[i];
+        w = s->adWeights; 
 
         // Sample observation probability for all particles
         GetRNGstate();
         for (j=0; j< np; j++) 
         {
-            cPart = swarm[i]->pParticle[j];
+            cPart = s->pParticle[j];
             cPart->prob = &prob[j * nr];
             for (k=0; k<nr; k++)
             {
@@ -227,23 +239,91 @@ int tlpl(int nObs, int *anY, double *adTau,
         }
         PutRNGstate();
 
-        // Calculate hazard parts 
+        // Calculate particle weights         
         for (j=0; j<np; j++) 
         {
-            cPart = swarm[i]->pParticle[j];
+            cPart = s->pParticle[j];
             hazard_part(sckm, cPart->state, &hp[j*nr]);
-            weights[j] = calc_log_pred_like(cY, *cTau, sckm, cPart, &hp[j*nr]);
+            w[j] = calc_log_pred_like(cY, *cTau, sckm, cPart, &hp[j*nr]);
         }
+        s->logWeights = 1;
+        s->normalizedWeights = 0;
         
+        // Resampling
+        renormalize(s);
+        nDoResample = doResample(np, w, nNonuniformity, dThreshold);
+        if (nDoResample) {
+            if (nVerbose) Rprintf(" Resampling: ");
+            resample(np, w, np, anResampledIndices, nResamplingMethod);
+        } else {
+            for (j=0; j<np; j++) anResampledIndices[j] = j;
+        }
+        for (j=0; j<np; j++) Rprintf("%d ", anResampledIndices[j]); Rprintf("\n");
+
+        // Update particles
+        for (j=0; j<np; j++) 
+        {
+            if (nVerbose) Rprintf(" Particle %d\n", j);
+            nPart = swarm[i+1]->pParticle[j];
+
+            nAnyNegative = 1;
+            while(nAnyNegative)
+            {
+                // The first time through take the resampled particle
+                // on any other pass take a new particle
+                k = nAnyNegative==1 ? anResampledIndices[j] : one_multinomial_sample(np, w);
+                cPart = s->pParticle[k];               
+
+                GetRNGstate();
+                for (l=0; l<nr; l++)
+                {
+                    // Calculate expected transitions
+                    rate[l] = rgamma(cPart->rateA[l], 1.0/cPart->rateB[l]); 
+Rprintf("  Rate %d: %4.4f %4.4f %4.4f \n", l, cPart->rateA[l], cPart->rateB[l], rate[l]);
+                    mn[l]   = (1-cPart->prob[l])*rate[l]*hp[k*nr+l];
+                }
+Rprintf("\n");
+
+                // Two loops to match R
+                for (l=0; l<nr; l++)
+                {
+                    // Sample transitions and update state
+                    anUnobservedTransitions[l] = rpois(mn[l]);
+                    anTotalTransitions[l] = anUnobservedTransitions[l]+cY[l];
+                }
+                PutRNGstate();
+
+                memcpy(nPart->state, cPart->state, ns*sizeof(double));
+                update_species(sckm, anTotalTransitions, nPart->state);
+
+                // Check for negative states 
+                for (l=0; l<ns; l++) 
+                {
+                    if (nPart->state[l] < 0) 
+                    {
+                        nAnyNegative++; 
+                        nAnyNegative =0; // temporary
+                        break;
+                    }
+                    nAnyNegative = 0;
+                }
+            } // while(nAnyNegative)
+
+            // Update sufficient statistics
+            for (l=0; l<nr; l++) 
+            {
+                nPart->probA[l] = cPart->probA[l] + cY[l];
+                nPart->probB[l] = cPart->probB[l] + anUnobservedTransitions[l];
+                nPart->rateA[l] = cPart->rateA[l] + anTotalTransitions[l];
+                nPart->rateB[l] = cPart->rateB[l] + hp[k*nr+l];
+            }
+        } // Updated particles
 
         // Update pointers
         cY += nr;
         cTau++; 
     }
 
-
-    free(weights);
-    free(rate);
     free(prob);
     free(hp);
 

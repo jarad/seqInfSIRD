@@ -145,20 +145,29 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
             # Resample particles
             w = renormalize.weights(w, log=T)
             rs = resample(w,...)$indices
+            print(rs)
 
             for (j in 1:np)
             {               
                 if (verbose && (j%%100)==0) 
                     cat(paste("  Particle ",j,", ",round(j/np*100), "% completed.\n", sep=''))
 
-            	any.negative = T
-            	while (any.negative) {
+            	any.negative = 1
+            	while (any.negative>0) {
                     # To ensure a new particle is resampled
                     # Clearly reasonable for multinomial resampling, but what about the rest? 
-                    kk = resample(w,1, method="multinomial")$indices # new particle id
+                    #kk = resample(w,1, method="multinomial")$indices # new particle id
+                    kk = ifelse(any.negative==1, rs[j],
+                                resample(w,1, method="multinomial")$indices) 
 
                     # Calculate mean for unobserved transitions
                     lambda = rgamma(nr, swarm$hyper$rate$a[,kk], swarm$hyper$rate$b[,kk])
+
+
+print(cat("Particle ", j, "\n"))
+for (l in 1:nr) print(c(swarm$hyper$rate$a[l,kk], swarm$hyper$rate$b[l,kk], lambda[l]))
+print("\n")
+
                     mn = (1-swarm$p[,kk])* lambda * hp[,kk]
 
                	    # Sample transitions and update state
@@ -167,7 +176,11 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
                     newswarm$X[,j] = swarm$X[,kk] + sckm$stoich %*% n.rxns
 
                     # Check to see if any state is negative 
-                    any.negative = any(newswarm$X[,j]<0)
+                    if (any(newswarm$X[,j]<0)) {
+                        any.negative = any.negative+1
+                    } else {
+                        any.negative = 0
+                    }
 
                     if (any.negative && verbose) {
                         cat(paste("Particle",kk,"failed.\n"))
