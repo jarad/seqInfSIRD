@@ -253,17 +253,16 @@ int tlpl(int nObs, int *anY, double *adTau,
         renormalize(s);
         nDoResample = doResample(np, w, nNonuniformity, dThreshold);
         if (nDoResample) {
-            if (nVerbose) Rprintf(" Resampling: ");
+            if (nVerbose>1) Rprintf(" Resampling.");
             resample(np, w, np, anResampledIndices, nResamplingMethod);
         } else {
             for (j=0; j<np; j++) anResampledIndices[j] = j;
         }
-        for (j=0; j<np; j++) Rprintf("%d ", anResampledIndices[j]+1); Rprintf("\n");
 
         // Update particles
         for (j=0; j<np; j++) 
         {
-            if (nVerbose) Rprintf(" Particle %d\n", j);
+            if (nVerbose>1) Rprintf(" Particle %d\n", j);
             nPart = swarm[i+1]->pParticle[j];
 
             nAnyNegative = 1;
@@ -279,10 +278,8 @@ int tlpl(int nObs, int *anY, double *adTau,
                 {
                     // Calculate expected transitions
                     rate[l] = rgamma(cPart->rateA[l], 1.0/cPart->rateB[l]); 
-Rprintf("  Rate %d: %4.4f %4.4f %4.4f \n", l, cPart->rateA[l], cPart->rateB[l], rate[l]);
                     mn[l]   = (1-cPart->prob[l])*rate[l]*hp[k*nr+l];
                 }
-Rprintf("\n");
 
                 // Two loops to match R
                 for (l=0; l<nr; l++)

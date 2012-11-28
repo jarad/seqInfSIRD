@@ -25,7 +25,7 @@ tlpl.prior = function(X, p.a, p.b, r.a, r.b, nr)
 
 
 tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, 
-                engine="R", verbose=F, ...)
+                engine="R", verbose=0, ...)
 {
     nr = sckm$r
     ns = sckm$s 
@@ -34,7 +34,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
     n = ncol(data$y)
     if (length(data$tau)==1) data$tau = rep(data$tau,n)
     stopifnot(length(data$tau)==n)
-    stopifnot(ncol(data$y)==nr) # Only observations on transitions are currently implemented
+    stopifnot(nrow(data$y)==nr) # Only observations on transitions are currently implemented
 
     check.system(sckm)
 
@@ -145,11 +145,10 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
             # Resample particles
             w = renormalize.weights(w, log=T)
             rs = resample(w,...)$indices
-            print(rs)
 
             for (j in 1:np)
             {               
-                if (verbose && (j%%100)==0) 
+                if (verbose>1 && (j%%100)==0) 
                     cat(paste("  Particle ",j,", ",round(j/np*100), "% completed.\n", sep=''))
 
             	any.negative = 1
@@ -162,11 +161,6 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
 
                     # Calculate mean for unobserved transitions
                     lambda = rgamma(nr, swarm$hyper$rate$a[,kk], swarm$hyper$rate$b[,kk])
-
-
-print(cat("Particle ", j, "\n"))
-for (l in 1:nr) print(c(swarm$hyper$rate$a[l,kk], swarm$hyper$rate$b[l,kk], lambda[l]))
-print("\n")
 
                     mn = (1-swarm$p[,kk])* lambda * hp[,kk]
 
