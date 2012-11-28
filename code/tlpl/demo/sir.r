@@ -10,7 +10,7 @@ sckm$Post = rbind( c(0,2,0), c(0,0,1))
 sckm$stoich = t(sckm$Post-sckm$Pre)
 sckm$X = c(16000,100,0)
 N = sum(sckm$X)
-sckm$theta = c(0.5/N,0.25)
+sckm$theta = c(0.5,0.25)
 sckm$lmult = log(c(1/N,1))
 
 ## Simulate data
@@ -20,26 +20,35 @@ n = 50
 ### True states and transitions
 tl = tau.leap(sckm, n)
 
+## Data
+
+plot( tl$X[,1], type="l", ylim=c(0,sckm$X[1]), lwd=ld, col=clrs[1], 
+      xlab="Time", ylab="Number", main="Truth")
+lines(tl$X[,2], lwd=ld, col=clrs[2])
+lines(tl$X[,3], lwd=ld, col=clrs[3])
+legend("right", c("S","I","R"), col=clrs, lwd=ld)
+
+
+readline("Hit <enter> to continue:")
+
+
 ### Sample transitions
 p = c(0.5,0.5) # Sample probabilities for S->I and I->R respectively
-y = cbind(rbinom(n, tl$nr[,1], p[1]), rbinom(n, tl$nr[,2], p[2]))
+y = rbind(rbinom(n, tl$nr[,1], p[1]), rbinom(n, tl$nr[,2], p[2]))
 
 # Perform inference
-cat("Running sequential inference...\n")
+cat("\nRunning sequential inference...\n")
 prior = tlpl.prior(sckm$X, 1e1, 1e1, sckm$theta*2, 2, sckm$r)
-z = tlpl(list(y=y, tau=1), sckm, prior=prior, n.particles=1e1, engine="R", verbose=T)
+z = tlpl(list(y=y, tau=1), sckm, prior=prior, n.particles=1e4, engine="C", verbose=1)
+
+cat("\nCalculating quantiles...\n")
 qs = tlpl_quantile(z)
 
 # Make figures
 ld = 2
 clrs = c("green","red","blue")
 
-## Data
 
-plot( tl$X[,1], type="l", ylim=c(0,sckm$X[1]), lwd=ld, col=clrs[1], xlab="Time", ylab="Number")
-lines(tl$X[,2], lwd=ld, col=clrs[2])
-lines(tl$X[,3], lwd=ld, col=clrs[3])
-legend("right", c("S","I","R"), col=clrs, lwd=ld)
 
 
 ## States
@@ -66,31 +75,36 @@ lines(xx, qs$X[3,3,])
 lines(xx, tl$X[,3], col="red")
 
 
+
+readline("Hit <enter> to continue:")
+
+
 ## Sampling probabilities and reaction rates
 par(mfrow=c(2,2))
 
 ### S->I probability
-plot( xx, qs$p[1,1,], type="l", ylim=range(qs$p[,1,]), main="S -> I", ylab="Probability", xlab="Time")
+plot( xx, qs$p[1,1,], type="l", ylim=range(qs$p[1,,]), 
+      main="S -> I", ylab="Probability", xlab="Time")
 lines(xx, qs$p[1,2,], lwd=2)
 lines(xx, qs$p[1,3,])
 abline(h=p[1], col="red")
 
 ### I->R probability
-plot( xx, qs$p[2,1,], type="l", ylim=range(qs$p[,2,]), main="I -> R", ylab="Probability", xlab="Time")
+plot( xx, qs$p[2,1,], type="l", ylim=range(qs$p[2,,]), main="I -> R", ylab="Probability", xlab="Time")
 lines(xx, qs$p[2,2,], lwd=2)
 lines(xx, qs$p[2,3,])
 abline(h=p[2], col="red")
 
 
 ### S->I rate
-plot( xx, qs$r[1,1,], type="l", ylim=range(qs$r[,1,]), main="S -> I", ylab="Rate", xlab="Time")
+plot( xx, qs$r[1,1,], type="l", ylim=range(qs$r[1,,]), main="S -> I", ylab="Rate", xlab="Time")
 lines(xx, qs$r[1,2,], lwd=2)
 lines(xx, qs$r[1,3,])
 abline(h=sckm$theta[1], col="red")
 
 
 ### I->R rate
-plot( xx, qs$r[2,1,], type="l", ylim=range(qs$r[,2,]), main="I -> R", ylab="Rate", xlab="Time")
+plot( xx, qs$r[2,1,], type="l", ylim=range(qs$r[2,,]), main="I -> R", ylab="Rate", xlab="Time")
 lines(xx, qs$r[2,2,], lwd=2)
 lines(xx, qs$r[2,3,])
 abline(h=sckm$theta[2], col="red")

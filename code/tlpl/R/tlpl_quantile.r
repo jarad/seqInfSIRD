@@ -52,7 +52,10 @@ tlpl_quantile = function(tlpl, probs=c(.025,.5,.975), which="xpr")
     if (do$r) { r.quantiles = array(NA, dim=c(r,p,n)) } else { r.quantiles=NULL }
 
     for (i in 1:n) 
-    {
+    {   
+        verbose=1
+        if (verbose) cat(paste("Time point ",i,", ",round(i/n*100), "% completed.\n", sep=''))
+
         for (j in 1:s) 
         {
             if (do$x) X.quantiles[j,,i] = quantile(tlpl$X[j,,i], probs=probs)
