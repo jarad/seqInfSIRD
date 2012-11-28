@@ -256,8 +256,8 @@ print("\n")
 	         ## sckm
 		 as.integer(sckm$s),
 		 as.integer(sckm$r),
-		 as.integer(sckm$Pre),
-		 as.integer(sckm$Post),
+		 as.integer(t(sckm$Pre)),
+		 as.integer(t(sckm$Post)),
                  as.double(sckm$lmult),
 				 
 		 ## particles

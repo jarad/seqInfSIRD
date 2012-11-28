@@ -258,7 +258,7 @@ int tlpl(int nObs, int *anY, double *adTau,
         } else {
             for (j=0; j<np; j++) anResampledIndices[j] = j;
         }
-        for (j=0; j<np; j++) Rprintf("%d ", anResampledIndices[j]); Rprintf("\n");
+        for (j=0; j<np; j++) Rprintf("%d ", anResampledIndices[j]+1); Rprintf("\n");
 
         // Update particles
         for (j=0; j<np; j++) 

@@ -26,7 +26,7 @@ int hazard_part(Sckm *sckm, const int *anX, double *adHazardPart)
         adHazardPart[i] = sckm->lMult[i];
         for (j=0; j<ns; j++) 
         { 
-            k = i  + j * nr;
+            k = i * ns + j;
             adHazardPart[i] += lchoose(anX[j], sckm->Pre[k]); 
         }    
         adHazardPart[i] = exp(adHazardPart[i]);
