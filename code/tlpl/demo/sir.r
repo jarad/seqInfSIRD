@@ -20,25 +20,34 @@ n = 50
 ### True states and transitions
 tl = tau.leap(sckm, n)
 
-## Data
 
+clrs = c("seagreen","red","blue")
+ld=2
 plot( tl$X[,1], type="l", ylim=c(0,sckm$X[1]), lwd=ld, col=clrs[1], 
       xlab="Time", ylab="Number", main="Truth")
 lines(tl$X[,2], lwd=ld, col=clrs[2])
 lines(tl$X[,3], lwd=ld, col=clrs[3])
-legend("right", c("S","I","R"), col=clrs, lwd=ld)
+legend("topright", c("S","I","R"), col=clrs, lwd=ld)
 
 
-readline("Hit <enter> to continue:")
 
 
 ### Sample transitions
 p = c(0.5,0.5) # Sample probabilities for S->I and I->R respectively
 y = rbind(rbinom(n, tl$nr[,1], p[1]), rbinom(n, tl$nr[,2], p[2]))
 
+plot( y[1,], type="l", ylim=range(y), lwd=ld, col=clrs[1], 
+      xlab="Time", ylab="Number", main="Observations")
+lines(y[2,], lwd=ld, col=clrs[2])
+legend("topright", c("S->I","I->R"), col=clrs, lwd=ld)
+
+
+readline("Hit <enter> to continue:")
+
+
 # Perform inference
 cat("\nRunning sequential inference...\n")
-prior = tlpl.prior(sckm$X, 1e1, 1e1, sckm$theta*2, 2, sckm$r)
+prior = tlpl.prior(sckm$X, 1e1*p, 1e1*(1-p), sckm$theta*2, 2, sckm$r)
 z = tlpl(list(y=y, tau=1), sckm, prior=prior, n.particles=1e4, engine="C", verbose=1)
 
 cat("\nCalculating quantiles...\n")
