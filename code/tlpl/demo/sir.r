@@ -23,9 +23,9 @@ tl = tau.leap(sckm, n)
 
 clrs = c("seagreen","red","blue")
 ld=3
-par(mfrow=c(1,2), mar=c(5,4,.1,.1))
+par(mfrow=c(1,3))
 plot( tl$X[,1], type="l", ylim=c(0,sckm$X[1]), lwd=ld, col=clrs[1], 
-      xlab="Time", ylab="Number", main="")
+      xlab="Time", ylab="Number", main="Truth")
 lines(tl$X[,2], lwd=ld, col=clrs[2])
 lines(tl$X[,3], lwd=ld, col=clrs[3])
 legend("topright", c("S","I","R"), col=clrs, lwd=ld)
@@ -34,8 +34,8 @@ legend("topright", c("S","I","R"), col=clrs, lwd=ld)
 
 
 ### Sample transitions
-p = c(0.01,0.001) # Sample probabilities for S->I and I->R respectively
-y = rbind(rbinom(n, tl$nr[,1], p[1]), rbinom(n, tl$nr[,2], p[2]))
+p = c(0.05,0.0001) # Sample probabilities for S->I and I->R respectively
+#y = rbind(rbinom(n, tl$nr[,1], p[1]), rbinom(n, tl$nr[,2], p[2]))
 
 plot( y[1,], type="p", pch=19, ylim=range(y), lwd=ld, col=clrs[2], 
       xlab="Time", ylab="Number", main="Observations")
@@ -45,11 +45,11 @@ legend("topright", c("S->I","I->R"), col=clrs[2:3], lwd=ld)
 
 
 ### Cumulative transitions
-#y2 = t(apply(y,1,cumsum))
-#plot( y2[1,], type="l", ylim=range(y2), lwd=ld, col=clrs[2], 
-#      xlab="Time", ylab="Number", main="Cumulative Observations")
-#lines(y2[2,], lwd=ld, col=clrs[3])
-#legend("topleft", c("S->I","I->R"), col=clrs[2:3], lwd=ld)
+y2 = t(apply(y,1,cumsum))
+plot( y2[1,], type="l", ylim=range(y2), lwd=ld, col=clrs[2], 
+      xlab="Time", ylab="Number", main="Cumulative Observations")
+lines(y2[2,], lwd=ld, col=clrs[3])
+legend("topleft", c("S->I","I->R"), col=clrs[2:3], lwd=ld)
 
 
 readline("Hit <enter> to continue:")
@@ -78,20 +78,20 @@ par(mfrow=c(1,3))
 plot( xx, qs$X[1,1,], type="l", ylim=c(0, max(sckm$X)), main="Susceptible", ylab="Count", xlab="Time")
 lines(xx, qs$X[1,2,], lwd=2)
 lines(xx, qs$X[1,3,])
-lines(xx, tl$X[,1], col="red")
+lines(xx, tl$X[,1], col="red", lwd=2)
 
 ### Infecteds
 plot( xx, qs$X[2,1,], type="l", ylim=c(0, max(sckm$X)), main="Infected", ylab="Count", xlab="Time")
 lines(xx, qs$X[2,2,], lwd=2)
 lines(xx, qs$X[2,3,])
-lines(xx, tl$X[,2], col="red")
+lines(xx, tl$X[,2], col="red", lwd=2)
 
 
 ### Recovered
 plot( xx, qs$X[3,1,], type="l", ylim=c(0, max(sckm$X)), main="Recovered", ylab="Count", xlab="Time")
 lines(xx, qs$X[3,2,], lwd=2)
 lines(xx, qs$X[3,3,])
-lines(xx, tl$X[,3], col="red")
+lines(xx, tl$X[,3], col="red", lwd=2)
 
 
 
@@ -106,27 +106,27 @@ plot( xx, qs$p[1,1,], type="l", ylim=range(qs$p[1,,]),
       main="S -> I", ylab="Probability", xlab="Time")
 lines(xx, qs$p[1,2,], lwd=2)
 lines(xx, qs$p[1,3,])
-abline(h=p[1], col="red")
+abline(h=p[1], col="red", lwd=2)
 
 ### I->R probability
 plot( xx, qs$p[2,1,], type="l", ylim=range(qs$p[2,,]), main="I -> R", ylab="Probability", xlab="Time")
 lines(xx, qs$p[2,2,], lwd=2)
 lines(xx, qs$p[2,3,])
-abline(h=p[2], col="red")
+abline(h=p[2], col="red", lwd=2)
 
 
 ### S->I rate
 plot( xx, qs$r[1,1,], type="l", ylim=range(qs$r[1,,]), main="S -> I", ylab="Rate", xlab="Time")
 lines(xx, qs$r[1,2,], lwd=2)
 lines(xx, qs$r[1,3,])
-abline(h=sckm$theta[1], col="red")
+abline(h=sckm$theta[1], col="red", lwd=2)
 
 
 ### I->R rate
 plot( xx, qs$r[2,1,], type="l", ylim=range(qs$r[2,,]), main="I -> R", ylab="Rate", xlab="Time")
 lines(xx, qs$r[2,2,], lwd=2)
 lines(xx, qs$r[2,3,])
-abline(h=sckm$theta[2], col="red")
+abline(h=sckm$theta[2], col="red", lwd=2)
 
 
 
