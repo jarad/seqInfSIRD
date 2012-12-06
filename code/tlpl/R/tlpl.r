@@ -10,12 +10,8 @@ tlpl_prior = function(X, p.a, p.b, r.a, r.b, nr)
 
     prior = list()
     prior$X = sckm$X
-    prior$prob = list()
-    prior$prob$a = p.a
-    prior$prob$b = p.b
-    prior$rate = list()
-    prior$rate$a = r.a
-    prior$rate$b = r.b
+    prior$prob = list(a=p.a, b=p.b)
+    prior$rate = list(a=r.a, b=r.b)
 
     return(prior)
 }
