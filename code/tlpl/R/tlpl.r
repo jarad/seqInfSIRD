@@ -9,7 +9,7 @@ tlpl_prior = function(X, p.a, p.b, r.a, r.b, nr)
     stopifnot(length(p.a)==nr, length(p.b)==nr, length(r.a)==nr, length(r.b)==nr)
 
     prior = list()
-    prior$X = sckm$X
+    prior$X = X
     prior$prob = list(a=p.a, b=p.b)
     prior$rate = list(a=r.a, b=r.b)
 
