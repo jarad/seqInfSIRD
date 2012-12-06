@@ -1,5 +1,5 @@
 # A convenience function to make the prior
-tlpl.prior = function(X, p.a, p.b, r.a, r.b, nr) 
+tlpl_prior = function(X, p.a, p.b, r.a, r.b, nr) 
 {
     if (length(p.a)==1) p.a = rep(p.a, nr)
     if (length(p.b)==1) p.b = rep(p.b, nr)
@@ -51,7 +51,7 @@ tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL,
 
         if (is.null(prior)) 
         {
-            prior = tlpl.prior(sckm$X, 1, 1, 1, 1, nr)
+            prior = tlpl_prior(sckm$X, 1, 1, 1, 1, nr)
         }
         np = n.particles
 
