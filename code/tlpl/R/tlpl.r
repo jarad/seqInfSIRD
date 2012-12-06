@@ -19,7 +19,21 @@ tlpl_prior = function(X, p.a, p.b, r.a, r.b, nr)
 
 
 
-
+#' Performs tau-leaped particle learning
+#'
+#' @param data a list with elements y and tau
+#' @param sckm a list with a bunch of elements
+#' @param swarm a particle swarm
+#' @param prior a prior to be used for all particles
+#' @param n.particles a number of particles
+#' @param engine use 'R' or 'C' code
+#' @param verbose level of output
+#' @return a list containing sample for states and sufficient statistics
+#' @author Jarad Niemi \email{niemi@@iastate.edu}
+#' @seealso \code{\link{tlpl_quantile}}
+#' @export tlpl
+#' @useDynLib tlpl
+#'
 tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, 
                 engine="R", verbose=0, ...)
 {

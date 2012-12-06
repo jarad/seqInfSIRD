@@ -9,6 +9,7 @@
 #' LazyLoad: \tab yes\cr
 #' Depends: stats\cr
 #' Suggests: smcUtils, testthat
+#' Collate: tlpl
 #' }
 #' 
 

@@ -5,12 +5,20 @@ Version: 0.1
 Author: Jarad Niemi
 Maintainer: Jarad Niemi <niemi@iastate.edu>
 Date: 2012-12-06
-Author: Jarad Niemi
-Maintainer: Jarad Niemi <niemi@iastate.edu>
 Description: Implements tau-leaped particle learning
-License: GPL-3 
+License: GPL-3
 URL: https://github.com/jarad/tlpl
 LazyLoad: yes
-Depends: stats
-Suggests: smcUtils, testthat
-
+Depends:
+    stats
+Suggests:
+    smcUtils,
+    testthat
+Collate:
+    'gillespie.r'
+    'Particle.r'
+    'pl.step.r'
+    'System.r'
+    'tlpl_predict.r'
+    'tlpl_quantile.r'
+    'tlpl.r'
