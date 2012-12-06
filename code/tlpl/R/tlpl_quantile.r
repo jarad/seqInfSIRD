@@ -34,12 +34,11 @@ mix.gamma.quantiles = function(a,b,probs,w=1)
 
 
 # This function will calculate the desired quantiles for tlpl output.
-tlpl_quantile = function(tlpl, probs=c(.025,.5,.975), which="xpr")
+tlpl_quantile = function(tlpl, probs=c(.025,.5,.975), which="xpr", verbose=1)
 {
     which = tolower(which)
     n = dim(tlpl$X)[3]
     s = dim(tlpl$X)[1]
-    r = dim(tlpl$hyper$prob$a)[1]
     p = length(probs)
 
     do =list()
@@ -47,23 +46,29 @@ tlpl_quantile = function(tlpl, probs=c(.025,.5,.975), which="xpr")
     do$p = grepl("p", which)
     do$r = grepl("r", which)
  
+    if (do$p || do$r) { r = dim(tlpl$hyper$prob$a)[1] }
+ 
     if (do$x) { X.quantiles = array(NA, dim=c(s,p,n)) } else { X.quantiles=NULL }
     if (do$p) { p.quantiles = array(NA, dim=c(r,p,n)) } else { p.quantiles=NULL }
     if (do$r) { r.quantiles = array(NA, dim=c(r,p,n)) } else { r.quantiles=NULL }
 
     for (i in 1:n) 
     {   
-        verbose=1
         if (verbose) cat(paste("Time point ",i,", ",round(i/n*100), "% completed.\n", sep=''))
 
-        for (j in 1:s) 
+        if (do$x) 
         {
-            if (do$x) X.quantiles[j,,i] = quantile(tlpl$X[j,,i], probs=probs)
+        	for (j in 1:s) X.quantiles[j,,i] = quantile(tlpl$X[j,,i], probs=probs)
         }
-        for (j in 1:r)
+
+        if (do$p) 
         {
-            if (do$p) p.quantiles[j,,i] = mix.beta.quantiles( tlpl$hyper$prob$a[j,,i], tlpl$hyper$prob$b[j,,i], probs)
-            if (do$r) r.quantiles[j,,i] = mix.gamma.quantiles(tlpl$hyper$rate$a[j,,i], tlpl$hyper$rate$b[j,,i], probs)
+        	for (j in 1:r) p.quantiles[j,,i] = mix.beta.quantiles( tlpl$hyper$prob$a[j,,i], tlpl$hyper$prob$b[j,,i], probs)
+        }
+        
+        if (do$r)
+        {
+        	for (j in 1:r) r.quantiles[j,,i] = mix.gamma.quantiles(tlpl$hyper$rate$a[j,,i], tlpl$hyper$rate$b[j,,i], probs)
         }
     }
 
