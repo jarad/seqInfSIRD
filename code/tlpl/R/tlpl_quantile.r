@@ -33,7 +33,15 @@ mix.gamma.quantiles = function(a,b,probs,w=1)
 }
 
 
-# This function will calculate the desired quantiles for tlpl output.
+#' This function will calculate the desired quantiles for tlpl output.
+#'
+#' @param tlpl output from tlpl
+#' @param probs numeric vector of probabilities with values in [0,1]. 
+#' @param which determines which variables quantiles should be produced for
+#' @param verbose level of verbosity while running
+#' @seealso tlpl
+#' @export tlpl_quantile
+#'
 tlpl_quantile = function(tlpl, probs=c(.025,.5,.975), which="xpr", verbose=1)
 {
     which = tolower(which)

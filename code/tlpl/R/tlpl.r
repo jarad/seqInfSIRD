@@ -28,6 +28,7 @@ tlpl_prior = function(X, p.a, p.b, r.a, r.b, nr)
 #' @param n.particles a number of particles
 #' @param engine use 'R' or 'C' code
 #' @param verbose level of output
+#' @param ... additional parameters for resampling
 #' @return a list containing sample for states and sufficient statistics
 #' @author Jarad Niemi \email{niemi@@iastate.edu}
 #' @seealso \code{\link{tlpl_quantile}}
@@ -35,7 +36,7 @@ tlpl_prior = function(X, p.a, p.b, r.a, r.b, nr)
 #' @useDynLib tlpl
 #'
 tlpl = function(data, sckm, swarm=NULL, prior=NULL, n.particles=NULL, 
-                engine="R", verbose=0, ...)
+                engine="C", verbose=0, ...)
 {
     nr = sckm$r
     ns = sckm$s 
