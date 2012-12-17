@@ -1,3 +1,0 @@
-export(tlpl)
-export(tlpl_quantile)
-useDynLib(tlpl)
