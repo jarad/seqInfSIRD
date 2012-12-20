@@ -1,7 +1,5 @@
 
 OBJECTS = sims.RData \
-          BS.csv \
-          BSq.csv \
           PL.csv \
           PLq.csv \
           SV.csv \
