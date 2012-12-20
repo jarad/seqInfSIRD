@@ -1,9 +1,10 @@
+SIM_OBJECTS = sims.RData
 
-OBJECTS = sims.RData \
-          PL.RData \
-          LW90.RData \
-          LW95.RData \
-          LW99.RData \
+ANALYSIS_OBJECTS = PL.RData LW90.RData LW95.RData LW99.RData
+
+QUANTILE_OBJECTS = PLq.RData LW90q.RData LW95q.RData LW99q.RData
+
+OBJECTS = $(SIM_OBJECTS) $(ANALYSIS_OBJECTS) $(QUANTILE_OBJECTS)
 
 RCMD = R CMD BATCH --vanilla
 
@@ -11,12 +12,14 @@ RCMD = R CMD BATCH --vanilla
 
 all: $(OBJECTS) 
 
-%.csv : %.R sims.csv
-	$(RCMD) $<
-	git pull origin master
-	git add $@
-	-git commit -m "make: updated $@"
-	-git push
+
+sims: $(SIM_OBJECTS)
+
+analysis: $(ANALYSIS_OBJECTS)
+
+quantiles: $(QUANTILE_OBJECTS)
+
+
 
 %.RData: %.R
 	$(RCMD) $<
