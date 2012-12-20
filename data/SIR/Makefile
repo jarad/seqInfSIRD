@@ -23,15 +23,15 @@ all: $(OBJECTS)
 	$(RCMD) $<
 	git pull origin master
 	git add $@
-	git commit -m "make: updated $@"
-	git push
+	-git commit -m "make: updated $@"
+	-git push
 
 SIR-sims.csv: SIR-sims.R
 	$(RCMD) SIR-sims.R
 	git pull origin master
 	git add SIR-sims.csv
-	git commit -m "make: updated SIR-sims.csv"
-	git push
+	-git commit -m "make: updated SIR-sims.csv"
+	-git push
 
 clean:
 	rm *.Rout
