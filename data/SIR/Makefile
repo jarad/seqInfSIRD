@@ -1,15 +1,9 @@
 
 OBJECTS = sims.RData \
           PL.RData \
-          PLq.RData \
-          SV.csv \
-          SVq.csv \
           LW90.RData \
-          LW90q.csv \
           LW95.RData \
-          LW95q.csv \
           LW99.RData \
-          LW99q.csv
 
 RCMD = R CMD BATCH --vanilla
 

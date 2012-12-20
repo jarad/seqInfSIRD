@@ -16,10 +16,9 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
 
   # Set up data structures
   n = nrow(y)
-  weights = matrix(1/n.particles, n.particles, n+1)
-  lweights = log(weights)
-  X = array(NA, dim=c(sckm$s, n.particles, n+1))
-  theta = array(NA, dim=c(2*sckm$r, n.particles, n+1))
+  weights = lweights = matrix(NA, n.particles, n+1)
+  X       = array(NA, dim=c(sckm$s, n.particles, n+1))
+  theta   = array(NA, dim=c(2*sckm$r, n.particles, n+1))
 
   ## Initialize
   X[,,1] = sckm$X
@@ -28,6 +27,8 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
     theta[i,,1]        = logit(rbeta( n.particles, prior$prob$a[i], prior$prob$b[i]))
     theta[i+sckm$r,,1] = log(  rgamma(n.particles, prior$rate$a[i], prior$rate$b[i]))
   }
+  weights[,1] = 1/n.particles
+  lweights[,1] = log(weights[,1])
  
   # Variables used in algorithm
   w      = numeric(n.particles)
@@ -57,6 +58,15 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
 
     # Resample particles
     w = renormalize.weights(w, log=T)
+
+    # If all particles have zero possibility 
+    if (all(is.nan(w))) 
+    {
+        return(list(weights=weights, X=X, 
+                    p = expit(theta[p.i,,]), 
+                    r = exp(  theta[r.i,,])))
+    }
+
     kk = resample(w,...)$indices
 
     # Propagate
@@ -75,8 +85,8 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
   }
 
   return(list(weights=weights, X=X, 
-              p = expit(theta[1:sckm$r,,]), 
-              r = exp(theta[sckm$r + (1:sckm$r),,])))
+              p = expit(theta[p.i,,]), 
+              r = exp(  theta[r.i,,])))
 }
 
 
