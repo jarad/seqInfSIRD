@@ -1,0 +1,2 @@
+n.particles = 10
+
