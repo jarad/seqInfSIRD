@@ -1,7 +1,7 @@
 
 OBJECTS = sims.RData \
-          PL.csv \
-          PLq.csv \
+          PL.RData \
+          PLq.RData \
           SV.csv \
           SVq.csv \
           LW90.csv \
@@ -25,10 +25,10 @@ all: $(OBJECTS)
 	-git push
 
 %.RData: %.R
-	$(RCMD) sims.R
+	$(RCMD) $<
 	git pull origin master
-	git add sims.RData
-	-git commit -m "make: updated sims.RData"
+	git add $@
+	-git commit -m "make: updated $@"
 	-git push
 
 clean:
