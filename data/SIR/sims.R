@@ -38,7 +38,7 @@ for (i in 1:n.sims)
   truth[[i]] = data.frame(time=0:50, 
                   S=tl$X[,1], I=tl$X[,2], R=tl$X[,3],
                   StoI=c(tl$nr[,1], NA), ItoR=c(tl$nr[,2], NA))
-  data[[i]] = data.frame(StoI = y[,1], ItoR = y[,2])
+  data[[i]] = y
 }
 
 rm(i,tl,y,p)
