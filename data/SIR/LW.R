@@ -14,4 +14,5 @@ for (i in 1:n.sims)
 
 save(lw, file=paste("LW", round(delta*100), ".RData", sep=""))
 
+q("no")
 
