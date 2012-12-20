@@ -21,8 +21,7 @@ n = 50
 prior = list(prob=list(a=rep(1,sckm$r), b=rep(1,sckm$r)),
              rate=list(a=c(1,.5)*10, b=rep(10,sckm$r)))
 
-sim = list()
-param = list()
+truth = param = data = list()
 
 for (i in 1:n.sims)
 {
@@ -36,10 +35,10 @@ for (i in 1:n.sims)
   
   param[[i]] = list(rate=sckm$theta, prob=p)
 
-  sim[[i]] = data.frame(time=0:50, 
+  truth[[i]] = data.frame(time=0:50, 
                   S=tl$X[,1], I=tl$X[,2], R=tl$X[,3],
-                  StoI=c(tl$nr[,1], NA), ItoR=c(tl$nr[,2], NA),
-                  yStoI=c(y[,1], NA), yItoR=c(y[,2], NA))
+                  StoI=c(tl$nr[,1], NA), ItoR=c(tl$nr[,2], NA))
+  data[[i]] = data.frame(StoI = y[,1], ItoR = y[,2])
 }
 
 rm(i,tl,y,p)
