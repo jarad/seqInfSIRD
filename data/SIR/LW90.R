@@ -1,5 +1,4 @@
-write.csv(matrix(1,2,2), "SIR-LW90.csv")
+delta = 0.90
 
-
-q("no")
+source("LW.R")
 
