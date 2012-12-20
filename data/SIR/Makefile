@@ -1,5 +1,5 @@
 
-OBJECTS = SIR-sims.csv \
+OBJECTS = SIR-sims.RData \
           SIR-BS.csv \
           SIR-BSq.csv \
           SIR-PL.csv \
@@ -26,11 +26,11 @@ all: $(OBJECTS)
 	-git commit -m "make: updated $@"
 	-git push
 
-SIR-sims.csv: SIR-sims.R
+%.RData: %.R
 	$(RCMD) SIR-sims.R
 	git pull origin master
-	git add SIR-sims.csv
-	-git commit -m "make: updated SIR-sims.csv"
+	git add SIR-sims.RData
+	-git commit -m "make: updated SIR-sims.RData"
 	-git push
 
 clean:
