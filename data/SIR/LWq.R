@@ -36,7 +36,7 @@ for (i in 1:length(lw))
                   r.quantiles = rq)
 }
 
-save(lwq, file=paste("LWq", round(delta*100), ".RData", sep=""))
+save(lwq, file=paste("LW", round(delta*100), "q.RData", sep=""))
 
-#q("no")
+q("no")
 
