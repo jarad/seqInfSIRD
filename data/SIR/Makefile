@@ -2,10 +2,16 @@ SIM_OBJECTS = sims.RData
 
 ANALYSIS_OBJECTS = PL.RData LW90.RData LW95.RData LW99.RData
 
-QUANTILE_OBJECTS = PLq.RData LW90q.RData LW95q.RData LW99q.RData
+QUANT_OBJECTS = PLq.RData LW90q.RData LW95q.RData LW99q.RData
 
 
-OBJECTS = $(SIM_OBJECTS) $(ANALYSIS_OBJECTS) $(QUANTILE_OBJECTS)
+
+FILTER_SOURCE = filter-settings.R sims.RData
+
+QUANT_SOURCE = quantile-settings.R 
+
+
+OBJECTS = $(SIM_OBJECTS) $(ANALYSIS_OBJECTS) $(QUANT_OBJECTS)
 
 
 RCMD = R CMD BATCH --vanilla
@@ -19,16 +25,41 @@ sims: $(SIM_OBJECTS)
 
 analysis: $(ANALYSIS_OBJECTS)
 
-quantiles: $(QUANTILE_OBJECTS)
+quantiles: $(QUANT_OBJECTS)
 
 ##################################################################
 
-%.RData: %.R
+
+sims.RData: sims.R
 	$(RCMD) $<
-#	git pull origin master
-#	git add $@
-#	-git commit -m "make: updated $@"
-#	-git push
+
+
+PL.RData: PL.R $(FILTER_SOURCE)
+	$(RCMD) $<
+
+PLq.RData: PLq.R quantile-settings.R PL.RData
+	$(RCMD) $<
+
+
+LW90.RData: LW90.R LW.R $(FILTER_SOURCE)
+	$(RCMD) $<
+
+LW95.RData: LW95.R LW.R $(FILTER_SOURCE)
+	$(RCMD) $<
+
+LW99.RData: LW99.R LW.R $(FILTER_SOURCE)
+	$(RCMD) $<
+
+
+LW90q.RData: LW90q.R LWq.R quantile-settings.R LW90.RData
+	$(RCMD) $<
+
+LW95q.RData: LW95q.R LWq.R quantile-settings.R LW95.RData
+	$(RCMD) $<
+
+LW99q.RData: LW99q.R LWq.R quantile-settings.R LW95.RData
+	$(RCMD) $<
+
 
 clean:
 	rm *.Rout
