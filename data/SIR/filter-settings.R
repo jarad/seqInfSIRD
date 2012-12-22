@@ -1,3 +1,3 @@
-n.particles = 1000
+n.particles = 100
 resampling.function = "multinomial"
 

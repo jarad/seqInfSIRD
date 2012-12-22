@@ -14,7 +14,7 @@ N = sum(sckm$X)
 sckm$lmult = log(c(1/N,1))
 
 ## Simulate data
-n.sims = 50
+n.sims = 10
 set.seed(20121218)
 n = 50
 
