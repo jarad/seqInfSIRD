@@ -8,7 +8,8 @@ lw = list()
 
 for (i in 1:n.sims)
 {
-  lw[[i]] = liu_west(data[[i]], sckm, n.particles=n.particles, delta=delta, prior=prior,
+  d = data.matrix(data[data$sim==i & data$time != 0,c("StoI","ItoR")])
+  lw[[i]] = liu_west(d, sckm, n.particles=n.particles, delta=delta, prior=prior,
                      method=resampling.function)
 }
 

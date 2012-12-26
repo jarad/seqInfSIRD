@@ -8,7 +8,7 @@ pl = list()
 for (i in 1:n.sims)
 {
   cat("Simulation",i,"(",round(i/n.sims*100),"%)\n")
-  d = list(y=t(data[[i]]), tau=1)
+  d = list(y=t(data[data$sim==i & data$time != 0,c("StoI","ItoR")]), tau=1)
   prior$X = sckm$X
   pl[[i]] = tlpl(d, sckm, prior=prior, n.particles=n.particles, verbose=0)
 }

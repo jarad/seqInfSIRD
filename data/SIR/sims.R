@@ -33,13 +33,20 @@ for (i in 1:n.sims)
   p = rbeta(sckm$r, prior$prob$a, prior$prob$b)
   y = t(rbind(rbinom(n, tl$nr[,1], p[1]), rbinom(n, tl$nr[,2], p[2])))
   
-  param[[i]] = list(rate=sckm$theta, prob=p)
+  param[[i]] = data.frame(sim=i, rStoI = sckm$theta[1], rItoR = sckm$theta[2], 
+                                 pStoI = p[1]         , pItoR = p[2])
 
-  truth[[i]] = data.frame(time=0:50, 
+  truth[[i]] = data.frame(sim=i, time=0:50, 
                   S=tl$X[,1], I=tl$X[,2], R=tl$X[,3],
-                  StoI=c(tl$nr[,1], NA), ItoR=c(tl$nr[,2], NA))
-  data[[i]] = y
+                  StoI=c(NA, tl$nr[,1]), ItoR=c(NA, tl$nr[,2]))
+  data[[i]] = data.frame(sim=i, time=0:50, StoI=c(NA, y[,1]), ItoR=c(NA, y[,2]))
 }
+
+# Turn lists into data frames
+param = do.call("rbind", param)
+truth = do.call("rbind", truth)
+data  = do.call("rbind", data)
+
 
 rm(i,tl,y,p)
 save.image("sims.RData")
