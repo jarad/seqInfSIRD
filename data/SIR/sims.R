@@ -1,4 +1,5 @@
 library(tlpl)
+library(plyr)
 
 # Generate data
 ## Set up SIR model
@@ -21,34 +22,24 @@ n = 50
 prior = list(prob=list(a=rep(1,sckm$r), b=rep(1,sckm$r)),
              rate=list(a=c(1,.5)*10, b=rep(10,sckm$r)))
 
-truth = param = data = list()
-
-for (i in 1:n.sims)
+# A function to produce a single simulation
+sim.f = function()
 {
-  sckm$theta = rgamma(sckm$r, prior$rate$a, prior$rate$b)
-  ### True states and transitions
-  tl = tau_leap(sckm, n)
+  rates = rgamma(sckm$r, prior$rate$a, prior$rate$b)
+  sckm$theta = rates
+  out = tau_leap(sckm, n)
+  out$rates = rates
 
-  ### Sample transitions
-  p = rbeta(sckm$r, prior$prob$a, prior$prob$b)
-  y = t(rbind(rbinom(n, tl$nr[,1], p[1]), rbinom(n, tl$nr[,2], p[2])))
-  
-  param[[i]] = data.frame(sim=i, rStoI = sckm$theta[1], rItoR = sckm$theta[2], 
-                                 pStoI = p[1]         , pItoR = p[2])
+  out$probs = rbeta( sckm$r, prior$prob$a, prior$prob$b)
+  out$y = t(rbind(rbinom(n, out$nr[,1], out$p[1]), 
+                  rbinom(n, out$nr[,2], out$p[2])))
 
-  truth[[i]] = data.frame(sim=i, time=0:50, 
-                  S=tl$X[,1], I=tl$X[,2], R=tl$X[,3],
-                  StoI=c(NA, tl$nr[,1]), ItoR=c(NA, tl$nr[,2]))
-  data[[i]] = data.frame(sim=i, time=0:50, StoI=c(NA, y[,1]), ItoR=c(NA, y[,2]))
+  return(out)
 }
 
-# Turn lists into data frames
-param = do.call("rbind", param)
-truth = do.call("rbind", truth)
-data  = do.call("rbind", data)
+# Apply the function n.sims times and return as a list
+sims = rlply(n.sims, sim.f, .progress="time")
 
-
-rm(i,tl,y,p)
 save.image("sims.RData")
 
 q("no")
