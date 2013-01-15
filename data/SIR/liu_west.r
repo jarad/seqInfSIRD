@@ -57,7 +57,7 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
     }
 
     # Resample particles
-    w = renormalize.weights(w, log=T)
+    w = renormalize(w, log=T)
 
     # If all particles have zero possibility 
     if (all(is.nan(w))) 
@@ -81,7 +81,7 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
                             dbinom(y[i,], exp.nr[,kk[j]], expit(    m[p.i,kk[j]   ]), log=T))
 
     }
-    weights[,i+1] = renormalize.weights(lweights[,i+1], log=T)
+    weights[,i+1] = renormalize(lweights[,i+1], log=T)
   }
 
   return(list(weights=weights, X=X, 
