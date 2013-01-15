@@ -59,7 +59,7 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
     # Resample particles
     w = renormalize(w, log=T)
 
-    # If all particles have zero possibility 
+    # If all particles have zero probability 
     if (all(is.nan(w))) 
     {
         return(list(weights=weights, X=X, 
@@ -77,7 +77,7 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
       sckm$X = X[,kk[j],i]
       tmp = tau_leap(sckm)
       X[,j,i+1] = tmp$X[2,]
-      lweights[j,i+1] = sum(dbinom(y[i,], tmp$nr,        expit(theta[p.i,j,   i+1]), log=T)-
+      lweights[j,i+1] = sum(dbinom(y[i,], tmp$nr,         expit(theta[p.i,j,   i+1]), log=T)-
                             dbinom(y[i,], exp.nr[,kk[j]], expit(    m[p.i,kk[j]   ]), log=T))
 
     }
