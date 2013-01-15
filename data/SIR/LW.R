@@ -14,5 +14,5 @@ lw = llply(lapply(sims, function(x) return(x$y)), liu_west,
 
 save(lw, file=paste("LW", round(delta*100), ".RData", sep=""))
 
-#q("no")
+q("no")
 
