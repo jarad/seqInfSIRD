@@ -68,7 +68,7 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
                     r = exp(  theta[r.i,,])))
     }
 
-    kk = resample(w,...)$indices
+    kk = resample(w, log=F, normalized=T,...)$indices
 
     # Propagate
     for (j in 1:n.particles)
