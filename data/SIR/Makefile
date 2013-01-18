@@ -33,6 +33,9 @@ quantiles: $(QUANT_OBJECTS)
 sims.RData: sims.R
 	$(RCMD) $<
 
+sims.pdf: sims-plot.R sims.RData
+	$(RCMD) $<
+
 
 PL.RData: PL.R $(FILTER_SOURCE)
 	$(RCMD) $<
