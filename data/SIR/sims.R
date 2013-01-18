@@ -15,7 +15,7 @@ N = sum(sckm$X)
 sckm$lmult = log(c(1/N,1))
 
 ## Simulate data
-n.sims = 10
+n.sims = 1000
 set.seed(20121218)
 n = 50
 
@@ -25,23 +25,28 @@ prior = list(prob=list(a=rep(1,sckm$r), b=rep(1,sckm$r)),
 # A function to produce a single simulation
 sim.f = function()
 {
-  rates = rgamma(sckm$r, prior$rate$a, prior$rate$b)
-  sckm$theta = rates
-  out = tau_leap(sckm, n)
-  out$rates = rates
+  try({
+    rates = rgamma(sckm$r, prior$rate$a, prior$rate$b)
+    sckm$theta = rates
+    out = tau_leap(sckm, n)
+    out$rates = rates
 
-  out$probs = rbeta( sckm$r, prior$prob$a, prior$prob$b)
-  out$y = t(rbind(rbinom(n, out$nr[,1], out$p[1]), 
-                  rbinom(n, out$nr[,2], out$p[2])))
+    out$probs = rbeta( sckm$r, prior$prob$a, prior$prob$b)
+    out$y = t(rbind(rbinom(n, out$nr[,1], out$p[1]), 
+                    rbinom(n, out$nr[,2], out$p[2])))
+    }, silent=T)
 
-  return(out)
+  if (exists("out")) return(out) else { return(NA) }
 }
 
 # Apply the function n.sims times and return as a list
 sims = rlply(n.sims, sim.f, .progress="time")
 
+# If a simulation had an error, resimulate
+for (i in 1:n.sims)
+{
+  while(!is.list(sims[[i]])) sims[[i]] = sim.f()
+}
+
 save.image("sims.RData")
-
-q("no")
-
 
