@@ -23,5 +23,4 @@ l_ply(sims, sir_plot)
 dev.off()
 
 
-q()
 
