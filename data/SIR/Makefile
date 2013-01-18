@@ -1,4 +1,4 @@
-SIM_OBJECTS = sims.RData
+SIM_OBJECTS = sims.RData sims.pdf
 
 ANALYSIS_OBJECTS = PL.RData LW90.RData LW95.RData LW99.RData
 
@@ -54,13 +54,13 @@ LW99.RData: LW99.R LW.R $(FILTER_SOURCE)
 	$(RCMD) $<
 
 
-LW90q.RData: LW90q.R LWq.R quantile-settings.R LW90.RData
+LW90q.RData: LW90q.R LWq.R $(QUANT_SOURCE) LW90.RData
 	$(RCMD) $<
 
-LW95q.RData: LW95q.R LWq.R quantile-settings.R LW95.RData
+LW95q.RData: LW95q.R LWq.R $(QUANT_SOURCE) LW95.RData
 	$(RCMD) $<
 
-LW99q.RData: LW99q.R LWq.R quantile-settings.R LW95.RData
+LW99q.RData: LW99q.R LWq.R $(QUANT_SOURCE) LW95.RData
 	$(RCMD) $<
 
 
