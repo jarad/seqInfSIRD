@@ -1,3 +1,3 @@
-n.particles = 1000
+n.particles = 10000
 resampling.function = "stratified"
 

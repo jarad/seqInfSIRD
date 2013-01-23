@@ -60,6 +60,8 @@ plotq = function(q)
       lines(0:n, plq[[j]]$p.quantiles[i,5,]) 
     }
     plot.empty()
+
+    readline("")
   }
 
 # LW99
