@@ -65,7 +65,7 @@ plotq = function(q, sim)
 # LW99
 
 load("LW99q.RData")
-  for (j in 1:n.sims) { 
+  for (j in 3:n.sims) { 
     n.last = which(rowSums(sims[[j]]$nr)==0)[1]
     if (is.na(n.last)) n.last=n
  
