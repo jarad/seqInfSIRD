@@ -6,17 +6,15 @@ load("sims.RData")
 source("quantile-settings.R")
 
 load("PLq.RData")
-load("LW90q.RData"); lw90q = lwq
-load("LW95q.RData"); lw95q = lwq
-load("LW99q.RData"); lw99q = lwq
 
 
 # Does PL work?
 plot.empty = function() plot(0,0,type="n", frame=F, axes=F, xlab="", ylab="")
 
 
-plotq = function(q)
+plotq = function(q, sim)
 {
+  
 }
 
 
@@ -65,6 +63,7 @@ plotq = function(q)
   }
 
 # LW99
+
 load("LW99q.RData")
   for (j in 1:n.sims) { 
     n.last = which(rowSums(sims[[j]]$nr)==0)[1]
@@ -102,6 +101,8 @@ load("LW99q.RData")
       lines(0:n, lwq[[j]]$p.quantiles[i,5,]) 
     }
     plot.empty()
+
+    readline("")
   }
 
 

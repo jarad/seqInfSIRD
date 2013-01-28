@@ -19,16 +19,16 @@ my.wtd.quantile = function(x,...)
 {
   if (all(is.na(x)) | length(x)==0) return(NA)
 
-  wtd.quantile(x,...)
+  wtd.quantile(x,normwt=T,...)
 }
 
 for (i in 1:length(lw))
 {
   for (j in 1:n)
   {
-    Xq[,,j] = apply(lw[[i]]$X[,,j], 1, my.wtd.quantile, probs=probs, weights=lw[[i]]$weights[,j])
-    pq[,,j] = apply(lw[[i]]$p[,,j], 1, my.wtd.quantile, probs=probs, weights=lw[[i]]$weights[,j])
-    rq[,,j] = apply(lw[[i]]$r[,,j], 1, my.wtd.quantile, probs=probs, weights=lw[[i]]$weights[,j])
+    Xq[,,j] = t(apply(lw[[i]]$X[,,j], 1, my.wtd.quantile, probs=probs, weights=lw[[i]]$weights[,j]))
+    pq[,,j] = t(apply(lw[[i]]$p[,,j], 1, my.wtd.quantile, probs=probs, weights=lw[[i]]$weights[,j]))
+    rq[,,j] = t(apply(lw[[i]]$r[,,j], 1, my.wtd.quantile, probs=probs, weights=lw[[i]]$weights[,j]))
   }    
 
   lwq[[i]] = list(X.quantiles = Xq, 
