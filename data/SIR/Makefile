@@ -8,6 +8,8 @@ QUANT_OBJECTS = PLq.RData LW90q.RData LW95q.RData LW99q.RData
 
 FILTER_SOURCE = filter-settings.R sims.RData
 
+LW_SOURCE = $(FILTER_SOURCE) liu_west.r
+
 QUANT_SOURCE = quantile-settings.R 
 
 
@@ -44,13 +46,13 @@ PLq.RData: PLq.R quantile-settings.R PL.RData
 	$(RCMD) $<
 
 
-LW90.RData: LW90.R LW.R $(FILTER_SOURCE)
+LW90.RData: LW90.R LW.R $(LW_SOURCE)
 	$(RCMD) $<
 
-LW95.RData: LW95.R LW.R $(FILTER_SOURCE)
+LW95.RData: LW95.R LW.R $(LW_SOURCE)
 	$(RCMD) $<
 
-LW99.RData: LW99.R LW.R $(FILTER_SOURCE)
+LW99.RData: LW99.R LW.R $(LW_SOURCE)
 	$(RCMD) $<
 
 
