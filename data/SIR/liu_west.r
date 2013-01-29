@@ -74,7 +74,9 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
                     r = exp(  theta[r.i,,])))
     }
 
-    kk = resample(w, log=F, normalized=T,...)$indices
+    
+    tmp = resample(w, log=F, normalized=T,...)
+    kk = tmp$indices
 
     # Propagate
     for (j in 1:n.particles)
@@ -84,9 +86,9 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
       sckm$X = X[,kk[j],i]
       tmp = tau_leap(sckm)
       X[,j,i+1] = tmp$X[2,]
-      lweights[j,i+1] = sum(dbinom(y[i,], tmp$nr,         expit(theta[p.i,j,   i+1]), log=T)-
+      lweights[j,i+1] = log(tmp$weights)+ # In case particles were not resampled
+                        sum(dbinom(y[i,], tmp$nr,         expit(theta[p.i,j,   i+1]), log=T)-
                             dbinom(y[i,], exp.nr[,kk[j]], expit(    m[p.i,kk[j]   ]), log=T))
-
     }
     weights[,i+1] = renormalize(lweights[,i+1], log=T)
   }
