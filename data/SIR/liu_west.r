@@ -45,12 +45,23 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
     cw = cov.wt(t(theta[,,i]), weights[,i])
     mn = cw$center
     cv = cw$cov
-    ch = t(chol(cv, pivot=TRUE))
+    
+    ch = tryCatch(t(chol(cv, pivot=FALSE)),
+                  warning = function(w) { print(w) },
+                  error   = function(e) { print(e); NULL })
+    # If cholesky fails, use APF but do not jitter particles
+
 
     # Shrink each particle toward grand mean
-    for (j in 1:n.particles)
+    if (is.null(ch)) # Cholesky failed
     {
-      m[,j] = a*theta[,j,i] + (1-a)*mn
+      m = theta[,,i]
+    } else 
+    {                # Cholesky succeeded
+      for (j in 1:n.particles)
+      {
+        m[,j] = a*theta[,j,i] + (1-a)*mn
+      }
     }
 
     # Calculate APF weights
@@ -75,20 +86,29 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
     }
 
     
-    tmp = resample(w, log=F, normalized=T,...)
-    kk = tmp$indices
+    res = resample(w, log=F, normalized=T,...)
+    kk = res$indices
 
     # Propagate
     for (j in 1:n.particles)
     {
-      theta[,j,i+1] = m[,kk[j]] + h*ch%*%rnorm(2*sckm$r)
+      k = kk[j]
+
+      if (is.null(ch))
+      {
+        theta[,j,i+1] = m[,k] # = theta[,k,i]
+      } else 
+      {
+        theta[,j,i+1] = m[,k] + h*ch%*%rnorm(2*sckm$r)
+      }
+
       sckm$theta = exp(theta[r.i,j,i+1])
-      sckm$X = X[,kk[j],i]
+      sckm$X = X[,k,i]
       tmp = tau_leap(sckm)
       X[,j,i+1] = tmp$X[2,]
-      lweights[j,i+1] = log(tmp$weights)+ # In case particles were not resampled
-                        sum(dbinom(y[i,], tmp$nr,         expit(theta[p.i,j,   i+1]), log=T)-
-                            dbinom(y[i,], exp.nr[,kk[j]], expit(    m[p.i,kk[j]   ]), log=T))
+      lweights[j,i+1] = log(res$weights[k])+ # In case particles were not resampled
+                        sum(dbinom(y[i,], tmp$nr,     expit(theta[p.i,j,i+1]), log=T)-
+                            dbinom(y[i,], exp.nr[,k], expit(    m[p.i,k    ]), log=T))
     }
     weights[,i+1] = renormalize(lweights[,i+1], log=T)
   }
