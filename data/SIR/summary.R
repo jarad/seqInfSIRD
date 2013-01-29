@@ -39,7 +39,7 @@ plotq = function(q, sim)
 
     for (i in 1:sckm$r)
     {
-      plot(0,0,, type='n', main=rxns[i], ylim=range(plq[[j]]$r.quantiles[i,,]), xlim=c(0,n.last),
+      plot(0,0,, type='n', main=rxns[i], ylim=c(0,2), xlim=c(0,n.last),
            xlab="Time", ylab="")
       abline(h=sims[[j]]$rates[i], col="red")
       lines(0:n, plq[[j]]$r.quantiles[i,1,]) 
@@ -50,7 +50,7 @@ plotq = function(q, sim)
 
     for (i in 1:sckm$r)
     {
-      plot(0,0,, type='n', main=rxns[i], ylim=range(plq[[j]]$p.quantiles[i,,]), xlim=c(0,n.last),
+      plot(0,0,, type='n', main=rxns[i], ylim=c(0,1), xlim=c(0,n.last),
            xlab="Time", ylab="")
       abline(h=sims[[j]]$probs[i], col="red")
       lines(0:n, plq[[j]]$p.quantiles[i,1,]) 
@@ -82,7 +82,7 @@ load("LW99q.RData")
 
     for (i in 1:sckm$r)
     {
-      plot(0,0,, type='n', main=rxns[i], ylim=range(lwq[[j]]$r.quantiles[i,,]), xlim=c(0,n.last),
+      plot(0,0,, type='n', main=rxns[i], ylim=c(0,2), xlim=c(0,n.last),
            xlab="Time", ylab="")
       abline(h=sims[[j]]$rates[i], col="red")
       lines(0:n, lwq[[j]]$r.quantiles[i,1,]) 
@@ -93,7 +93,7 @@ load("LW99q.RData")
 
     for (i in 1:sckm$r)
     {
-      plot(0,0,, type='n', main=rxns[i], ylim=range(lwq[[j]]$p.quantiles[i,,]), xlim=c(0,n.last),
+      plot(0,0,, type='n', main=rxns[i], ylim=c(0,1), xlim=c(0,n.last),
            xlab="Time", ylab="")
       abline(h=sims[[j]]$probs[i], col="red")
       lines(0:n, lwq[[j]]$p.quantiles[i,1,]) 

@@ -38,10 +38,16 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
 
   for (i in 1:n)
   {
-    # Perform fixed parameter jittering
-    mn = apply(theta[,,i], 1, mean)
-    cv = cov(t(theta[,,i]))
+    # Calculate sample mean and covariance of weighted particles
+    #mn = apply(theta[,,i], 1, wtd.mean, normwt=T, weights=weights[,i])
+    #cv = cov(t(theta[,,i]))
+
+    cw = cov.wt(t(theta[,,i]), weights[,i])
+    mn = cw$center
+    cv = cw$cov
     ch = t(chol(cv, pivot=TRUE))
+
+    # Shrink each particle toward grand mean
     for (j in 1:n.particles)
     {
       m[,j] = a*theta[,j,i] + (1-a)*mn
