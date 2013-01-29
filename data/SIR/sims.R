@@ -13,6 +13,8 @@ sckm$stoich = t(sckm$Post-sckm$Pre)
 sckm$X = c(16000,10,0)
 N = sum(sckm$X)
 sckm$lmult = log(c(1/N,1))
+sckm$states = c("S","I","R")
+sckm$rxns = c("S->I","I->R")
 
 ## Simulate data
 n.sims = 10
