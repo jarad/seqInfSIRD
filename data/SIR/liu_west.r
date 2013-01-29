@@ -79,7 +79,7 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
     # If all particles have zero probability 
     if (all(is.nan(w))) 
     {
-        warning("All particles have zero probability. Aborting run.")
+        warning(paste("All particles have zero probability at time ",i,". Aborting run.",sep=""))
         return(list(weights=weights, X=X, 
                     p = expit(theta[p.i,,]), 
                     r = exp(  theta[r.i,,])))
