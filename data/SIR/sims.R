@@ -42,7 +42,8 @@ sim.f = function()
 }
 
 # Apply the function n.sims times and return as a list
-sims = rlply(n.sims, sim.f, .progress="time")
+sims = rlply(n.sims, sim.f, 
+             .progress = progress_text(style=ifelse(interactive(), 3, 1)))
 
 # If a simulation had an error, resimulate
 for (i in 1:n.sims)
