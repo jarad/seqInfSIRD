@@ -24,11 +24,23 @@ comp = c(states, paste("p:",rxns), paste("r:",rxns))
 
 nn = c(length(plq), ns+2*nr, n+1, N.METHODS)
 
+## Convert to data frames for saving
+library(reshape2)
+array.to.df = function(arr) 
+{
+  df = melt(arr, varnames=c("parameter","time","method"))
+  df$parameter = as.factor(comp[df$parameter])
+  df$time      = df$time-1
+  df$method    = method[df$method]
+  return(df)
+}
+
+
+#########################################################
+
+
+
 # MSE
-
-
-
-
 which.md = which(probs==0.5)
 SE = array(NA, dim=nn)
 for (i in 1:nn[1])
@@ -60,45 +72,98 @@ for (i in 1:nn[1])
 
 MSE = apply(SE, 2:4, mean, na.rm=T)
 
-for (i in 1:nn[2])
+
+# MAD
+which.md = which(probs==0.5)
+AD = array(NA, dim=nn)
+for (i in 1:nn[1])
 {
-  plot(0:n, MSE[i,,1], type="l", ylim=range(MSE[i,,], na.rm=T), main=comp[i])
-  for (j in 2:4) lines(0:n, MSE[i,,j], col=j, lty=j)
-  legend("topright",method,col=1:4, lty=1:4)
-  readline("")
+  for (j in 1:sckm$s)
+  {
+    AD[i,j,,1] = abs(sims[[i]]$X[,j] - plq  [[i]]$X.quantiles[j,which.md,])
+    AD[i,j,,2] = abs(sims[[i]]$X[,j] - lw90q[[i]]$X.quantiles[j,which.md,])
+    AD[i,j,,3] = abs(sims[[i]]$X[,j] - lw95q[[i]]$X.quantiles[j,which.md,])
+    AD[i,j,,4] = abs(sims[[i]]$X[,j] - lw99q[[i]]$X.quantiles[j,which.md,])
+  }
+  for (j in 1:sckm$r)
+  {
+    k = sckm$s + j
+    AD[i,k,,1] = abs(sims[[i]]$probs[j] - plq  [[i]]$p.quantiles[j,which.md,])
+    AD[i,k,,2] = abs(sims[[i]]$probs[j] - lw90q[[i]]$p.quantiles[j,which.md,])
+    AD[i,k,,3] = abs(sims[[i]]$probs[j] - lw95q[[i]]$p.quantiles[j,which.md,])
+    AD[i,k,,4] = abs(sims[[i]]$probs[j] - lw99q[[i]]$p.quantiles[j,which.md,])
+  }
+  for (j in 1:sckm$r)
+  {
+    k = sckm$s + sckm$r + j
+    AD[i,k,,1] = abs(sims[[i]]$rates[j] - plq  [[i]]$r.quantiles[j,which.md,])
+    AD[i,k,,2] = abs(sims[[i]]$rates[j] - lw90q[[i]]$r.quantiles[j,which.md,])
+    AD[i,k,,3] = abs(sims[[i]]$rates[j] - lw95q[[i]]$r.quantiles[j,which.md,])
+    AD[i,k,,4] = abs(sims[[i]]$rates[j] - lw99q[[i]]$r.quantiles[j,which.md,])
+  }
 }
+
+MAD = apply(AD, 2:4, mean, na.rm=T)
+
+
+
+# MAPE
+which.md = which(probs==0.5)
+APE = array(NA, dim=nn)
+for (i in 1:nn[1])
+{
+  for (j in 1:sckm$s)
+  {
+    APE[i,j,,] = AD[i,j,,]/sims[[i]]$X[,j]
+  }
+  for (j in 1:sckm$r)
+  {
+    k = sckm$s + j
+    APE[i,k,,] = AD[i,k,,]/sims[[i]]$probs[j]    
+  }
+  for (j in 1:sckm$r)
+  {
+    k = sckm$s + sckm$r + j
+    APE[i,k,,] = AD[i,k,,]/sims[[i]]$rates[j]
+  }
+}
+
+MAPE = apply(APE, 2:4, mean, na.rm=T)
+
+
+
 
 
 # Coverage
 which.ci = c(1,5)
-CV = array(NA, dim=nn)a
+CV = array(NA, dim=nn)
 
-inside = function(x,a,b) return(ifelse(x>=a & x<=b, TRUE, FALSE))
-
-
-
+vIsTRUE = Vectorize(isTRUE)
+inside = function(x,a,b) return(ifelse(vIsTRUE(x>=a & x<=b), TRUE, FALSE))
 for (i in 1:nn[1])
 {
   for (j in 1:sckm$s)
   {
     CV[i,j,,1] = inside(sims[[i]]$X[,j], plq  [[i]]$X.quantiles[j,which.ci[1],], plq[[i]]$X.quantiles[j,which.ci[2],])
-    CV[i,j,,1] = inside(sims[[i]]$X[,j], lw90q[[i]]$X.quantiles[j,which.ci[1],], plq[[i]]$X.quantiles[j,which.ci[2],])
-    CV[i,j,,1] = inside(sims[[i]]$X[,j], lw95q[[i]]$X.quantiles[j,which.ci[1],], plq[[i]]$X.quantiles[j,which.ci[2],])
-    CV[i,j,,1] = inside(sims[[i]]$X[,j], lw99q[[i]]$X.quantiles[j,which.ci[1],], plq[[i]]$X.quantiles[j,which.ci[2],])
+    CV[i,j,,2] = inside(sims[[i]]$X[,j], lw90q[[i]]$X.quantiles[j,which.ci[1],], plq[[i]]$X.quantiles[j,which.ci[2],])
+    CV[i,j,,3] = inside(sims[[i]]$X[,j], lw95q[[i]]$X.quantiles[j,which.ci[1],], plq[[i]]$X.quantiles[j,which.ci[2],])
+    CV[i,j,,4] = inside(sims[[i]]$X[,j], lw99q[[i]]$X.quantiles[j,which.ci[1],], plq[[i]]$X.quantiles[j,which.ci[2],])
   }
   for (j in 1:sckm$r)
   {
-    CV[i,j,,1] = inside(sims[[i]]$probs[,j], plq  [[i]]$p.quantiles[j,which.ci[1],], plq[[i]]$p.quantiles[j,which.ci[2],])
-    CV[i,j,,1] = inside(sims[[i]]$probs[,j], lw90q[[i]]$p.quantiles[j,which.ci[1],], plq[[i]]$p.quantiles[j,which.ci[2],])
-    CV[i,j,,1] = inside(sims[[i]]$probs[,j], lw95q[[i]]$p.quantiles[j,which.ci[1],], plq[[i]]$p.quantiles[j,which.ci[2],])
-    CV[i,j,,1] = inside(sims[[i]]$probs[,j], lw99q[[i]]$p.quantiles[j,which.ci[1],], plq[[i]]$p.quantiles[j,which.ci[2],])
+    k = sckm$s+j
+    CV[i,k,,1] = inside(sims[[i]]$probs[j], plq  [[i]]$p.quantiles[j,which.ci[1],], plq[[i]]$p.quantiles[j,which.ci[2],])
+    CV[i,k,,2] = inside(sims[[i]]$probs[j], lw90q[[i]]$p.quantiles[j,which.ci[1],], plq[[i]]$p.quantiles[j,which.ci[2],])
+    CV[i,k,,3] = inside(sims[[i]]$probs[j], lw95q[[i]]$p.quantiles[j,which.ci[1],], plq[[i]]$p.quantiles[j,which.ci[2],])
+    CV[i,k,,4] = inside(sims[[i]]$probs[j], lw99q[[i]]$p.quantiles[j,which.ci[1],], plq[[i]]$p.quantiles[j,which.ci[2],])
   }
   for (j in 1:sckm$r)
   {
-    CV[i,j,,1] = inside(sims[[i]]$rates[,j], plq  [[i]]$r.quantiles[j,which.ci[1],], plq[[i]]$r.quantiles[j,which.ci[2],])
-    CV[i,j,,1] = inside(sims[[i]]$rates[,j], lw90q[[i]]$r.quantiles[j,which.ci[1],], plq[[i]]$r.quantiles[j,which.ci[2],])
-    CV[i,j,,1] = inside(sims[[i]]$rates[,j], lw95q[[i]]$r.quantiles[j,which.ci[1],], plq[[i]]$r.quantiles[j,which.ci[2],])
-    CV[i,j,,1] = inside(sims[[i]]$rates[,j], lw99q[[i]]$r.quantiles[j,which.ci[1],], plq[[i]]$r.quantiles[j,which.ci[2],])
+    k = sckm$s + sckm$r + j
+    CV[i,k,,1] = inside(sims[[i]]$rates[j], plq  [[i]]$r.quantiles[j,which.ci[1],], plq[[i]]$r.quantiles[j,which.ci[2],])
+    CV[i,k,,2] = inside(sims[[i]]$rates[j], lw90q[[i]]$r.quantiles[j,which.ci[1],], plq[[i]]$r.quantiles[j,which.ci[2],])
+    CV[i,k,,3] = inside(sims[[i]]$rates[j], lw95q[[i]]$r.quantiles[j,which.ci[1],], plq[[i]]$r.quantiles[j,which.ci[2],])
+    CV[i,k,,4] = inside(sims[[i]]$rates[j], lw99q[[i]]$r.quantiles[j,which.ci[1],], plq[[i]]$r.quantiles[j,which.ci[2],])
   }
 }
 
@@ -106,16 +171,17 @@ MCV = apply(CV, 2:4, mean, na.rm=T)
 
 
 
-for (i in 1:nn[2])
-{
-  plot(0:n, MCV[i,,1], type="l", ylim=c(0,max(MCV[i,,], na.rm=T)), main=comp[i], )
-  for (j in 2:4) lines(0:n, MCV[i,,j], col=j, lty=j)
-  legend("topright",method,col=1:4, lty=1:4)
-  readline("")
-}
 
 
+MSE  = array.to.df(MSE ); MSE $statistic = "MSE"
+MCV  = array.to.df(MCV ); MCV $statistic = "MCV"
+MAD  = array.to.df(MAD ); MAD $statistic = "MAD"
+MAPE = array.to.df(MAPE); MAPE$statistic = "MAPE"
 
+write.csv(rbind(MSE,MCV,MAD,MAPE), file="summary-statistics.csv", row.names=F)
+
+
+q(ifelse(interactive(),"ask","no"))
 
 
 
