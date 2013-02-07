@@ -27,6 +27,8 @@ prior = list(prob=list(a=rep(1,sckm$r), b=rep(1,sckm$r)),
 # A function to produce a single simulation
 sim.f = function()
 {
+  failed = TRUE
+  
   try({
     rates = rgamma(sckm$r, prior$rate$a, prior$rate$b)
     sckm$theta = rates
@@ -52,4 +54,6 @@ for (i in 1:n.sims)
 }
 
 save.image("sims.RData")
+
+q(ifelse(interactive(),"ask","no"))
 

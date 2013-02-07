@@ -12,5 +12,5 @@ pl = llply(lapply(sims, function(x) return(list(y=t(x$y), tau=1))),
            .progress = progress_text(style=ifelse(interactive(), 3, 1)))
 save(pl, file="PL.RData")
 
-q()
+q(ifelse(interactive(),"ask","no"))
 

@@ -38,5 +38,5 @@ for (i in 1:length(lw))
 
 save(lwq, file=paste("LW", round(delta*100), "q.RData", sep=""))
 
-q()
+q(ifelse(interactive(),"ask","no"))
 
