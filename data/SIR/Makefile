@@ -8,7 +8,7 @@ ANALYSIS_OBJECTS = PL.RData LW90.RData LW95.RData LW99.RData
 
 QUANT_OBJECTS = PLq.RData LW90q.RData LW95q.RData LW99q.RData
 
-SUM_OBJECTS = PLsum.csv LW90sum.csv LW95sum.csv LW99sum.csv
+SUM_OBJECTS = PLsum.csv LW90sum.csv LW95sum.csv LW99sum.csv example-plots.pdf
 
 
 FILTER_SOURCE = filter-settings.R sims.RData
@@ -88,6 +88,9 @@ LW95sum.csv: LW95sum.R $(SUM_SOURCE) LW95q.RData
 LW99sum.csv: LW99sum.R $(SUM_SOURCE) LW99q.RData
 	$(RCMD) $<
 
+
+example-plots.pdf: example-plots.R $(QUANT_OBJECTS)
+	$(RCMD) $<
 
 
 clean:
