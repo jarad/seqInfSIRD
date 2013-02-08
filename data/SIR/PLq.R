@@ -9,5 +9,5 @@ plq = llply(pl, tlpl_quantile, probs=probs, verbose=0,
 
 save(plq, file="PLq.RData")
 
-q("no")
+q(ifelse(interactive(),"ask","no"))
 
