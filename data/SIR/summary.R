@@ -116,7 +116,7 @@ which.ci = c(1,5)
 CV = array(NA, dim=nn)
 
 vIsTRUE = Vectorize(isTRUE)
-inside = function(x,a) return(ifelse(vIsTRUE(x>=a & x<=b), TRUE, FALSE))
+inside = function(x,a,b) return(ifelse(vIsTRUE(x>=a & x<=b), TRUE, FALSE))
 for (i in 1:nn[1])
 {
   for (j in 1:sckm$s)
