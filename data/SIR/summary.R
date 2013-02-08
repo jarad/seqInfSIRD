@@ -116,22 +116,25 @@ which.ci = c(1,5)
 CV = array(NA, dim=nn)
 
 vIsTRUE = Vectorize(isTRUE)
-inside = function(x,ci) return(ifelse(vIsTRUE(x>=ci[1] & x<=ci[2]), TRUE, FALSE))
+inside = function(x,a) return(ifelse(vIsTRUE(x>=a & x<=b), TRUE, FALSE))
 for (i in 1:nn[1])
 {
   for (j in 1:sckm$s)
   {
-    CV[i,j,] = inside(sims[[i]]$X[     ,j], q[[i]]$X.quantiles[j,which.ci[1:2],])
+    CV[i,j,] = inside(sims[[i]]$X[     ,j], q[[i]]$X.quantiles[j,which.ci[1],],
+                                            q[[i]]$X.quantiles[j,which.ci[2],])
   }
   for (j in 1:sckm$r)
   {
     k = sckm$s+j
-    CV[i,k,] = inside(sims[[i]]$probs[j], q[[i]]$p.quantiles[j,which.ci[1:2],])
+    CV[i,k,] = inside(sims[[i]]$probs[j], q[[i]]$p.quantiles[j,which.ci[1],],
+                                          q[[i]]$p.quantiles[j,which.ci[2],])
   }
   for (j in 1:sckm$r)
   {
     k = sckm$s + sckm$r + j
-    CV[i,k,] = inside(sims[[i]]$rates[j], q[[i]]$r.quantiles[j,which.ci[1:2],])
+    CV[i,k,] = inside(sims[[i]]$rates[j], q[[i]]$r.quantiles[j,which.ci[1],],
+                                          q[[i]]$r.quantiles[j,which.ci[2],])
   }
 }
 
