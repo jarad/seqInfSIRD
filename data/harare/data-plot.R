@@ -17,12 +17,13 @@ meeting.line = geom_vline(xintercept = as.numeric(meeting), col="red")
 campaign.rect = geom_rect(xmin=as.numeric(campaign[1]), xmax=as.numeric(campaign[2]), ymin=-100, ymax=1000, fill="green")
 
 pdf("new-cases.pdf")
-p+meeting.line+campaign.rect+geom_point()+ labs(title = "New weekly cases", y="Number of new cases", x="Date")
+print(p+meeting.line+campaign.rect+geom_point()+ labs(title = "New weekly cases", y="Number of new cases", x="Date"))
 dev.off()
 
 pdf("cumulative-cases.pdf")
-q+meeting.line+campaign.rect+geom_point()+ labs(title = "Cumulative cases", y="Cumulative number of cases", x="Date")
+print(q+meeting.line+campaign.rect+geom_point()+ labs(title = "Cumulative cases", y="Cumulative number of cases", x="Date"))
 dev.off()
 
 
+q(ifelse(interactive(),"ask","no"))
 

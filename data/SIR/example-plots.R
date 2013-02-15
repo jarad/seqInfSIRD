@@ -42,7 +42,7 @@ for (i in 1:n.sims)
     lines(0:n, lw99q0$X.quantiles[j,ll,], col=5)
     lines(0:n, lw99q0$X.quantiles[j,ul,], col=5)
 
-    legend("left", methods, col=1:5, lty=1)
+    legend("topright", methods, col=1:5, lty=1)
   }
 
   # Probabilities
@@ -62,7 +62,7 @@ for (i in 1:n.sims)
     lines(0:n, lw99q0$p.quantiles[j,ll,], col=5)
     lines(0:n, lw99q0$p.quantiles[j,ul,], col=5)
 
-    legend("left", methods, col=1:5, lty=1)
+    #legend("topright", methods, col=1:5, lty=1)
   }
 
   plot(0,0,type="n", axes=F, xlab="", ylab="")
@@ -84,9 +84,9 @@ for (i in 1:n.sims)
     lines(0:n, lw99q0$r.quantiles[j,ll,], col=5)
     lines(0:n, lw99q0$r.quantiles[j,ul,], col=5)
 
-    legend("left", methods, col=1:5, lty=1)
+    #legend("topright", methods, col=1:5, lty=1)
   }
-
+  if (interactive()) readline("<enter>")
 }
 dev.off()
 

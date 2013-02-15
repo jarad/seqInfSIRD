@@ -9,27 +9,37 @@ sckm$r = 3 # reactions (S->E, E->I, I->R)
 sckm$Pre  = rbind( c(1,0,1,0), c(0,1,0,0), c(0,0,1,0))
 sckm$Post = rbind( c(0,1,1,0), c(0,0,1,0), c(0,0,0,1))
 sckm$stoich = t(sckm$Post-sckm$Pre)
-sckm$X = c(16000,0,10,0)
+sckm$X = c(160000,100,100,0)
 N = sum(sckm$X)
 sckm$lmult = log(c(1/N,1,1))
 sckm$states = c("S","E","I","R")
 sckm$rxns = c("S->E","E->I","I->R")
 
+
+
 # Read data
 d = read.csv("harareClean.csv")
 d$new = diff(c(0,d$total))
 n = nrow(d)
+
+
+# Simulate data
+sckm$theta = c(1,1,.5)
+out = tau_leap(sckm,60)
+y_tmp = rbinom(n, out$nr[,2], .02)
+plot(y_tmp)
+
+
+
 y = matrix(0, nrow=3, ncol=n)
 y[2,] = d$new
-
-library(tlpl)
 sckm$theta = rep(0,sckm$r)
 
-prior = list(prob=list(a=rep(1,5,1), b=c(1e5,95,1e5)),
+prior = list(prob=list(a=rep(1,2,1), b=c(1e5,9998,1e5)),
              rate=list(a=c(10,1e5,5), b=c(10,1e5,10)),
              X = sckm$X)
 
-res = tlpl(list(y=y, tau=1), sckm=sckm, prior=prior, n.particles=10000, verbose=1)
+res = tlpl(list(y=y, tau=1), sckm=sckm, prior=prior, n.particles=10000, verbose=5)
 q   = tlpl_quantile(res, c(.025,.975), verbose=1)
 
 
