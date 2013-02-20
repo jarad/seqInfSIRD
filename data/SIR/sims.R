@@ -19,10 +19,10 @@ sckm$rxns = c("S->I","I->R")
 ## Simulate data
 n.sims = 30
 set.seed(20121218)
-n = 50
+n = 60
 
-prior = list(prob=list(a=rep(1,sckm$r), b=rep(1,sckm$r)),
-             rate=list(a=c(1,.5)*10, b=rep(10,sckm$r)))
+prior = list(prob=list(a=rep(5,sckm$r), b=rep(95,sckm$r)),
+             rate=list(a=c(.5,.25)*10, b=rep(10,sckm$r)))
 
 # A function to produce a single simulation
 sim.f = function()
@@ -30,7 +30,13 @@ sim.f = function()
   failed = TRUE
   
   try({
-    rates = rgamma(sckm$r, prior$rate$a, prior$rate$b)
+    R0in1to3 = FALSE
+    while(!R0in1to3) 
+    {
+      rates = rgamma(sckm$r, prior$rate$a, prior$rate$b)
+      R0 = rates[1]/rates[2]
+      R0in1to3 = R0 > 1 & R0<3
+    }
     sckm$theta = rates
     out = tau_leap(sckm, n)
     out$rates = rates
