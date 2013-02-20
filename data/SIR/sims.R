@@ -10,7 +10,7 @@ sckm$r = 2 # reactions (S->I, I->R)
 sckm$Pre  = rbind( c(1,1,0), c(0,1,0))
 sckm$Post = rbind( c(0,2,0), c(0,0,1))
 sckm$stoich = t(sckm$Post-sckm$Pre)
-sckm$X = c(16000,10,0)
+sckm$X = c(16000,100,0)
 N = sum(sckm$X)
 sckm$lmult = log(c(1/N,1))
 sckm$states = c("S","I","R")
@@ -30,20 +30,22 @@ sim.f = function()
   failed = TRUE
   
   try({
-    R0in1to3 = FALSE
-    while(!R0in1to3) 
-    {
-      rates = rgamma(sckm$r, prior$rate$a, prior$rate$b)
-      R0 = rates[1]/rates[2]
-      R0in1to3 = R0 > 1 & R0<3
-    }
-    sckm$theta = rates
-    out = tau_leap(sckm, n)
-    out$rates = rates
 
-    out$probs = rbeta( sckm$r, prior$prob$a, prior$prob$b)
-    out$y = t(rbind(rbinom(n, out$nr[,1], out$p[1]), 
-                    rbinom(n, out$nr[,2], out$p[2])))
+    somey = FALSE
+    while(!somey) 
+    {
+      rates = rgamma( sckm$r, prior$rate$a*10, prior$rate$b*10)
+      sckm$theta = rates
+      out = tau_leap(sckm, n)
+      out$rates = rates
+
+      out$probs = rbeta( sckm$r, prior$prob$a*10, prior$prob$b*10)
+
+      out$y = t(rbind(rbinom(n, out$nr[,1], out$p[1]), 
+                      rbinom(n, out$nr[,2], out$p[2])))
+      somey = sum(out$y[1:5,1]>0)
+    }
+
     }, silent=T)
 
   if (exists("out")) return(out) else { return(NA) }
