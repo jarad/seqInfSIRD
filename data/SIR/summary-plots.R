@@ -1,4 +1,5 @@
 
+
 fl = system("ls *sum.csv",T)
 
 d = list()
@@ -21,13 +22,8 @@ d$tmp = d$MSE+2*d$seMSE
 
 qplot(time, tmp, data=d[d$parameter%in% levels(d$parameter)[c(4:5,7:8)],], geom="line", colour=method, facets=~parameter)
 
-
-
-ggplot(d, aes(x = MSE, group = 1)) +
-  geom_ribbon(aes(ymin = quantile.0.05, ymax = quantile.0.95, fill = "05%-95%"), alpha = .25) + 
-  geom_ribbon(aes(ymin = quantile.0.25, ymax = quantile.0.75, fill = "25%-75%"), alpha = .25) +
-  geom_line(aes(y = quantile.0.5)) +
-  scale_fill_manual(name = "", values = c("25%-75%" = "red", "05%-95%" = "blue")) 
-
+ggplot(d[d$parameter=="p: S->I",], aes(x = time, y = MSE, group=method)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = MSE-2*seMSE, ymax = MSE+2*seMSE, fill = "05%-95%"), alpha = .25)
 
 

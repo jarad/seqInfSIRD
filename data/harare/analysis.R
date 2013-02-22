@@ -19,7 +19,7 @@ sckm$rxns = c("S->E","E->I","I->R")
 
 # Read data
 d = read.csv("harareClean.csv")
-d$new = diff(c(0,d$total))
+d$new = d$diff2
 n = nrow(d)
 
 
@@ -27,19 +27,21 @@ n = nrow(d)
 sckm$theta = c(1,1,.5)
 out = tau_leap(sckm,60)
 y_tmp = rbinom(n, out$nr[,2], .02)
-plot(y_tmp)
+#plot(y_tmp)
 
 
 
 y = matrix(0, nrow=3, ncol=n)
 y[2,] = d$new
+n = 20
+y = y[,1:n]
 sckm$theta = rep(0,sckm$r)
 
-prior = list(prob=list(a=rep(1,2,1), b=c(1e5,9998,1e5)),
-             rate=list(a=c(10,1e5,5), b=c(10,1e5,10)),
+prior = list(prob=list(a=rep(1,2,1), b=c(1e5,998,1e5)),
+             rate=list(a=c(10,1e5,5)/2, b=c(10,1e5,10)/2),
              X = sckm$X)
 
-res = tlpl(list(y=y, tau=1), sckm=sckm, prior=prior, n.particles=10000, verbose=5)
+res = tlpl(list(y=y, tau=1), sckm=sckm, prior=prior, n.particles=1e4, verbose=1)
 q   = tlpl_quantile(res, c(.025,.975), verbose=1)
 
 
