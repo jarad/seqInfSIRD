@@ -17,7 +17,7 @@ sckm$states = c("S","I","R")
 sckm$rxns = c("S->I","I->R")
 
 ## Simulate data
-n.sims = 2
+n.sims = 100
 set.seed(20121218)
 n = 60
 
