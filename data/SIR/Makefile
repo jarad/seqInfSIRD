@@ -23,7 +23,7 @@ SUM_SOURCE = summary.R
 OBJECTS = $(SIM_OBJECTS) $(ANALYSIS_OBJECTS) $(QUANT_OBJECTS) $(SUM_OBJECTS)
 
 
-RCMD = R CMD BATCH --vanilla
+RCMD = -R CMD BATCH --vanilla
 
 ##################################################################
 
@@ -94,4 +94,4 @@ example-plots.pdf: example-plots.R $(QUANT_OBJECTS)
 
 
 clean:
-	rm *.Rout
+	-rm *.Rout
