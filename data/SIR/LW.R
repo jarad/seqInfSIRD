@@ -5,6 +5,8 @@ load("sims.RData")
 source("filter-settings.R")
 source("liu_west.r")
 
+prior$X = rmultinom(n.particles, N, sckm$X)
+
 lw = llply(lapply(sims, function(x) return(x$y)), liu_west,
            sckm=sckm, 
            n.particles=n.particles,

@@ -17,7 +17,7 @@ sckm$states = c("S","I","R")
 sckm$rxns = c("S->I","I->R")
 
 ## Simulate data
-n.sims = 100
+n.sims = 10
 set.seed(20121218)
 n = 60
 
@@ -37,13 +37,14 @@ sim.f = function()
       sckm$X = as.numeric(rmultinom(1,N,sckm$X/N))
       rates = rgamma( sckm$r, prior$rate$a*10, prior$rate$b*10)
       sckm$theta = rates
+
       out = tau_leap(sckm, n)
+      out$sckm = sckm
       out$rates = rates
-
       out$probs = rbeta( sckm$r, prior$prob$a*10, prior$prob$b*10)
-
       out$y = t(rbind(rbinom(n, out$nr[,1], out$p[1]), 
                       rbinom(n, out$nr[,2], out$p[2])))
+
       somey = sum(out$y[1:5,1]>0)
     }
 
