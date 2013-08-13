@@ -12,11 +12,16 @@ d = dcast(rbind.fill(d), parameter + time + method ~ statistic)
 d$parameter = factor(d$parameter, c("S","I","R","p: S->I","p: I->R","blank","r: S->I","r: I->R"))
 
 library(ggplot2)
+d = d[d$time>0,]
+
 qplot(time, MCV, data=d, geom="line", colour=method, facets=~parameter)
 
 qplot(time, MSE, data=d, geom="line", colour=method, facets=~parameter)
-qplot(time, MSE, data=d[d$parameter%in% levels(d$parameter)[c(4:5,7:8)],], geom="line", colour=method, facets=~parameter)
 
+qplot(time, MSE, data=d[d$parameter%in% levels(d$parameter)[1:3],], geom="line", colour=method, facets=~parameter)
+
+qplot(time, MSE, data=d[d$parameter%in% levels(d$parameter)[4:5],], geom="line", colour=method, facets=~parameter)
+qplot(time, MSE, data=d[d$parameter%in% levels(d$parameter)[7:8],], geom="line", colour=method, facets=~parameter)
 
 d$tmp = d$MSE+2*d$seMSE
 

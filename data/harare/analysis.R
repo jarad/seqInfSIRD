@@ -45,18 +45,18 @@ res = tlpl(list(y=y, tau=1), sckm=sckm, prior=prior, n.particles=1e4, verbose=1)
 q   = tlpl_quantile(res, c(.025,.975), verbose=1)
 
 
-par(mfrow=c(3,max(sckm$s,sckm$r)))
+par(mfrow=c(2,max(sckm$s,sckm$r)))
 # States 
 for (j in 1:sckm$s)  {
-  plot(0:n,0:n, type="n", ylim=range(q$X.quantiles[j,,]), xlim=c(0,n), main=sckm$states[j])
+  plot(0:n,0:n, type="n", ylim=range(q$X.quantiles[j,,]), xlim=c(0,n), main=sckm$states[j], ylab="Number", xlab="Week")
   lines(0:n, q$X.quantiles[j,1,], col=2)
   lines(0:n, q$X.quantiles[j,2,], col=2)
 }
 
 # Probabilities
-for (j in 1:sckm$r)
+for (j in 2)
 {
-  plot(0,0, type="n", ylim=range(q$p.quantiles[j,,]), xlim=c(0,n), main=paste("p:",sckm$rxns[j]))   
+  plot(0,0, type="n", ylim=range(q$p.quantiles[j,,]), xlim=c(0,n), main=paste("p:",sckm$rxns[j]), ylab="", xlab="Week")   
   lines(0:n, q$p.quantiles[j,1,], col=2)
   lines(0:n, q$p.quantiles[j,2,], col=2)
 }
@@ -64,10 +64,9 @@ for (j in 1:sckm$r)
 plot(0,0,type="n", axes=F, xlab="", ylab="")
 
 # Rates
-for (j in 1:sckm$r)
+for (j in c(1,3))
 {
-
-  plot(0,0, type="n", ylim=range(q$r.quantiles[j,,]), xlim=c(0,n), main=paste("r:",sckm$rxns[j]))
+  plot(0,0, type="n", ylim=range(q$r.quantiles[j,,]), xlim=c(0,n), main=paste("r:",sckm$rxns[j]), ylab="", xlab="Week")
   lines(0:n, q$r.quantiles[j,1,], col=2)
   lines(0:n, q$r.quantiles[j,2,], col=2)
 }
