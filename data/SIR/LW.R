@@ -2,7 +2,7 @@
 library(plyr)
 
 load("sims.RData")
-source("filter-settings.R")
+source("settings.R")
 source("liu_west.r")
 
 prior$X = rmultinom(n.particles, N, sckm$X)

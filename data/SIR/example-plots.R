@@ -3,7 +3,7 @@
 load("sims.RData")
 n.sims = length(sims)
 
-source("quantile-settings.R")
+source("settings.R")
 ll = which(probs==.025); ll=1 # current the former doesn't match
 ul = which(probs==.975)
 

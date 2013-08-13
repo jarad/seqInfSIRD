@@ -2,7 +2,7 @@
 # calculate MSE, MAD, MAPE, coverage
 #
 load("sims.RData")
-source("quantile-settings.R")
+source("settings.R")
 
 states = sckm$states
 rxns   = sckm$rxns

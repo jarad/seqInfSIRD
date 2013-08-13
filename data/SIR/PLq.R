@@ -2,7 +2,7 @@ library(tlpl)
 library(plyr)
 
 load("PL.RData")
-source("quantile-settings.R")
+source("settings.R")
 
 plq = llply(pl, tlpl_quantile, probs=probs, verbose=0, 
             .progress = progress_text(style=ifelse(interactive(), 3, 1)))

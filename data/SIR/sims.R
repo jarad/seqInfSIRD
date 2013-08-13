@@ -17,10 +17,7 @@ sckm$states = c("S","I","R")
 sckm$rxns = c("S->I","I->R")
 
 ## Simulate data
-n.sims = 5
-set.seed(20121218)
-n = 60
-
+source("settings.R")
 prior = list(prob=list(a=rep(5,sckm$r), b=rep(95,sckm$r)),
              rate=list(a=c(.5,.25)*10, b=rep(10,sckm$r)))
 

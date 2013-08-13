@@ -2,7 +2,7 @@ library(Hmisc)
 
 load(paste("LW", round(delta*100), ".RData", sep=""))
 
-source("quantile-settings.R")
+source("settings.R")
 
 lwq = list()
 

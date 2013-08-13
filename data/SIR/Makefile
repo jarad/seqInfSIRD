@@ -10,13 +10,13 @@ QUANT_OBJECTS = PLq.RData LW90q.RData LW95q.RData LW99q.RData
 
 SUM_OBJECTS = PLsum.csv LW90sum.csv LW95sum.csv LW99sum.csv example-plots.pdf
 
+SETTINGS = settings.R
 
-FILTER_SOURCE = filter-settings.R sims.RData
+FILTER_SOURCE = $(SETTINGS) sims.RData
 
 LW_SOURCE = $(FILTER_SOURCE) LW.R liu_west.r
 
-QUANT_SOURCE = quantile-settings.R 
-LW_QUANT_SOURCE = $(QUANT_SOURCE) LWq.R 
+LW_QUANT_SOURCE = $(SETTINGS) LWq.R 
 
 SUM_SOURCE = summary.R
 
@@ -48,10 +48,10 @@ sims.pdf: sims-plot.R sims.RData
 	$(RCMD) $<
 
 
-PL.RData: PL.R $(FILTER_SOURCE)
+PL.RData: PL.R $(SETTINGS)
 	$(RCMD) $<
 
-PLq.RData: PLq.R $(QUANT_SOURCE) PL.RData
+PLq.RData: PLq.R $(SETTINGS) PL.RData
 	$(RCMD) $<
 
 PLsum.csv: PLsum.R $(SUM_SOURCE) PLq.RData
