@@ -3,24 +3,25 @@
 load("sims.RData")
 n.sims = length(sims)
 
-source("quantile-settings.r")
+source("quantile-settings.R")
 ll = which(probs==.025); ll=1 # current the former doesn't match
 ul = which(probs==.975)
 
 
 load("PLq.RData")
-load("LW90q.RData"); lw90q = lwq
+#load("LW90q.RData"); lw90q = lwq
 load("LW95q.RData"); lw95q = lwq
 load("LW99q.RData"); lw99q = lwq
 
-methods=c("Truth","PL","LW90","LW95","LW99")
+#methods=c("Truth","PL","LW90","LW95","LW99")
+methods=c("Truth","PL","LW95","LW99")
 
 pdf("example-plots.pdf")
 for (i in 1:n.sims)
 {
   sim = sims[[i]]
   plq0 = plq[[i]]
-  lw90q0 = lw90q[[i]]
+#  lw90q0 = lw90q[[i]]
   lw95q0 = lw95q[[i]]
   lw99q0 = lw99q[[i]]
 
@@ -33,8 +34,8 @@ for (i in 1:n.sims)
     lines(0:n, plq0  $X.quantiles[j,ll,], col=2)
     lines(0:n, plq0  $X.quantiles[j,ul,], col=2)
 
-    lines(0:n, lw90q0$X.quantiles[j,ll,], col=3)
-    lines(0:n, lw90q0$X.quantiles[j,ul,], col=3)
+#    lines(0:n, lw90q0$X.quantiles[j,ll,], col=3)
+#    lines(0:n, lw90q0$X.quantiles[j,ul,], col=3)
 
     lines(0:n, lw95q0$X.quantiles[j,ll,], col=4)
     lines(0:n, lw95q0$X.quantiles[j,ul,], col=4)
@@ -42,7 +43,7 @@ for (i in 1:n.sims)
     lines(0:n, lw99q0$X.quantiles[j,ll,], col=5)
     lines(0:n, lw99q0$X.quantiles[j,ul,], col=5)
 
-    legend("topright", methods, col=1:5, lty=1)
+    if (j==2) legend("topright", methods, col=c(1,2,4,5), lty=1)
   }
 
   # Probabilities
@@ -53,8 +54,8 @@ for (i in 1:n.sims)
     lines(0:n, plq0  $p.quantiles[j,ll,], col=2)
     lines(0:n, plq0  $p.quantiles[j,ul,], col=2)
 
-    lines(0:n, lw90q0$p.quantiles[j,ll,], col=3)
-    lines(0:n, lw90q0$p.quantiles[j,ul,], col=3)
+#    lines(0:n, lw90q0$p.quantiles[j,ll,], col=3)
+#    lines(0:n, lw90q0$p.quantiles[j,ul,], col=3)
 
     lines(0:n, lw95q0$p.quantiles[j,ll,], col=4)
     lines(0:n, lw95q0$p.quantiles[j,ul,], col=4)
@@ -75,8 +76,8 @@ for (i in 1:n.sims)
     lines(0:n, plq0  $r.quantiles[j,ll,], col=2)
     lines(0:n, plq0  $r.quantiles[j,ul,], col=2)
 
-    lines(0:n, lw90q0$r.quantiles[j,ll,], col=3)
-    lines(0:n, lw90q0$r.quantiles[j,ul,], col=3)
+#    lines(0:n, lw90q0$r.quantiles[j,ll,], col=3)
+#    lines(0:n, lw90q0$r.quantiles[j,ul,], col=3)
 
     lines(0:n, lw95q0$r.quantiles[j,ll,], col=4)
     lines(0:n, lw95q0$r.quantiles[j,ul,], col=4)
