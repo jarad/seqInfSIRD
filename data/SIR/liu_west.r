@@ -104,7 +104,7 @@ liu_west = function(y, sckm, n.particles, delta, prior,...)
 
       sckm$theta = exp(theta[r.i,j,i+1])
       sckm$X = X[,k,i]
-      tmp = tau_leap(sckm)
+      tmp = tau_leap(sckm, engine="C")
       X[,j,i+1] = tmp$X[2,]
       lweights[j,i+1] = log(res$weights[k])+ # In case particles were not resampled
                         sum(dbinom(y[i,], tmp$nr,     expit(theta[p.i,j,i+1]), log=T)-
