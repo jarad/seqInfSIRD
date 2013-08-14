@@ -39,8 +39,8 @@ sim.f = function()
       out$sckm = sckm
       out$rates = rates
       out$probs = rbeta( sckm$r, prior$prob$a*10, prior$prob$b*10)
-      out$y = t(rbind(rbinom(n, out$nr[,1], out$p[1]), 
-                      rbinom(n, out$nr[,2], out$p[2])))
+      out$y = cbind(rbinom(n, out$nr[,1], out$p[1]), 
+                    rbinom(n, out$nr[,2], out$p[2]))
 
       somey = sum(out$y[1:5,1]>0)
     }
