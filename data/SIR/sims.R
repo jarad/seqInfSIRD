@@ -1,20 +1,10 @@
 library(tlpl)
 library(plyr)
 
+
 # Generate data
 ## Set up SIR model
-sckm = list()
-sckm$s = 3 # species (S,I,R)
-sckm$r = 2 # reactions (S->I, I->R)
-#                   S -> I    I -> R
-sckm$Pre  = rbind( c(1,1,0), c(0,1,0))
-sckm$Post = rbind( c(0,2,0), c(0,0,1))
-sckm$stoich = t(sckm$Post-sckm$Pre)
-sckm$X = c(16000,100,0)
-N = sum(sckm$X)
-sckm$lmult = log(c(1/N,1))
-sckm$states = c("S","I","R")
-sckm$rxns = c("S->I","I->R")
+sckm = sckm("sir", X=c(16000,100,0))
 
 ## Simulate data
 source("settings.R")
@@ -32,12 +22,11 @@ sim.f = function()
     while(!somey) 
     {
       sckm$X = as.numeric(rmultinom(1,N,sckm$X/N))
-      rates = rgamma( sckm$r, prior$rate$a*10, prior$rate$b*10)
-      sckm$theta = rates
+      sckm$theta = rgamma( sckm$r, prior$rate$a*10, prior$rate$b*10)
 
       out = tau_leap(sckm, n)
       out$sckm = sckm
-      out$rates = rates
+      out$rates = sckm$theta
       out$probs = rbeta( sckm$r, prior$prob$a*10, prior$prob$b*10)
       out$y = cbind(rbinom(n, out$nr[,1], out$p[1]), 
                     rbinom(n, out$nr[,2], out$p[2]))
