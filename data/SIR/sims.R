@@ -5,6 +5,7 @@ library(plyr)
 # Generate data
 ## Set up SIR model
 sckm = sckm("sir", X=c(16000,100,0))
+N = sum(sckm$X)
 
 ## Simulate data
 source("settings.R")

@@ -5,6 +5,8 @@ load("sims.RData")
 source("settings.R")
 source("liu_west.r")
 
+sckm$lmult = log(sckm$mult) # Temporary
+
 prior$X = rmultinom(n.particles, N, sckm$X)
 
 lw = llply(lapply(sims, function(x) return(x$y)), liu_west,
