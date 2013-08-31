@@ -4,13 +4,13 @@ library(plyr)
 
 # Generate data
 ## Set up SIR model
-sckm = sckm("sir", X=c(16000,100,0))
-N = sum(sckm$X)
+sys = sckm("sir", X=c(16000,100,0))
+N = sum(sys$X)
 
 ## Simulate data
 source("settings.R")
-prior = list(prob=list(a=rep(5,sckm$r), b=rep(95,sckm$r)),
-             rate=list(a=c(.5,.25)*10, b=rep(10,sckm$r)))
+prior = list(prob=list(a=rep(5,sys$r), b=rep(95,sys$r)),
+             rate=list(a=c(.5,.25)*10, b=rep(10,sys$r)))
 
 # A function to produce a single simulation
 sim.f = function()
@@ -22,13 +22,13 @@ sim.f = function()
     somey = FALSE
     while(!somey) 
     {
-      sckm$X = as.numeric(rmultinom(1,N,sckm$X/N))
-      sckm$theta = rgamma( sckm$r, prior$rate$a*10, prior$rate$b*10)
+      sys$X = as.numeric(rmultinom(1,N,sys$X/N))
+      sys$theta = rgamma( sys$r, prior$rate$a*10, prior$rate$b*10)
 
-      out = tau_leap(sckm, n)
-      out$sckm = sckm
-      out$rates = sckm$theta
-      out$probs = rbeta( sckm$r, prior$prob$a*10, prior$prob$b*10)
+      out = tau_leap(sys, n)
+      out$sys = sys
+      out$rates = sys$theta
+      out$probs = rbeta( sys$r, prior$prob$a*10, prior$prob$b*10)
       out$y = cbind(rbinom(n, out$nr[,1], out$p[1]), 
                     rbinom(n, out$nr[,2], out$p[2]))
 
