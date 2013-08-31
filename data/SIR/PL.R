@@ -4,8 +4,8 @@ library(plyr)
 load("sims.RData")
 source("settings.R")
 
-sys$theta = rep(0,sckm$r)
-prior$X=rmultinom(n.particles, N, sckm$X)
+sys$theta = rep(0,sys$r)
+prior$X=rmultinom(n.particles, N, sys$X)
 
 pl = llply(lapply(sims, function(x) return(list(y=x$y, tau=1))), 
            tlpl, sckm=sys, prior=prior, n.particles=n.particles, verbose=0,
