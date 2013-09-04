@@ -44,11 +44,11 @@ summary: $(SUM_OBJECTS)
 sims.RData: sims.R
 	$(RCMD) $<
 
-sims.pdf: sims-plot.R sims.RData
+sims.pdf: sims-plot.R $(FILTER_SOURCE)
 	$(RCMD) $<
 
 
-PL.RData: PL.R $(SETTINGS)
+PL.RData: PL.R $(FILTER_SOURCE)
 	$(RCMD) $<
 
 PLq.RData: PLq.R $(SETTINGS) PL.RData

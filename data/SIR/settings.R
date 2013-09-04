@@ -3,7 +3,7 @@
 set.seed(20121218)
 
 # Simulation settings
-n.sims = 5
+n.sims = 100
 n = 60 # Number of time points
 
 # Filter settings
