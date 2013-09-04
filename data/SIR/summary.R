@@ -4,10 +4,10 @@
 load("sims.RData")
 source("settings.R")
 
-states = sckm$states
-rxns   = sckm$rxns
-ns     = sckm$s
-nr     = sckm$r
+states = sys$states
+rxns   = sys$rxns
+ns     = sys$s
+nr     = sys$r
 comp = c(states, paste("p:",rxns), paste("r:",rxns))
 
 
@@ -33,19 +33,19 @@ which.md = which(probs==0.5)
 SE = array(NA, dim=nn)
 for (i in 1:nn[1])
 {
-  for (j in 1:sckm$s) 
+  for (j in 1:sys$s) 
   {
     SE[i,j,] = (sims[[i]]$X[   ,j] - q[[i]]$X.quantiles[j,which.md,])^2
   }  
 
-  for (j in 1:sckm$r)
+  for (j in 1:sys$r)
   {
-    k = sckm$s + j
+    k = sys$s + j
     SE[i,k,] = (sims[[i]]$probs[j] - q[[i]]$p.quantiles[j,which.md,])^2
   }
-  for (j in 1:sckm$r)
+  for (j in 1:sys$r)
   {
-    k = sckm$s + sckm$r + j
+    k = sys$s + sys$r + j
     SE[i,k,] = (sims[[i]]$rates[j] - q[[i]]$r.quantiles[j,which.md,])^2
   }
 }
@@ -59,19 +59,19 @@ which.md = which(probs==0.5)
 AD = array(NA, dim=nn)
 for (i in 1:nn[1])
 {
-  for (j in 1:sckm$s) 
+  for (j in 1:sys$s) 
   {
     AD[i,j,] = abs(sims[[i]]$X[   ,j] - q[[i]]$X.quantiles[j,which.md,])
   }  
 
-  for (j in 1:sckm$r)
+  for (j in 1:sys$r)
   {
-    k = sckm$s + j
+    k = sys$s + j
     AD[i,k,] = abs(sims[[i]]$probs[j] - q[[i]]$p.quantiles[j,which.md,])
   }
-  for (j in 1:sckm$r)
+  for (j in 1:sys$r)
   {
-    k = sckm$s + sckm$r + j
+    k = sys$s + sys$r + j
     AD[i,k,] = abs(sims[[i]]$rates[j] - q[[i]]$r.quantiles[j,which.md,])
   }
 }
@@ -87,18 +87,18 @@ which.md = which(probs==0.5)
 APE = array(NA, dim=nn)
 for (i in 1:nn[1])
 {
-  for (j in 1:sckm$s)
+  for (j in 1:sys$s)
   {
     APE[i,j,] = AD[i,j,]/(sims[[i]]$X[,j]+1) # To ensure finite results
   }
-  for (j in 1:sckm$r)
+  for (j in 1:sys$r)
   {
-    k = sckm$s + j
+    k = sys$s + j
     APE[i,k,] = AD[i,k,]/sims[[i]]$probs[j]    
   }
-  for (j in 1:sckm$r)
+  for (j in 1:sys$r)
   {
-    k = sckm$s + sckm$r + j
+    k = sys$s + sys$r + j
     APE[i,k,] = AD[i,k,]/sims[[i]]$rates[j]
   }
 }
@@ -119,20 +119,20 @@ vIsTRUE = Vectorize(isTRUE)
 inside = function(x,a,b) return(ifelse(vIsTRUE(x>=a & x<=b), TRUE, FALSE))
 for (i in 1:nn[1])
 {
-  for (j in 1:sckm$s)
+  for (j in 1:sys$s)
   {
     CV[i,j,] = inside(sims[[i]]$X[     ,j], q[[i]]$X.quantiles[j,which.ci[1],],
                                             q[[i]]$X.quantiles[j,which.ci[2],])
   }
-  for (j in 1:sckm$r)
+  for (j in 1:sys$r)
   {
-    k = sckm$s+j
+    k = sys$s+j
     CV[i,k,] = inside(sims[[i]]$probs[j], q[[i]]$p.quantiles[j,which.ci[1],],
                                           q[[i]]$p.quantiles[j,which.ci[2],])
   }
-  for (j in 1:sckm$r)
+  for (j in 1:sys$r)
   {
-    k = sckm$s + sckm$r + j
+    k = sys$s + sys$r + j
     CV[i,k,] = inside(sims[[i]]$rates[j], q[[i]]$r.quantiles[j,which.ci[1],],
                                           q[[i]]$r.quantiles[j,which.ci[2],])
   }
