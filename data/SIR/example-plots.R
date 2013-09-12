@@ -28,9 +28,9 @@ for (i in 1:n.sims)
   par(mfrow=c(3,3))
 
   # States 
-  for (j in 1:sckm$s)
+  for (j in 1:sys$s)
   {
-    plot(0:n,sim$X[,j], type="l", ylim=c(0,N), xlim=c(0,n), main=sckm$states[j])
+    plot(0:n,sim$X[,j], type="l", ylim=c(0,N), xlim=c(0,n), main=sys$states[j])
     lines(0:n, plq0  $X.quantiles[j,ll,], col=2)
     lines(0:n, plq0  $X.quantiles[j,ul,], col=2)
 
@@ -47,9 +47,9 @@ for (i in 1:n.sims)
   }
 
   # Probabilities
-  for (j in 1:sckm$r)
+  for (j in 1:sys$r)
   {
-    plot(0,0, type="n", ylim=range(plq0$p.quantiles[j,,]), xlim=c(0,n), main=paste("p:",sckm$rxns[j]))
+    plot(0,0, type="n", ylim=range(plq0$p.quantiles[j,,]), xlim=c(0,n), main=paste("p:",sys$rxns[j]))
     abline(h=sim$probs[j])
     lines(0:n, plq0  $p.quantiles[j,ll,], col=2)
     lines(0:n, plq0  $p.quantiles[j,ul,], col=2)
@@ -69,9 +69,9 @@ for (i in 1:n.sims)
   plot(0,0,type="n", axes=F, xlab="", ylab="")
 
   # Rates
-  for (j in 1:sckm$r)
+  for (j in 1:sys$r)
   {
-    plot(0,0, type="n", ylim=range(plq0$r.quantiles[j,,]), xlim=c(0,n), main=paste("r:",sckm$rxns[j]))
+    plot(0,0, type="n", ylim=range(plq0$r.quantiles[j,,]), xlim=c(0,n), main=paste("r:",sys$rxns[j]))
     abline(h=sim$rates[j])
     lines(0:n, plq0  $r.quantiles[j,ll,], col=2)
     lines(0:n, plq0  $r.quantiles[j,ul,], col=2)
