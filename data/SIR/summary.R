@@ -11,7 +11,7 @@ nr     = sys$r
 comp = c(states, paste("p:",rxns), paste("r:",rxns))
 
 
-nn = c(length(probs), ns+2*nr, n+1)
+nn = c(length(q), ns+2*nr, n+1)
 
 ## Convert to data frames for saving
 library(reshape2)
