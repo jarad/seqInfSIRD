@@ -7,7 +7,7 @@ source("liu_west.r")
 
 sys$lmult = log(sys$mult) # Temporary
 
-prior$X = rmultinom(n.particles, N, sckm$X)
+prior$X = rmultinom(n.particles, N, sys$X)
 
 lw = llply(lapply(sims, function(x) return(x$y)), liu_west,
            sckm=sys, 
