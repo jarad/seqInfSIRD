@@ -6,7 +6,7 @@ LWdelta = 90 95 99
 
 ANALYSIS_OBJECTS = PL.RData LW90.RData LW95.RData LW99.RData
 
-QUANT_OBJECTS = PLq.RData LW90q.RData LW95q.RData LW99q.RData
+QUANT_OBJECTS = PLq.RData LW95q.RData LW99q.RData
 
 SUM_OBJECTS = PLsum.csv LW90sum.csv LW95sum.csv LW99sum.csv example-plots.pdf
 
