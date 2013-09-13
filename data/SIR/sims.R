@@ -9,8 +9,8 @@ N = sum(sys$X)
 
 ## Simulate data
 source("settings.R")
-prior = list(prob=list(a=rep(5,sys$r), b=rep(95,sys$r)),
-             rate=list(a=c(.5,.25)*10, b=rep(10,sys$r)))
+prior = list(prob=list(a=rep(50,sys$r), b=rep(950,sys$r)),
+             rate=list(a=c(.5,.25)*100, b=rep(100,sys$r)))
 
 # A function to produce a single simulation
 sim.f = function()
@@ -23,12 +23,12 @@ sim.f = function()
     while(!somey) 
     {
       sys$X = as.numeric(rmultinom(1,N,sys$X/N))
-      sys$theta = rgamma( sys$r, prior$rate$a*10, prior$rate$b*10)
+      sys$theta = rgamma( sys$r, prior$rate$a, prior$rate$b)
 
       out = tau_leap(sys, n)
       out$sys = sys
       out$rates = sys$theta
-      out$probs = rbeta( sys$r, prior$prob$a*10, prior$prob$b*10)
+      out$probs = rbeta( sys$r, prior$prob$a, prior$prob$b)
       out$y = cbind(rbinom(n, out$nr[,1], out$p[1]), 
                     rbinom(n, out$nr[,2], out$p[2]))
 

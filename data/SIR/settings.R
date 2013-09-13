@@ -7,7 +7,7 @@ n.sims = 100
 n = 60 # Number of time points
 
 # Filter settings
-n.particles = 1000
+n.particles = 500
 resampling.function = "multinomial"
 
 # Quantile settings
