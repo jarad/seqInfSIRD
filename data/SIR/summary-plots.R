@@ -9,7 +9,7 @@ library(plyr)
 library(reshape2)
 d = dcast(rbind.fill(d), parameter + time + method ~ statistic)
 
-d$parameter = factor(d$parameter, c("S","I","R","p: S->I","p: I->R","blank","r: S->I","r: I->R"))
+d$parameter = factor(d$parameter, c("S","I","R","p: S+I->2I","p: I->R","blank","r: S+I->2I","r: I->R"))
 
 library(ggplot2)
 d = d[d$time>0,]
@@ -27,8 +27,11 @@ d$tmp = d$MSE+2*d$seMSE
 
 qplot(time, tmp, data=d[d$parameter%in% levels(d$parameter)[c(4:5,7:8)],], geom="line", colour=method, facets=~parameter)
 
-ggplot(d[d$parameter=="p: S->I",], aes(x = time, y = MSE, group=method)) +
-  geom_line() +
-  geom_ribbon(aes(ymin = MSE-2*seMSE, ymax = MSE+2*seMSE, fill = "05%-95%"), alpha = .25)
+
+
+
+
+ggplot(d[d$parameter=="p: S+I->2I",], aes(x = time, y = MSE, colour=method)) +
+  geom_ribbon(aes(ymin = MSE-2*seMSE/10, ymax = MSE+2*seMSE/10, fill = "05%-95%"), alpha = .25)
 
 
