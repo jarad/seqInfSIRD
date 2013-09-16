@@ -56,7 +56,20 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 
 d = d[d$time>0,]
 
-qplot(time, MCV, data=d, geom="line", colour=method, facets=~parameter)
+clrs = c(2,4,5)
+names(clrs) = c("PL","LW95","LW99")
+
+dx = d[d$parameter%in% levels(d$parameter)[1:3],]
+dp = d[d$parameter%in% levels(d$parameter)[4:5],]
+dr = d[d$parameter%in% levels(d$parameter)[7:8],]
+
+q1 = qplot(time, MCV, data=dx, geom="line", colour=method, facets=~parameter)+scale_colour_manual(values=clrs)
+q2 = qplot(time, MCV, data=dp, geom="line", colour=method, facets=~parameter)+scale_colour_manual(values=clrs)
+q3 = qplot(time, MCV, data=dr, geom="line", colour=method, facets=~parameter)+scale_colour_manual(values=clrs)
+
+pdf("mse.pdf")
+multiplot(q1,q2,q3)
+dev.off()
 
 q1 = qplot(time, sqrt(MSE), data=d[d$parameter%in% levels(d$parameter)[1:3],], geom="line", colour=method, facets=~parameter)
 q2 = qplot(time, sqrt(MSE), data=d[d$parameter%in% levels(d$parameter)[4:5],], geom="line", colour=method, facets=~parameter)
